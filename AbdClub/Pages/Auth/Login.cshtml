@@ -1,0 +1,19 @@
+﻿@page
+@model AbdClub.Pages.Auth.LoginModel
+
+<div class="login-wrap">
+    <h1>Member Login</h1>
+    <p>Sign in with your Google account to access the member area.</p>
+
+    @if (Model.NotAMember)
+    {
+        <div class="alert">
+            Your Google account is not linked to an active membership.
+            <a href="/membership">Join here</a> or contact an officer.
+        </div>
+    }
+
+    <a asp-page="/Auth/Login" asp-page-handler="GoogleLogin" class="btn-google">
+        Sign in with Google
+    </a>
+</div>

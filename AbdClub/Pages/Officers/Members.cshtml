@@ -1,0 +1,99 @@
+@page
+@model AbdClub.Pages.Officers.MembersModel
+@{
+    ViewData["Title"] = "Manage Members";
+}
+
+<h1>Members</h1>
+
+<div class="filter-bar">
+    <a href="?filter=all"
+           class="@(Model.Filter == "all" ? "active" : "")">
+        All
+    </a>
+    <a href="?filter=active"
+           class="@(Model.Filter == "active" ? "active" : "")">
+        Active
+    </a>
+    <a href="?filter=expiring"
+           class="@(Model.Filter == "expiring" ? "active" : "")">
+        Expiring Soon
+    </a>
+    <a href="?filter=expired"
+           class="@(Model.Filter == "expired" ? "active" : "")">
+        Expired
+    </a>
+    <a href="?filter=officers"
+           class="@(Model.Filter == "officers" ? "active" : "")">
+        Officers
+    </a>
+</div>
+
+<p>@Model.Members.Count member(s) found.</p>
+
+@if (!Model.Members.Any())
+{
+    <p>No members match this filter.</p>
+}
+else
+{
+    <table class="member-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Joined</th>
+                <th>Expires</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in Model.Members)
+            {
+                <tr class="@(member.ExpiryDate < DateTime.UtcNow ? "expired-row" : "")">
+                    <td>@member.FullName</td>
+                    <td>@member.Email</td>
+                    <td>@(member.Phone ?? "—")</td>
+                    <td>@member.JoinDate.ToString("MMM d, yyyy")</td>
+                    <td>@member.ExpiryDate.ToString("MMM d, yyyy")</td>
+                    <td>
+                        @if (member.IsOfficer)
+                        {
+                            <span class="badge-officer">
+                                @member.OfficerRole
+                            </span>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
+                    <td>
+                        @if (!member.IsActive)
+                        {
+                            <span class="badge-inactive">Inactive</span>
+                        }
+                        else if (member.ExpiryDate < DateTime.UtcNow)
+                        {
+                            <span class="badge-expired">Expired</span>
+                        }
+                        else if (member.ExpiryDate < DateTime.UtcNow.AddDays(30))
+                        {
+                            <span class="badge-expiring">Expiring soon</span>
+                        }
+                        else
+                        {
+                            <span class="badge-active">Active</span>
+                        }
+                    </td>
+                    <td>
+                        <a href="/Officers/EditMember?id=@member.Id">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,15 @@
+﻿@page
+@model AbdClub.Pages.Officers.DashboardModel
+@{
+    ViewData["Title"] = "Officer Dashboard";
+}
+
+<h1>Officer Dashboard</h1>
+<p>Welcome, @User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value</p>
+
+<ul>
+    <li><a href="/Officers/Members">Manage Members</a></li>
+    <li><a href="/Officers/Emails">Send Email</a></li>
+    <li><a href="/Officers/MeetingNotes">Meeting Notes</a></li>
+    <li><a href="/Officers/Files">Club Files</a></li>
+</ul>

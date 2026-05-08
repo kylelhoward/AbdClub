@@ -1,0 +1,33 @@
+﻿@page
+@model AbdClub.Pages.Members.DashboardModel
+@{
+    ViewData["Title"] = "Member Dashboard";
+}
+
+<h1>Welcome, @Model.Member.FullName</h1>
+
+<div class="status-card @(Model.IsExpiringSoon ? "warning" : "good")">
+    <div class="label">Membership status</div>
+    <div class="value">
+        @if (Model.IsExpired)
+        {
+            <span class="badge red">Expired @Model.Member.ExpiryDate.ToString("MMM d, yyyy")</span>
+        }
+        else if (Model.IsExpiringSoon)
+        {
+            <span class="badge amber">Expires @Model.Member.ExpiryDate.ToString("MMM d, yyyy") — renew soon</span>
+        }
+        else
+        {
+            <span class="badge green">Active until @Model.Member.ExpiryDate.ToString("MMM d, yyyy")</span>
+        }
+    </div>
+</div>
+
+@if (Model.IsExpired || Model.IsExpiringSoon)
+{
+    <a href="/Membership" class="btn-primary">Renew now — $50/year</a>
+}
+
+<h2>Upcoming events</h2>
+@* Events list goes here *@
