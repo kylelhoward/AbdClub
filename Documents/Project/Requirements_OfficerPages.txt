@@ -1,0 +1,41 @@
+Officers Pages.
+
+Dance List: 
+Date,Time,Location,Attending Officers,
+Volunteers,DJ,Dance Lesson,
+Email Notification action,...,.
+
+Dance Lesson(as part of Dances): Instructor,Date,Time,Location,Type,Description.
+
+Events: Title,Date,Time,Location,
+Description,Sponsors,Contact Info,
+Event Email Notification action,...,
+
+Officer Meetings: Date,Time,Location
+,Agenda,Attending Officers, Email Notification action,
+...,...
+
+Bimonthly email notifications will be sent.
+upcoming dances and upcoming events:
+	All members,officers, email list members., 
+upcoming officer meetings: officers.
+volunteer email: volunteers for upcoming dances.
+
+Three general ad hoc email notifications with subject and body.
+One for everyone (members,email list, officers).
+One for members and officers.
+One for officers only.
+
+Meeting Minutes: Date,Time,Location,Attending Officers
+,Agenda,Discussion Points,Action Items,Decisions Made
+,Next Meeting Date,Email Notification action,...,..  .
+Incorporated into Metting events? 
+So, upcoming officer meetings will have a link to the meeting minutes for that meeting?
+
+File Managment
+Possible file categories: Tax Documents, Policies, Dance Flyers,General,...,..,.
+Upload Date,File Name,File Type,Description,Uploaded By
+,Access Level,Download Link,Email Notification action,...,.
+
+
+

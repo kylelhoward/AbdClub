@@ -8,7 +8,7 @@ public class Member
     public string? Phone { get; set; }
     public string? GoogleSubId { get; set; }
     public DateTime JoinDate { get; set; }
-    public DateTime ExpiryDate { get; set; }
+    public DateTime? ExpiryDate { get; set; }
     public bool IsOfficer { get; set; } = false;
     public string? OfficerRole { get; set; }
     public bool IsActive { get; set; } = true;

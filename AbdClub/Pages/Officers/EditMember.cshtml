@@ -1,0 +1,38 @@
+@page "{id:int}"
+@model AbdClub.Pages.Officers.EditMemberModel
+
+<h1>Edit Member</h1>
+
+@if (Model.ErrorMessage != null)
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post">
+    <div>
+        <label asp-for="Member.FullName"></label>
+        <input asp-for="Member.FullName" />
+    </div>
+    <div>
+        <label asp-for="Member.Email"></label>
+        <input asp-for="Member.Email" />
+    </div>
+    <div>
+        <label asp-for="Member.IsActive">Active</label>
+        <input asp-for="Member.IsActive" type="checkbox" />
+    </div>
+    <div>
+        <label asp-for="Member.ExpiryDate">Expiry Date</label>
+        <input asp-for="Member.ExpiryDate" type="date" />
+    </div>
+    <div>
+        <label asp-for="Member.IsOfficer">Officer</label>
+        <input asp-for="Member.IsOfficer" type="checkbox" />
+    </div>
+    <div>
+        <label asp-for="Member.OfficerRole">Officer Role</label>
+        <input asp-for="Member.OfficerRole" />
+    </div>
+    <button type="submit">Save</button>
+    <a asp-page="./Members">Cancel</a>
+</form>
