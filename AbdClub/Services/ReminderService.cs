@@ -41,18 +41,22 @@ public class ReminderService : BackgroundService
         {
             var targetDate = today.AddDays(days);
             var emailType = $"Reminder{days}";
-
+            var start = targetDate.Date;
+            var end = start.AddDays(1);
             // Find members expiring on exactly this target date
             // who haven't already received this reminder
             var members = await db.Members
-                .Where(m =>
-                    m.IsActive &&
-                    m.ExpiryDate.Date == targetDate &&
-                    !db.EmailLogs.Any(e =>
-                        e.MemberId == m.Id &&
-                        e.EmailType == emailType &&
-                        e.SentAt.Date == today))
-                .ToListAsync();
+     .Where(m =>
+         m.IsActive &&
+         m.ExpiryDate.HasValue &&
+         m.ExpiryDate.Value >= start &&
+         m.ExpiryDate.Value < end &&
+         !db.EmailLogs.Any(e =>
+             e.MemberId == m.Id &&
+             e.EmailType == emailType &&
+             e.SentAt >= today.Date &&
+             e.SentAt < today.Date.AddDays(1)))
+     .ToListAsync();
 
             foreach (var member in members)
             {

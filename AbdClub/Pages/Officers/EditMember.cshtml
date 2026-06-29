@@ -1,38 +1,71 @@
 @page "{id:int}"
 @model AbdClub.Pages.Officers.EditMemberModel
 
-<h1>Edit Member</h1>
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h2 class="card-title h4 mb-0">Edit Member</h2>
+        </div>
+        <div class="card-body">
 
-@if (Model.ErrorMessage != null)
-{
-    <div class="alert alert-danger">@Model.ErrorMessage</div>
+            @if (Model.ErrorMessage != null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <form method="post" novalidate>
+                <input type="hidden" asp-for="Member.Id" />
+
+                <div class="mb-3">
+                    <label asp-for="Member.FullName" class="form-label">Full Name</label>
+                    <input asp-for="Member.FullName" class="form-control" placeholder="Enter full name" />
+                    <span asp-validation-for="Member.FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.Email" class="form-label">Email Address</label>
+                    <input asp-for="Member.Email" type="email" class="form-control" placeholder="name@example.com" />
+                    <span asp-validation-for="Member.Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.ExpiryDate" class="form-label">Expiry Date</label>
+                    <input asp-for="Member.ExpiryDate" type="date" class="form-control" />
+                    <span asp-validation-for="Member.ExpiryDate" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.OfficerRole" class="form-label">Officer Role</label>
+                    <input asp-for="Member.OfficerRole" class="form-control" placeholder="e.g., Secretary, Treasurer" />
+                    <span asp-validation-for="Member.OfficerRole" class="text-danger small"></span>
+                </div>
+
+                <div class="card bg-light p-3 mb-4">
+                    <div class="form-check form-switch mb-2">
+                        <input asp-for="Member.IsActive" type="checkbox" class="form-check-input" role="switch" />
+                        <label asp-for="Member.IsActive" class="form-check-label fw-bold">Active Member</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input asp-for="Member.IsOfficer" type="checkbox" class="form-check-input" role="switch" />
+                        <label asp-for="Member.IsOfficer" class="form-check-label fw-bold">Is Officer</label>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                    <a asp-page="./Members" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="bi bi-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }
-
-<form method="post">
-    <div>
-        <label asp-for="Member.FullName"></label>
-        <input asp-for="Member.FullName" />
-    </div>
-    <div>
-        <label asp-for="Member.Email"></label>
-        <input asp-for="Member.Email" />
-    </div>
-    <div>
-        <label asp-for="Member.IsActive">Active</label>
-        <input asp-for="Member.IsActive" type="checkbox" />
-    </div>
-    <div>
-        <label asp-for="Member.ExpiryDate">Expiry Date</label>
-        <input asp-for="Member.ExpiryDate" type="date" />
-    </div>
-    <div>
-        <label asp-for="Member.IsOfficer">Officer</label>
-        <input asp-for="Member.IsOfficer" type="checkbox" />
-    </div>
-    <div>
-        <label asp-for="Member.OfficerRole">Officer Role</label>
-        <input asp-for="Member.OfficerRole" />
-    </div>
-    <button type="submit">Save</button>
-    <a asp-page="./Members">Cancel</a>
-</form>

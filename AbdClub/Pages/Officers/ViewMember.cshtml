@@ -1,0 +1,72 @@
+﻿@page "{id:int}"
+@model AbdClub.Pages.Officers.DetailsModel
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h2 class="card-title h4 mb-0">Member Details</h2>
+            <div>
+                @if (Model.Member.IsActive)
+                {
+                    <span class="badge bg-success me-1">Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary me-1">Inactive</span>
+                }
+
+                @if (Model.Member.IsOfficer)
+                {
+                    <span class="badge bg-amber text-dark" style="background-color: #ffc107;">Officer</span>
+                }
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            @if (Model.ErrorMessage != null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Full Name</div>
+                <div class="col-sm-8 text-dark">@Model.Member.FullName</div>
+            </div>
+
+            <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Email Address</div>
+                <div class="col-sm-8">
+                    <a href="mailto:@Model.Member.Email" class="text-decoration-none">@Model.Member.Email</a>
+                </div>
+            </div>
+
+            <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Expiry Date</div>
+                <div class="col-sm-8 text-dark">
+                    @(Model.Member.ExpiryDate.HasValue ? Model.Member.ExpiryDate.Value.ToString("MMMM dd, yyyy") : "N/A")
+                </div>
+            </div>
+
+            @if (Model.Member.IsOfficer)
+            {
+                <div class="row mb-3 border-bottom pb-2">
+                    <div class="col-sm-4 text-muted fw-bold">Officer Role</div>
+                    <div class="col-sm-8 text-dark">
+                        <span class="fst-italic">@Model.Member.OfficerRole</span>
+                    </div>
+                </div>
+            }
+
+            <div class="d-flex justify-content-between align-items-center mt-4 pt-2">
+                <a asp-page="./Members" class="btn btn-outline-secondary">
+                    Back to List
+                </a>
+                <a asp-page="./Edit" asp-route-id="@Model.Member.Id" class="btn btn-primary px-4">
+                    Edit Member
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

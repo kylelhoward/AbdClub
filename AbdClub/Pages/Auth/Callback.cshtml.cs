@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace AbdClub.Pages.Auth;
 
@@ -25,7 +26,7 @@ public class CallbackModel : PageModel
 
         // Get the email from the claims Google returned
         var email = result.Principal?
-            .FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            .FindFirst(ClaimTypes.Email)?.Value;
 
         if (email == null)
             return RedirectToPage("/Auth/Login");
@@ -47,7 +48,20 @@ public class CallbackModel : PageModel
             return RedirectToPage("/Membership", new { expired = true });
         }
 
-        // All good — send officers to officer dashboard, members to member dashboard
+        // All good — build a principal that includes the Officer role when applicable
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, member.FullName ?? member.Email ?? string.Empty),
+            new Claim(ClaimTypes.Email, member.Email ?? string.Empty),
+            new Claim("IsOfficer", member.IsOfficer.ToString().ToLower())
+        };
+        if (member.IsOfficer)
+            claims.Add(new Claim(ClaimTypes.Role, "Officer"));
+
+        var identity = new ClaimsIdentity(claims, "Cookies");
+        await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(identity));
+
+        // Send officers to officer dashboard, members to member dashboard
         if (member.IsOfficer)
             return RedirectToPage("/Officers/Dashboard");
 

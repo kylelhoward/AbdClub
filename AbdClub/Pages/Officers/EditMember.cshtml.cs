@@ -2,10 +2,12 @@ using AbdClub.Data;
 using AbdClub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AbdClub.Pages.Officers;
 
+
+[Authorize(Roles = "Officer")]
 public class EditMemberModel : PageModel
 {
     private readonly AbdContext _db;
@@ -41,9 +43,12 @@ public class EditMemberModel : PageModel
         memberInDb.FullName = Member.FullName;
         memberInDb.Email = Member.Email;
         memberInDb.IsActive = Member.IsActive;
-        memberInDb.ExpiryDate = Member.ExpiryDate;
+        memberInDb.ExpiryDate = Member.ExpiryDate.HasValue
+            ? System.DateTime.SpecifyKind(Member.ExpiryDate.Value, System.DateTimeKind.Utc)
+            : (DateTime?)null;
         memberInDb.IsOfficer = Member.IsOfficer;
         memberInDb.OfficerRole = Member.OfficerRole;
+
 
         await _db.SaveChangesAsync();
         return RedirectToPage("./Members");

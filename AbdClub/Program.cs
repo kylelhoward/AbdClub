@@ -71,10 +71,17 @@ builder.Services.AddAuthentication(options =>
         var identity = (System.Security.Claims.ClaimsIdentity)context.Principal!.Identity!;
         identity.AddClaim(new System.Security.Claims.Claim("MemberId", member.Id.ToString()));
         identity.AddClaim(new System.Security.Claims.Claim("IsOfficer", member.IsOfficer.ToString().ToLower()));
-        identity.AddClaim(new System.Security.Claims.Claim("ExpiryDate", member.ExpiryDate.ToString("O")));
+        identity.AddClaim(new System.Security.Claims.Claim(
+            "ExpiryDate",
+            member.ExpiryDate.HasValue ? member.ExpiryDate.Value.ToString("O") : ""
+        ));
 
         if (member.OfficerRole != null)
             identity.AddClaim(new System.Security.Claims.Claim("OfficerRole", member.OfficerRole));
+
+        // Also add an actual Role claim so [Authorize(Roles = "Officer")] works
+        if (member.IsOfficer)
+            identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Officer"));
     };
 });
 

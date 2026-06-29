@@ -116,7 +116,7 @@ public class EmailService : IEmailService
     private string BuildReminderBody(Member member, string emailType)
     {
         var renewUrl = "https://danceatx.org/membership";
-        var expiry = member.ExpiryDate.ToString("MMMM d, yyyy");
+        var expiry = member.ExpiryDate?.ToString("MMMM d, yyyy") ?? "N/A";
 
         return emailType switch
         {
