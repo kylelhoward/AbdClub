@@ -87,6 +87,7 @@ builder.Services.AddAuthentication(options =>
 
 // --- App Services ---
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
 
 var app = builder.Build();

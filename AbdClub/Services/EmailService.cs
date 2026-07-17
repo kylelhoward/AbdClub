@@ -5,11 +5,6 @@ using System.Net.Mail;
 
 namespace AbdClub.Services;
 
-public interface IEmailService
-{
-    Task SendReminderAsync(Member member, string emailType);
-    Task SendBroadcastAsync(List<Member> recipients, string subject, string body);
-}
 
 public class EmailService : IEmailService
 {
@@ -197,5 +192,25 @@ public class EmailService : IEmailService
                 — The ABD Team
                 """
         };
+    }
+
+    public Task SendMembershipReminderAsync(Member member)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendVolunteerReminderAsync(Dance dance, Volunteer volunteer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendOfficerReminderAsync(Dance dance, Member officer)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendEventNotificationToAllMembersAsync(Dance dance, string subject, string body)
+    {
+        throw new NotImplementedException();
     }
 }
