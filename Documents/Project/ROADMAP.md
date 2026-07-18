@@ -2,13 +2,13 @@
 
 ## Short Term — Finish the App
 - [ ] Build remaining pages
-  - [ ] EditMember
+  - [x] EditMember
   - [ ] Emails
   - [ ] MeetingNotes
   - [ ] Files
-- [ ] Wire up Resend (or SMTP2GO) for real email sending
-- [ ] Test Stripe payments with sandbox
-- [ ] Test expiry reminder emails
+- [x] Wire up Resend (or SMTP2GO) for real email sending
+- [x] Test Stripe payments with sandbox
+- [x] Test expiry reminder emails
 
 ## Medium Term — Get on the VPS
 - [ ] Spin up DigitalOcean droplet

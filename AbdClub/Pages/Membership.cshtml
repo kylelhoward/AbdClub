@@ -1,0 +1,90 @@
+﻿@page
+@model AbdClub.Pages.MembershipModel
+@{
+    ViewData["Title"] = "Join Austin Ballroom Dancers";
+}
+
+<div class="membership-wrap">
+
+    <h1>Annual Membership</h1>
+    <p class="lead">
+        Join Austin Ballroom Dancers for one full year — just $50.
+    </p>
+
+    <ul class="perks">
+        <li>Access to all monthly social dances</li>
+        <li>Discounted workshop tickets</li>
+        <li>Member newsletter and event reminders</li>
+        <li>Voting rights at club meetings</li>
+        <li>Priority event registration</li>
+    </ul>
+
+    @if (Model.PaymentCancelled)
+    {
+        <div class="alert alert-warning">
+            Payment was cancelled — no charge was made.
+            You can try again below.
+        </div>
+    }
+
+    @if (Model.PaymentSuccess)
+    {
+        <div class="alert alert-success">
+            <strong>Welcome to ABD!</strong> Your membership is now active.
+            <a href="/Auth/Login">Sign in with Google</a> to access
+            your member dashboard.
+        </div>
+    }
+
+    @if (!Model.PaymentSuccess)
+    {
+        <div class="membership-form">
+            <h2>Your details</h2>
+            <p>
+                Enter your information below. The Gmail address you provide
+                is what you'll use to log in after joining.
+            </p>
+
+            <form method="post">
+                <div class="form-group">
+                    <label for="fullName">Full name</label>
+                    <input type="text" id="fullName" name="fullName"
+                           placeholder="Jane Smith" required
+                           class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        Gmail address
+                        <small>(must be a Gmail — used to log in)</small>
+                    </label>
+                    <input type="email" id="email" name="email"
+                           placeholder="jane@gmail.com" required
+                           class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone <small>(optional)</small></label>
+                    <input type="tel" id="phone" name="phone"
+                           placeholder="512-555-0100"
+                           class="form-control" />
+                </div>
+
+                <div class="price-summary">
+                    <span>Annual Membership</span>
+                    <span class="price">$50.00</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Pay $50 securely with Stripe
+                </button>
+
+                <p class="secure-note">
+                    🔒 You'll be taken to Stripe's secure payment page.
+                    We never see your card details.
+                </p>
+            </form>
+        </div>
+    }
+
+</div>

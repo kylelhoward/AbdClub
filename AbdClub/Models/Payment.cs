@@ -8,7 +8,7 @@ public class Payment
     public DateTime PaymentDate { get; set; }
     public DateTime PeriodStart { get; set; }
     public DateTime PeriodEnd { get; set; }
-    public string? PayPalTransactionId { get; set; }
+    public string? TransactionId { get; set; }
     public string Status { get; set; } = "Completed";
 
     public Member Member { get; set; } = null!;

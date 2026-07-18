@@ -38,7 +38,6 @@ builder.Services.AddAuthentication(options =>
 {
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-
     options.Events.OnCreatingTicket = async context =>
     {
         var db = context.HttpContext.RequestServices
@@ -56,7 +55,6 @@ builder.Services.AddAuthentication(options =>
 
         if (member == null)
         {
-            // Email not in our Members table — deny access
             context.Fail("Not a registered member");
             return;
         }
@@ -68,21 +66,30 @@ builder.Services.AddAuthentication(options =>
             await db.SaveChangesAsync();
         }
 
-        // Add our custom claims to their login session
-        var identity = (System.Security.Claims.ClaimsIdentity)context.Principal!.Identity!;
-        identity.AddClaim(new System.Security.Claims.Claim("MemberId", member.Id.ToString()));
-        identity.AddClaim(new System.Security.Claims.Claim("IsOfficer", member.IsOfficer.ToString().ToLower()));
-        identity.AddClaim(new System.Security.Claims.Claim(
-            "ExpiryDate",
-            member.ExpiryDate.HasValue ? member.ExpiryDate.Value.ToString("O") : ""
-        ));
+        // Get the COOKIE identity, not the Google identity
+        // This is the key fix — we must add claims to the principal
+        // that will be serialized into the cookie
+        var claimsToAdd = new List<System.Security.Claims.Claim>
+    {
+        new("MemberId",    member.Id.ToString()),
+        new("IsOfficer",   member.IsOfficer.ToString().ToLower()),
+        new("ExpiryDate",  member.ExpiryDate.HasValue
+                           ? member.ExpiryDate.Value.ToString("O")
+                           : ""),
+    };
 
         if (member.OfficerRole != null)
-            identity.AddClaim(new System.Security.Claims.Claim("OfficerRole", member.OfficerRole));
+            claimsToAdd.Add(new("OfficerRole", member.OfficerRole));
 
-        // Also add an actual Role claim so [Authorize(Roles = "Officer")] works
         if (member.IsOfficer)
-            identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Officer"));
+            claimsToAdd.Add(new(
+                System.Security.Claims.ClaimTypes.Role, "Officer"));
+
+        // Add to BOTH identities to be safe
+        foreach (var identity in context.Principal!.Identities)
+        {
+            identity.AddClaims(claimsToAdd);
+        }
     };
 });
 
@@ -103,6 +110,17 @@ else
     builder.Services.AddScoped<IEmailService, ResendEmailService>();
 }
 
+builder.Services.AddScoped<IStripeService, StripeService>();  // ← add this
+
+// --- Session ---
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
 
@@ -118,6 +136,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseSession();        // ← add this
 app.UseAuthentication();  // who are you?
 app.UseAuthorization();   // what can you do?
 app.MapRazorPages();
@@ -138,4 +157,13 @@ app.MapGet("/test-email", async (IEmailService emailService, AbdContext db) =>
     await emailService.SendMembershipReminderAsync(member);
     return $"Test email sent to {member.Email}";
 });
+
+app.MapGet("/debug-claims", (HttpContext ctx) =>
+{
+    var claims = ctx.User.Claims
+        .Select(c => new { c.Type, c.Value })
+        .ToList();
+    return Results.Json(claims);
+}).RequireAuthorization();
+
 app.Run();
