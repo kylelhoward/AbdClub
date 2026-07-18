@@ -6,7 +6,7 @@
   - [ ] Emails
   - [ ] MeetingNotes
   - [ ] Files
-- [ ] Wire up SMTP2GO for real email sending
+- [ ] Wire up Resend (or SMTP2GO) for real email sending
 - [ ] Test Stripe payments with sandbox
 - [ ] Test expiry reminder emails
 

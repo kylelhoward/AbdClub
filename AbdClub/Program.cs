@@ -1,6 +1,7 @@
 using AbdClub.Data;
 using AbdClub.Services;
 using Microsoft.EntityFrameworkCore;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,7 +87,22 @@ builder.Services.AddAuthentication(options =>
 });
 
 // --- App Services ---
-builder.Services.AddScoped<IEmailService, EmailService>();
+// Choose one email service: Resend or SMTP (SMTP2GO, SendGrid, etc.)
+var emailProvider = builder.Configuration["Email:Provider"] ?? "Resend";
+
+if (emailProvider.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+}
+else
+{
+    // Register Resend client
+    var resendApiKey = builder.Configuration["Email:ResendApiKey"]!;
+    builder.Services.Configure<ResendClientOptions>(options => options.ApiToken = resendApiKey);
+    builder.Services.AddHttpClient<ResendClient>();
+    builder.Services.AddScoped<IEmailService, ResendEmailService>();
+}
+
 builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
 
@@ -113,4 +129,13 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
+app.MapGet("/test-email", async (IEmailService emailService, AbdContext db) =>
+{
+    var member = await db.Members
+    .SingleOrDefaultAsync(m => m.Email == "kylelhoward@gmail.com");
+    if (member == null) return "No members found";
+
+    await emailService.SendMembershipReminderAsync(member);
+    return $"Test email sent to {member.Email}";
+});
 app.Run();
