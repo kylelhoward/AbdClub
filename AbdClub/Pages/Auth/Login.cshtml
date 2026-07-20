@@ -1,19 +1,69 @@
 ﻿@page
 @model AbdClub.Pages.Auth.LoginModel
 
-<div class="login-wrap">
+<div class="login-wrap" style="max-width:400px; margin:3rem auto;">
     <h1>Member Login</h1>
-    <p>Sign in with your Google account to access the member area.</p>
+    <p>Sign in to access your Austin Ballroom Dancers membership.</p>
 
     @if (Model.NotAMember)
     {
-        <div class="alert">
-            Your Google account is not linked to an active membership.
-            <a href="/membership">Join here</a> or contact an officer.
+        <div class="alert alert-warning">
+            Your account is not linked to an active membership.
+            <a href="/Membership">Join here</a> or contact an officer.
         </div>
     }
 
-    <a asp-page="/Auth/Login" asp-page-handler="GoogleLogin" class="btn-google">
-        Sign in with Google
-    </a>
+    @if (Model.LinkSent)
+    {
+        <div class="alert alert-success">
+            <strong>Check your email!</strong><br />
+            We sent a login link to <strong>@Model.EmailSent</strong>.
+            It expires in 15 minutes.
+        </div>
+    }
+
+    @if (Model.LinkExpired)
+    {
+        <div class="alert alert-danger">
+            That login link has expired or already been used.
+            Please request a new one below.
+        </div>
+    }
+
+    @if (!Model.LinkSent)
+    {
+        <!-- Google Login -->
+        <div class="mb-4">
+            <a asp-page="/Auth/Login"
+               asp-page-handler="GoogleLogin"
+               class="btn btn-outline-dark w-100">
+                <img src="https://www.google.com/favicon.ico"
+                     width="16" height="16" class="me-2" />
+                Sign in with Google
+            </a>
+        </div>
+
+        <div class="text-center text-muted mb-4">
+            <span>— or —</span>
+        </div>
+
+        <!-- Magic Link Login -->
+        <div>
+            <p class="text-muted small">
+                Don't have a Google account? Enter your email
+                and we'll send you a login link.
+            </p>
+            <form method="post">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email address</label>
+                    <input type="email" id="email" name="email"
+                           class="form-control"
+                           placeholder="your@email.com" required />
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    Send me a login link
+                </button>
+            </form>
+        </div>
+    }
 </div>

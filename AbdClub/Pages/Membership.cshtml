@@ -30,9 +30,21 @@
     @if (Model.PaymentSuccess)
     {
         <div class="alert alert-success">
-            <strong>Welcome to ABD!</strong> Your membership is now active.
-            <a href="/Auth/Login">Sign in with Google</a> to access
-            your member dashboard.
+            <strong>Welcome to Austin Ballroom Dancers!</strong>
+            <p>Your membership is now active. Here's how to log in:</p>
+            <hr />
+
+            <p><strong>Option 1 — Gmail users:</strong></p>
+            <a asp-page="/Auth/Login" class="btn btn-outline-dark btn-sm">
+                Sign in with Google
+            </a>
+
+            <p class="mt-3"><strong>Option 2 — All other email users:</strong></p>
+            <p>
+                Go to the <a asp-page="/Auth/Login">login page</a> and enter
+                the email address you used to sign up. We'll send you a
+                login link.
+            </p>
         </div>
     }
 
@@ -55,11 +67,11 @@
 
                 <div class="form-group">
                     <label for="email">
-                        Gmail address
-                        <small>(must be a Gmail — used to log in)</small>
+                        Email address
+                        <small>(used to log in — Gmail or any email)</small>
                     </label>
                     <input type="email" id="email" name="email"
-                           placeholder="jane@gmail.com" required
+                           placeholder="jane@example.com" required
                            class="form-control" />
                 </div>
 
@@ -79,9 +91,13 @@
                     Pay $50 securely with Stripe
                 </button>
 
-                <p class="secure-note">
-                    🔒 You'll be taken to Stripe's secure payment page.
+                <p class="note">
+                    You'll be taken to a secure Stripe payment page.
                     We never see your card details.
+                </p>
+                <p class="note">
+                    <strong>Gmail users</strong> — log in with Google after joining.<br />
+                    <strong>All other email users</strong> — use the magic link option on the login page.
                 </p>
             </form>
         </div>

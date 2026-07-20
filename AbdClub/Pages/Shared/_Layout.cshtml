@@ -18,38 +18,93 @@
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+                @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+                @if (Env.IsDevelopment())
+                {
+                    <span class="navbar-text text-warning ms-auto">Development Mode!</span>
+                }
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link text-dark" asp-page="/Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Members/GetExpiration">My Membership</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Auth/Login">Officer Login</a>
-                        </li>
+
+                        @* {{!-- My Membership — only when logged in --}} *@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Members/Dashboard">My Membership</a>
+                            </li>
+                        }
+
+                        @* Officers dropdown — only for officers  *@
+                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Officer"))
+                        {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#" id="officersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle text-dark" href="#"
+                                   id="officersDropdown" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
                                     Officers
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="officersDropdown">
-                                    <li><a class="dropdown-item" asp-area="" asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-page="/Officers/Members">Members</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-page="/Officers/Meetings">Meetings</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-page="/Officers/Dances">Dances</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-page="/Officers/Files">Club Files</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Members">Members</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Meetings">Meetings</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Dances">Dances</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Files">Club Files</a></li>
                                 </ul>
                             </li>
                         }
 
+                        
+                        @if (User.Identity?.IsAuthenticated == true &&
+                                                    User.IsInRole("Officer") &&
+                                                    User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Dev/Index">Dev</a>
+                            </li>
+                        }
+                        @* Login — only when NOT logged in  *@
+                        @if (User.Identity?.IsAuthenticated != true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Auth/Login">Login</a>
+                            </li>
+                        }
+
+                        @* Join — only when NOT logged in  *@
+                        @if (User.Identity?.IsAuthenticated != true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Membership">Join</a>
+                            </li>
+                        }
                     </ul>
-                    @{ var displayName = User.FindFirst("name")?.Value ?? User.Identity?.Name ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value; }
+
+
+                    @{
+                        var displayName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
+                                         ?? User.Identity?.Name
+                                         ?? "Member";
+                    }
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <span class="navbar-text ms-auto">Hello, @displayName</span>
+                        @if (User.IsInRole("Officer") &&
+                            User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen")
+                        {
+                            <span class="navbar-text ms-auto">Halo, @User.FindFirst("OfficerRole")?.Value!</span>
+                        }
+                        else
+                        {
+                            <span class="navbar-text ms-auto">Hello, @displayName!</span>
+                        }
+                        <!-- Logout button -->
+                        <form method="post" asp-page="/Auth/Logout" class="ms-2 d-inline">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                Sign out
+                            </button>
+                        </form>
                     }
 
                 </div>
@@ -64,7 +119,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - AbdClub - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            &copy; 2026 - Austin Ballroom Dancers - <a asp-area="" asp-page="/Privacy">Privacy</a>
         </div>
     </footer>
 

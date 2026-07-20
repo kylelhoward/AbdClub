@@ -9,6 +9,7 @@
 - [x] Wire up Resend (or SMTP2GO) for real email sending
 - [x] Test Stripe payments with sandbox
 - [x] Test expiry reminder emails
+- [x] Sign out flow
 
 ## Medium Term — Get on the VPS
 - [ ] Spin up DigitalOcean droplet

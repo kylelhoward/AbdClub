@@ -10,5 +10,6 @@ public interface IEmailService
     Task SendEventNotificationToAllMembersAsync(Dance dance, string subject, string body);
     Task SendReminderAsync(Member member, string emailType);
     Task SendBroadcastAsync(List<Member> recipients, string subject, string body);
+    Task SendMagicLinkEmailAsync(Member member, string magicUrl);  // ← add this
 
 }

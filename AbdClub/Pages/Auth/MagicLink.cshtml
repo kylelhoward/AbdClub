@@ -1,0 +1,23 @@
+﻿@page
+@model AbdClub.Pages.Auth.MagicLinkModel
+@{
+    ViewData["Title"] = "Logging you in...";
+}
+
+@if (Model.IsValid)
+{
+    <div class="text-center mt-5">
+        <h2>Logging you in...</h2>
+        <p>Please wait.</p>
+    </div>
+}
+else
+{
+    <div class="text-center mt-5">
+        <h2>Link expired or already used</h2>
+        <p>Login links expire after 15 minutes and can only be used once.</p>
+        <a asp-page="/Auth/Login" asp-route-expired="true" class="btn btn-primary">
+            Request a new link
+        </a>
+    </div>
+}

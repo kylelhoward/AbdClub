@@ -50,6 +50,47 @@ public class SmtpEmailService : IEmailService
         return message;
     }
 
+    public async Task SendMagicLinkEmailAsync(Member member, string magicUrl)
+    {
+        var subject = "Your Austin Ballroom Dancers login link";
+
+        var body = $@"
+        <h2>Your Login Link</h2>
+        <p>Hi {member.FullName},</p>
+        <p>Click the button below to log in to your Austin Ballroom Dancers account.</p>
+        <p>
+            <a href=""{magicUrl}""
+               style=""background:#D4537E; color:white; padding:12px 24px;
+                      text-decoration:none; border-radius:4px; font-weight:bold;"">
+                Log in to ABD
+            </a>
+        </p>
+        <p>Or copy and paste this link into your browser:</p>
+        <p style=""color:#666; font-size:12px;"">{magicUrl}</p>
+        <p><strong>This link expires in 15 minutes</strong> and can only be used once.</p>
+        <p>If you didn't request this link, you can safely ignore this email.</p>
+        <p>— The ABD Team</p>
+    ";
+
+        try
+        {
+            using var smtp = GetSmtpClient();
+            using var message = BuildMessage(
+                member.Email, member.FullName, subject, body, isHtml: true);
+
+            await smtp.SendMailAsync(message);
+
+            _logger.LogInformation(
+                "Magic link email sent via SMTP to {Email}", member.Email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                "Failed to send magic link to {Email}: {Exception}",
+                member.Email, ex.Message);
+        }
+    }
+
     public async Task SendReminderAsync(Member member, string emailType)
     {
         var subject = emailType switch

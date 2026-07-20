@@ -11,15 +11,21 @@
     <div class="value">
         @if (Model.IsExpired)
         {
-            <span class="badge red">Expired @(Model.Member.ExpiryDate?.ToString("MMM d, yyyy"))</span>
+            <span class="badge bg-danger">
+                Expired @Model.Member.ExpiryDate?.ToString("MMM d, yyyy")
+            </span>
         }
         else if (Model.IsExpiringSoon)
         {
-            <span class="badge amber">Expires @(Model.Member.ExpiryDate?.ToString("MMM d, yyyy")) — renew soon</span>
+            <span class="badge bg-warning text-dark">
+                Expires @Model.Member.ExpiryDate?.ToString("MMM d, yyyy") — renew soon
+            </span>
         }
         else
         {
-            <span class="badge green">Active until @(Model.Member.ExpiryDate?.ToString("MMM d, yyyy"))</span>
+            <span class="badge bg-success">
+                Active until @Model.Member.ExpiryDate?.ToString("MMM d, yyyy")
+            </span>
         }
     </div>
 </div>

@@ -1,0 +1,93 @@
+﻿@page
+@model AbdClub.Pages.Dev.SeedModel
+@{
+    ViewData["Title"] = "Dev Seed";
+}
+
+<h2>Add Test Members (Dev Only)</h2>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div style="color:green; font-weight:bold;">@Model.Message</div>
+}
+
+<form method="post">
+    <div>
+        <label>Full name</label><br />
+        <input type="text" name="fullName" required />
+    </div>
+    <div>
+        <label>Email</label><br />
+        <input type="email" name="email" required />
+    </div>
+    <div>
+        <label>Phone (optional)</label><br />
+        <input type="tel" name="phone" />
+    </div>
+    <div>
+        <label>Expiry date</label><br />
+        <input type="date" name="expiryDate"
+               value="@DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd")" required />
+    </div>
+    <div>
+        <label>Role</label><br />
+        <select name="memberType">
+            <option value="member">Regular Member</option>
+            <option value="officer">Officer</option>
+        </select>
+    </div>
+    <div>
+        <label>Officer Role (if officer)</label><br />
+        <input type="text" name="officerRole" placeholder="President, Treasurer..." />
+    </div>
+    <br />
+    <button type="submit">Add Member</button>
+</form>
+
+<hr />
+<h3>Simulate a payment (no Stripe CLI needed)</h3>
+<form method="post" asp-page-handler="SimulatePayment">
+    <input type="text"  name="fullName" placeholder="Full name" required />
+    <input type="email" name="email"    placeholder="Gmail address" required />
+    <input type="tel"   name="phone"    placeholder="Phone (optional)" />
+    <button type="submit">Simulate $50 payment</button>
+</form>
+
+<hr />
+<h3>Quick seed — add all test members at once</h3>
+<form method="post" asp-page-handler="SeedAll">
+    <button type="submit" style="background:orange; padding:10px 20px;">
+        Seed 10 test members
+    </button>
+</form>
+
+<hr />
+<h3>Current Members (@Model.MemberCount total)</h3>
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Expiry</th>
+        <th>Status</th>
+        <th>Officer</th>
+    </tr>
+    @foreach (var m in Model.Members)
+    {
+        var status = m.ExpiryDate < DateTime.UtcNow ? "Expired" :
+                     m.ExpiryDate <= DateTime.UtcNow.AddDays(7) ? "Expires in 7 days" :
+                     m.ExpiryDate <= DateTime.UtcNow.AddDays(30) ? "Expires in 30 days" :
+                     m.ExpiryDate <= DateTime.UtcNow.AddDays(60) ? "Expires in 60 days" :
+                     "Active";
+        var color = status == "Expired" ? "red" :
+                    status.StartsWith("Expires") ? "orange" : "green";
+        <tr>
+            <td>@m.Id</td>
+            <td>@m.FullName</td>
+            <td>@m.Email</td>
+            <td>@m.ExpiryDate?.ToString("yyyy-MM-dd")</td>
+            <td style="color:@color; font-weight:bold;">@status</td>
+            <td>@(m.IsOfficer ? m.OfficerRole : "—")</td>
+        </tr>
+    }
+</table>

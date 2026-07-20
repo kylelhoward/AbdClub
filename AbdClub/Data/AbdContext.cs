@@ -18,6 +18,8 @@ public class AbdContext : DbContext
     public DbSet<DJ> Djs { get; set; } = null!;
     public DbSet<Volunteer> Volunteers { get; set; } = null!;
 
+    public DbSet<MagicLink> MagicLinks { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

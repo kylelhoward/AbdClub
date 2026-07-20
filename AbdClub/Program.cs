@@ -27,7 +27,7 @@ builder.Services.AddRazorPages(options =>
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "Cookies";
-    options.DefaultChallengeScheme = "Google";
+    options.DefaultChallengeScheme = "Cookies";
 })
 .AddCookie("Cookies", options =>
 {
@@ -111,6 +111,7 @@ else
 }
 
 builder.Services.AddScoped<IStripeService, StripeService>();  // ← add this
+builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
 
 // --- Session ---
 builder.Services.AddDistributedMemoryCache();

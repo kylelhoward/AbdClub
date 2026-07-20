@@ -124,7 +124,7 @@ public class StripeService : IStripeService
 
         // Check for existing member (renewal case)
         var existing = await _db.Members
-            .FirstOrDefaultAsync(m => m.Email == email);
+    .FirstOrDefaultAsync(m => m.Email == email.Trim().ToLower());
 
         if (existing != null)
         {
@@ -162,7 +162,7 @@ public class StripeService : IStripeService
             var member = new Member
             {
                 FullName = fullName,
-                Email = email,
+                Email = email.Trim().ToLower(),
                 Phone = string.IsNullOrEmpty(phone) ? null : phone,
                 JoinDate = DateTime.UtcNow,
                 ExpiryDate = DateTime.UtcNow.AddYears(1),
