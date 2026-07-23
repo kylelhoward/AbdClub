@@ -53,8 +53,16 @@ public class CallbackModel : PageModel
         {
             new Claim(ClaimTypes.Name, member.FullName ?? member.Email ?? string.Empty),
             new Claim(ClaimTypes.Email, member.Email ?? string.Empty),
-            new Claim("IsOfficer", member.IsOfficer.ToString().ToLower())
+            new Claim("MemberId", member.Id.ToString()),
+            new Claim("IsOfficer", member.IsOfficer.ToString().ToLower()),
+            new Claim(
+                "ExpiryDate",
+                member.ExpiryDate.HasValue ? member.ExpiryDate.Value.ToString("O") : string.Empty)
         };
+
+        if (member.OfficerRole != null)
+            claims.Add(new Claim("OfficerRole", member.OfficerRole));
+
         if (member.IsOfficer)
             claims.Add(new Claim(ClaimTypes.Role, "Officer"));
 

@@ -3,6 +3,7 @@ using AbdClub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages.Officers;
 
@@ -16,6 +17,7 @@ public class EditMemberModel : PageModel
     [BindProperty]
     public Member Member { get; set; } = default!;
     public string? ErrorMessage { get; set; }
+    public List<Payment> Payments { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -25,6 +27,11 @@ public class EditMemberModel : PageModel
             ErrorMessage = "Member not found.";
             return Page();
         }
+        Payments = await _db.Payments
+        .Where(p => p.MemberId == id)
+        .OrderByDescending(p => p.PaymentDate)
+        .ToListAsync();
+
         return Page();
     }
 
@@ -48,7 +55,7 @@ public class EditMemberModel : PageModel
             : (DateTime?)null;
         memberInDb.IsOfficer = Member.IsOfficer;
         memberInDb.OfficerRole = Member.OfficerRole;
-
+        memberInDb.Phone = Member.Phone;
 
         await _db.SaveChangesAsync();
         return RedirectToPage("./Members");

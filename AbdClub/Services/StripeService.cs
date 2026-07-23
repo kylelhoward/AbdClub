@@ -123,8 +123,12 @@ public class StripeService : IStripeService
         }
 
         // Check for existing member (renewal case)
-        var existing = await _db.Members
-    .FirstOrDefaultAsync(m => m.Email == email.Trim().ToLower());
+        Member? existing = await _db.Members
+            .FirstOrDefaultAsync(
+                m => m.Email.Equals(email.Trim(),
+                StringComparison.OrdinalIgnoreCase
+                )
+            );
 
         if (existing != null)
         {
@@ -136,6 +140,8 @@ public class StripeService : IStripeService
 
             existing.ExpiryDate = baseDate.AddYears(1);
             existing.IsActive = true;
+            existing.FullName = fullName.Trim();
+            existing.Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
 
             _db.Payments.Add(new Payment
             {
@@ -167,7 +173,8 @@ public class StripeService : IStripeService
                 JoinDate = DateTime.UtcNow,
                 ExpiryDate = DateTime.UtcNow.AddYears(1),
                 IsActive = true,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                SelfRegistered = true   // ← paid online via Stripe
             };
 
             _db.Members.Add(member);

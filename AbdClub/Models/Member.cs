@@ -13,7 +13,7 @@ public class Member
     public string? OfficerRole { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
+    public bool SelfRegistered { get; set; } = false;
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public ICollection<EmailLog> EmailLogs { get; set; } = new List<EmailLog>();
 }

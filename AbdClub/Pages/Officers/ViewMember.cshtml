@@ -43,6 +43,22 @@
             </div>
 
             <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Phone</div>
+                <div class="col-sm-8 text-dark">
+                    @if (!string.IsNullOrWhiteSpace(Model.Member.Phone))
+                    {
+                        <a href="tel:@Model.Member.Phone" class="text-decoration-none">
+                            @Model.Member.Phone
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-3 border-bottom pb-2">
                 <div class="col-sm-4 text-muted fw-bold">Expiry Date</div>
                 <div class="col-sm-8 text-dark">
                     @(Model.Member.ExpiryDate.HasValue ? Model.Member.ExpiryDate.Value.ToString("MMMM dd, yyyy") : "N/A")
@@ -58,12 +74,24 @@
                     </div>
                 </div>
             }
-
+            <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Registration</div>
+                <div class="col-sm-8">
+                    @if (Model.Member.SelfRegistered)
+                    {
+                        <span class="badge bg-info text-dark">Self-registered online</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Added manually by officer</span>
+                    }
+                </div>
+            </div>
             <div class="d-flex justify-content-between align-items-center mt-4 pt-2">
                 <a asp-page="./Members" class="btn btn-outline-secondary">
                     Back to List
                 </a>
-                <a asp-page="./Edit" asp-route-id="@Model.Member.Id" class="btn btn-primary px-4">
+                <a asp-page="./EditMember" asp-route-id="@Model.Member.Id" class="btn btn-primary px-4">
                     Edit Member
                 </a>
             </div>

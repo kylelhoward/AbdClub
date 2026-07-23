@@ -1,0 +1,129 @@
+﻿@page
+@model AbdClub.Pages.Officers.AddMemberModel
+@{
+    ViewData["Title"] = "Add Member";
+}
+
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h2 class="card-title h4 mb-0">Add New Member</h2>
+        </div>
+        <div class="card-body">
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">@Model.ErrorMessage</div>
+            }
+
+            <form method="post" novalidate>
+
+                <div class="mb-3">
+                    <label asp-for="Member.FullName" class="form-label">Full Name</label>
+                    <input asp-for="Member.FullName" class="form-control"
+                           placeholder="Jane Smith" />
+                    <span asp-validation-for="Member.FullName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.Email" class="form-label">
+                        Email Address
+                        <small class="text-muted">(used to log in)</small>
+                    </label>
+                    <input asp-for="Member.Email" type="email" class="form-control"
+                           placeholder="jane@example.com" />
+                    <span asp-validation-for="Member.Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.Phone" class="form-label">
+                        Phone <small class="text-muted">(optional)</small>
+                    </label>
+                    <input asp-for="Member.Phone" type="tel" class="form-control"
+                           placeholder="512-555-0100" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.JoinDate" class="form-label">Join Date</label>
+                    <input asp-for="Member.JoinDate" type="date" class="form-control"
+                           value="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="Member.JoinDate" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.ExpiryDate" class="form-label">Expiry Date</label>
+                    <input asp-for="Member.ExpiryDate" type="date" class="form-control"
+                           value="@DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="Member.ExpiryDate" class="text-danger small"></span>
+                </div>
+
+                <div class="card bg-light p-3 mb-4">
+                    <div class="form-check form-switch mb-2">
+                        <input asp-for="Member.IsActive" type="checkbox"
+                               class="form-check-input" role="switch" checked />
+                        <label asp-for="Member.IsActive" class="form-check-label fw-bold">
+                            Active Member
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input asp-for="Member.IsOfficer" type="checkbox"
+                               class="form-check-input" role="switch"
+                               id="isOfficerToggle" />
+                        <label asp-for="Member.IsOfficer" class="form-check-label fw-bold">
+                            Is Officer
+                        </label>
+                    </div>
+
+                    <div id="officerRoleField" style="display:none;">
+                        <label asp-for="Member.OfficerRole" class="form-label mt-2">
+                            Officer Role
+                        </label>
+                        <input asp-for="Member.OfficerRole" class="form-control"
+                               placeholder="e.g. President, Treasurer, Secretary" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">
+                        Record a payment?
+                        <small class="text-muted fw-normal">
+                            (for members paying by check or cash)
+                        </small>
+                    </label>
+                    <div class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" role="switch"
+                               id="recordPayment" name="recordPayment" />
+                        <label class="form-check-label" for="recordPayment">
+                            Record $50 payment
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                    <a asp-page="./Members" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success px-4">
+                        Add Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Show/hide officer role field based on toggle
+        const toggle = document.getElementById('isOfficerToggle');
+        const roleField = document.getElementById('officerRoleField');
+
+        function updateRoleField() {
+            roleField.style.display = toggle.checked ? 'block' : 'none';
+        }
+
+        toggle.addEventListener('change', updateRoleField);
+        updateRoleField();
+    </script>
+}

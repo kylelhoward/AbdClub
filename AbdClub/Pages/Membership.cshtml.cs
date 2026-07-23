@@ -1,6 +1,8 @@
+using AbdClub.Data;
 using AbdClub.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages;
 
@@ -8,27 +10,74 @@ public class MembershipModel : PageModel
 {
     private readonly IStripeService _stripe;
     private readonly ILogger<MembershipModel> _logger;
+    private readonly AbdContext _db;
 
-    public MembershipModel(IStripeService stripe, ILogger<MembershipModel> logger)
+    public MembershipModel(
+        IStripeService stripe,
+        ILogger<MembershipModel> logger,
+        AbdContext db)
     {
         _stripe = stripe;
         _logger = logger;
+        _db = db;
     }
 
     public bool PaymentCancelled { get; set; }
     public bool PaymentSuccess { get; set; }
+    public bool IsRenewal { get; set; }
 
-    public void OnGet()
+    [BindProperty]
+    public string FullName { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string Email { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string? Phone { get; set; }
+
+    public async Task OnGetAsync()
     {
         PaymentCancelled = Request.Query.ContainsKey("cancelled");
         PaymentSuccess = Request.Query.ContainsKey("success");
+
+        var memberIdClaim = User.FindFirst("MemberId");
+        if (!int.TryParse(memberIdClaim?.Value, out var memberId))
+            return;
+
+        var member = await _db.Members
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.Id == memberId);
+
+        if (member == null)
+            return;
+
+        IsRenewal = true;
+        FullName = member.FullName;
+        Email = member.Email;
+        Phone = member.Phone;
     }
 
-    public async Task<IActionResult> OnPostAsync(
-        string fullName, string email, string? phone)
+    public async Task<IActionResult> OnPostAsync()
     {
-        if (string.IsNullOrWhiteSpace(fullName) ||
-            string.IsNullOrWhiteSpace(email))
+        var memberIdClaim = User.FindFirst("MemberId");
+        if (int.TryParse(memberIdClaim?.Value, out var memberId))
+        {
+            var member = await _db.Members
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == memberId);
+
+            if (member != null)
+            {
+                // A renewal must remain associated with the signed-in account.
+                // Name and phone may be updated, but email changes need a separate
+                // account-management flow so payment cannot create a duplicate member.
+                IsRenewal = true;
+                Email = member.Email;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(FullName) ||
+            string.IsNullOrWhiteSpace(Email))
         {
             ModelState.AddModelError("", "Name and email are required.");
             return Page();
@@ -49,7 +98,7 @@ public class MembershipModel : PageModel
         try
         {
             var checkoutUrl = await _stripe.CreateCheckoutSessionAsync(
-                fullName, email, phone, successUrl, cancelUrl);
+                FullName, Email, Phone, successUrl, cancelUrl);
 
             return Redirect(checkoutUrl);
         }

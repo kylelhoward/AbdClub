@@ -71,6 +71,7 @@
                         <th scope="col">Role</th>
                         <th scope="col" class="text-center">Status</th>
                         <th scope="col" class="text-end">Actions</th>
+                        <th scope="col">Source</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,6 +139,16 @@
                                 else
                                 {
                                     <span class="badge bg-success">Active</span>
+                                }
+                            </td>
+                            <td>
+                                @if (member.SelfRegistered)
+                                {
+                                    <span class="badge bg-info text-dark">Online</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Manual</span>
                                 }
                             </td>
                             <td class="text-end">

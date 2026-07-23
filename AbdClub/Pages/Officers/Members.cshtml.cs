@@ -15,33 +15,35 @@ public class MembersModel : PageModel
     public List<Member> Members { get; set; } = new();
     public string Filter { get; set; } = "all";
 
-    public async Task OnGetAsync(string filter = "all")
+    public async Task OnGetAsync(string filter = "all", string? q = null)
     {
         Filter = filter;
         var query = _db.Members.AsQueryable();
 
+        // Apply search first
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            q = q.Trim().ToLower();
+            query = query.Where(m =>
+                m.FullName.ToLower().Contains(q) ||
+                m.Email.ToLower().Contains(q));
+        }
+
+        // Then apply filter
         query = filter switch
         {
             "active" => query.Where(m =>
-                m.IsActive &&
-                (
-                    // treat null expiry as lifetime, or expiry in the future
-                    m.ExpiryDate == null ||
-                    m.ExpiryDate >= DateTime.UtcNow
-                )
-            ),
+                m.IsActive && (m.ExpiryDate == null || m.ExpiryDate >= DateTime.UtcNow)),
             "expiring" => query.Where(m =>
                 m.ExpiryDate != null &&
                 m.ExpiryDate <= DateTime.UtcNow.AddDays(60) &&
-                m.ExpiryDate >= DateTime.UtcNow
-            ),
+                m.ExpiryDate >= DateTime.UtcNow),
             "expired" => query.Where(m =>
-                m.ExpiryDate != null &&
-                m.ExpiryDate < DateTime.UtcNow
-            ),
+                m.ExpiryDate != null && m.ExpiryDate < DateTime.UtcNow),
             "officers" => query.Where(m => m.IsOfficer),
             _ => query
         };
+
         Members = await query
             .OrderBy(m => m.FullName)
             .ToListAsync();

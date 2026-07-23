@@ -6,7 +6,7 @@
 
 <div class="membership-wrap">
 
-    <h1>Annual Membership</h1>
+    <h1>@(Model.IsRenewal ? "Renew Annual Membership" : "Annual Membership")</h1>
     <p class="lead">
         Join Austin Ballroom Dancers for one full year — just $50.
     </p>
@@ -52,15 +52,22 @@
     {
         <div class="membership-form">
             <h2>Your details</h2>
-            <p>
-                Enter your information below. The Gmail address you provide
-                is what you'll use to log in after joining.
-            </p>
+            @if (Model.IsRenewal)
+            {
+                <p>Your member details are prefilled below. Your sign-in email is locked to your account.</p>
+            }
+            else
+            {
+                <p>
+                    Enter your information below. The email address you provide
+                    is what you'll use to log in after joining.
+                </p>
+            }
 
             <form method="post">
                 <div class="form-group">
                     <label for="fullName">Full name</label>
-                    <input type="text" id="fullName" name="fullName"
+                    <input asp-for="FullName" type="text" id="fullName"
                            placeholder="Jane Smith" required
                            class="form-control" />
                 </div>
@@ -70,14 +77,15 @@
                         Email address
                         <small>(used to log in — Gmail or any email)</small>
                     </label>
-                    <input type="email" id="email" name="email"
+                    <input asp-for="Email" type="email" id="email"
                            placeholder="jane@example.com" required
+                           readonly="@Model.IsRenewal"
                            class="form-control" />
                 </div>
 
                 <div class="form-group">
                     <label for="phone">Phone <small>(optional)</small></label>
-                    <input type="tel" id="phone" name="phone"
+                    <input asp-for="Phone" type="tel" id="phone"
                            placeholder="512-555-0100"
                            class="form-control" />
                 </div>

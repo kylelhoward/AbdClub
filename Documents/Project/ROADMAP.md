@@ -13,7 +13,7 @@
 
 ## Medium Term — Get on the VPS
 - [ ] Spin up DigitalOcean droplet
-- [ ] Install .NET 8, PostgreSQL, Nginx
+- [ ] Install .NET 10, PostgreSQL, Nginx
 - [ ] Deploy the app
 - [ ] Test at raw IP address
 

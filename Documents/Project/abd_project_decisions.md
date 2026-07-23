@@ -102,7 +102,7 @@
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Framework | ASP.NET Core 8 | Developer already knows .NET |
+| Framework | ASP.NET Core 10 | Developer already knows .NET |
 | UI pattern | Razor Pages | Best fit for page-centric app; simpler than MVC |
 | ORM | Entity Framework Core | Code-first migrations |
 | Database | PostgreSQL | Free, runs well on cheap VPS, EF Core supported |
