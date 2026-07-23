@@ -1,6 +1,6 @@
 # ABD Website Rebuild — Master Project Decisions
 > Hill Country Web Co. · Client: Austin Ballroom Dancers (danceatx.org)
-> Last updated: June 2026
+> Last updated: July 2026
 
 ---
 
@@ -63,19 +63,23 @@
 | Item | Detail |
 |---|---|
 | Provider | DigitalOcean |
-| Plan | Basic Droplet — 1GB RAM, 1 CPU, 25GB SSD |
-| Cost | ~$6/month |
+| Plan | Basic Droplet — 2GB RAM, 1 CPU, 50GB SSD |
+| Cost | ~$12/month |
 | OS | Ubuntu 24.04 LTS |
 | Web server | Nginx (reverse proxy) |
-| App server | ASP.NET Core 8 (.NET 8) |
+| App server | ASP.NET Core 10 (.NET 10) |
 | Database | PostgreSQL |
 | SSL | Certbot (Let's Encrypt — free, auto-renews) |
 
+The 2GB plan provides useful headroom for Nginx, PostgreSQL, the ASP.NET
+application, and the initial UAT environment. It can be resized later if
+production usage warrants it.
+
 ### Why VPS over alternatives
-- Cheapest option (~$6/mo vs ~$18-20/mo for Azure App Service + Azure SQL)
+- Cost-effective option (~$12/mo vs ~$18-20/mo for Azure App Service + Azure SQL)
 - Full control over the server
 - Good learning experience for Linux/server admin
-- .NET 8 runs well on Linux
+- .NET 10 runs well on Linux
 
 ### Why not Azure
 - More expensive for this scale
@@ -89,12 +93,26 @@
 ### Total monthly cost estimate
 | Item | Cost |
 |---|---|
-| DigitalOcean VPS | $6/mo |
+| DigitalOcean VPS | $12/mo |
 | Domain (danceatx.org) | ~$1/mo (~$12/yr) |
 | SSL | Free (Certbot) |
 | Email sending (SMTP2GO) | Free (up to 1,000/mo) |
 | Stripe | Free + 2.9% + $0.30 per transaction |
-| **Total fixed** | **~$7/mo** |
+| **Total fixed** | **~$13/mo** |
+
+### Deployment topology: portfolio, UAT, and production
+
+The VPS will initially serve two sites through separate Nginx server blocks:
+
+| Hostname | Purpose | Data and integrations |
+|---|---|---|
+| `hillcountrywebco.com` | Hill Country Web Co. public portfolio site | Static/public business content |
+| `abd-demo.hillcountrywebco.com` | ABD board demonstration and UAT environment | Synthetic data; separate UAT database; Stripe test mode; UAT email/OAuth settings |
+| `danceatx.org` | Future ABD production site | Separate production database and production Stripe, email, and OAuth credentials |
+
+UAT is not production. It must not contain real member data, live Stripe keys,
+or production email credentials. The Google OAuth redirect URI must use the
+HTTPS UAT hostname; raw IP addresses are not a suitable OAuth test target.
 
 ---
 
@@ -107,7 +125,7 @@
 | ORM | Entity Framework Core | Code-first migrations |
 | Database | PostgreSQL | Free, runs well on cheap VPS, EF Core supported |
 | Local dev DB | SQL Server Express | Familiar; EF Core abstracts differences |
-| Authentication | Google OAuth 2.0 | Free; no password management needed |
+| Authentication | Google OAuth 2.0 + email magic links | Google for Gmail users; magic links for other email providers; no passwords stored |
 | Payment | Stripe | 2.9% + $0.30/transaction; no monthly fee |
 | Email sending | SMTP2GO | Free tier up to 1,000 emails/month |
 | Email testing | Ethereal Email | Fake SMTP for local dev — no real emails sent |
@@ -143,11 +161,11 @@
 
 ## 5. Authentication Design
 
-- **Google OAuth 2.0** — free, no passwords stored
-- Members log in with their Gmail address
-- Gmail must match the email address on their Member record
+- **Google OAuth 2.0** for Gmail users and **email magic links** for other
+  email providers — no passwords are stored
+- The login email must match the email address on the Member record
 - New members: pay via Stripe → member record created automatically →
-  can then log in with Google
+  can then log in with Google or an emailed magic link
 - Custom claims added to login session: MemberId, IsOfficer, OfficerRole,
   ExpiryDate
 
@@ -162,16 +180,19 @@
 
 ## 6. Database Schema
 
-Six tables — all created via EF Core code-first migrations:
+Core tables are created via EF Core code-first migrations:
 
 | Table | Purpose |
 |---|---|
 | Members | Core member records — name, email, GoogleSubId, expiry, officer flag |
 | Payments | Stripe transaction history per member |
 | EmailLog | Record of every automated email sent (prevents duplicate sends) |
-| BroadcastEmails | Record of officer-sent announcements |
 | MeetingNotes | Officer-uploaded meeting minute files |
 | ClubFiles | General file storage (bylaws, forms, flyers) |
+| MagicLinks | Time-limited passwordless login tokens |
+| Events / Dances | Event hierarchy; dances add scheduling relationships |
+| Lessons, DJs, Volunteers | Dance-specific schedule and staffing records |
+| DanceAttendingOfficers | Many-to-many officer coverage assignments |
 
 ### Key fields on Members table
 - `Email` — unique, matched to Google account at login
@@ -358,12 +379,20 @@ Build
 ├── [ ] Test officer broadcast email
 ├── [ ] Test file upload (meeting notes, club files)
 ├── [ ] Migrate content from current site
-├── [ ] Delete /Dev/Seed page
+├── [ ] Remove or restrict development-only endpoints and pages (`/Dev`, `/debug-claims`, `/test-email`)
+
+UAT configuration (apply after VPS deployment)
+├── [ ] Create `hillcountrywebco.com` portfolio site
+├── [ ] Create `abd-demo.hillcountrywebco.com` DNS record
+├── [ ] Deploy ABD with a separate UAT database and synthetic member data
+├── [ ] Configure UAT-only Google OAuth redirect URI, Stripe test webhook, email credentials, and secrets
+├── [ ] Run Certbot and test the HTTPS UAT hostname
+└── [ ] Give the ABD board UAT accounts and collect feedback
 
 Deploy to VPS
-├── [ ] Spin up DigitalOcean droplet (Ubuntu 24.04)
+├── [ ] Spin up 2GB DigitalOcean droplet (Ubuntu 24.04)
 ├── [ ] Secure server (non-root user, SSH keys, UFW firewall)
-├── [ ] Install .NET 8
+├── [ ] Install ASP.NET Core Runtime 10
 ├── [ ] Install PostgreSQL
 ├── [ ] Install Nginx
 ├── [ ] Deploy app
@@ -371,7 +400,6 @@ Deploy to VPS
 ├── [ ] Add founding officers to Members table
 ├── [ ] Configure Nginx reverse proxy
 ├── [ ] Run Certbot for SSL (HTTPS)
-├── [ ] Test at raw VPS IP address
 ├── [ ] Register Stripe webhook with production URL
 ├── [ ] Add production URL to Google OAuth Console
 
