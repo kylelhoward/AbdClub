@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
-namespace AbdClub.Pages.Officers;
+namespace AbdClub.Pages.Officers.Members;
 
 
 [Authorize(Roles = "Officer")]

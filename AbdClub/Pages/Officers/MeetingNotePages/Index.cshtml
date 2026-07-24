@@ -1,0 +1,66 @@
+@page
+@model AbdClub.Pages.Officers.MeetingNotePages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.MeetingNote[0].UploadedByMemberId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MeetingNote[0].MeetingDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MeetingNote[0].Title)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MeetingNote[0].FilePath)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MeetingNote[0].UploadedAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.MeetingNote[0].UploadedBy)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.MeetingNote) {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.UploadedByMemberId)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.MeetingDate)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Title)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.FilePath)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.UploadedAt)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.UploadedBy)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

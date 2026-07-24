@@ -1,0 +1,63 @@
+﻿@page
+@using YourNamespace.Models
+@model YourNamespace.Pages.FileManagerModel
+@{
+    ViewData["Title"] = "Club File Manager";
+}
+
+<h3>Upload Club File</h3>
+
+<!-- Display any validation errors (e.g., wrong file extension) -->
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="UploadData.UploadedByMemberId" value="42" />
+
+    <div class="mb-3">
+        <label class="form-label">Select File (.pdf, .docx only)</label>
+        <input type="file" name="FormFile" class="form-control" accept=".pdf,.docx" required />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Category</label>
+        <select asp-for="UploadData.Category" class="form-select"
+                asp-items="Html.GetEnumSelectList<FileCategory>()" required>
+            <option value="">-- Select Category --</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Upload & Save</button>
+</form>
+
+<hr />
+
+<h3>Club Documents</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Uploaded At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model.SavedClubFiles)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td><span class="badge bg-secondary">@file.Category.ToString()</span></td>
+                <td>@file.UploadedAt.ToLocalTime().ToString("g")</td>
+                <td>
+                    <a asp-page-handler="Download" asp-route-id="@file.Id" class="btn btn-sm btn-success">Download</a>
+
+                    <!-- Separate mini-form for safe POST delete processing -->
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@file.Id" class="d-inline"
+                          onsubmit="return confirm('Are you sure you want to delete this file?');">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

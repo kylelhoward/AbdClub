@@ -1,5 +1,5 @@
 @page
-@model AbdClub.Pages.Officers.MembersModel
+@model AbdClub.Pages.Officers.Members.MembersListModel
 @{
     ViewData["Title"] = "Manage Members";
 }
@@ -12,7 +12,7 @@
         </div>
 
         <div>
-            <a class="btn btn-primary" href="/Officers/AddMember">Add Member</a>
+            <a class="btn btn-primary" href="/Officers/Members/AddMember">Add Member</a>
         </div>
     </div>
 
@@ -153,8 +153,8 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group" role="group" aria-label="Actions for @member.FullName">
-                                    <a class="btn btn-sm btn-outline-primary" href="/Officers/EditMember/@member.Id">Edit</a>
-                                    <a class="btn btn-sm btn-outline-secondary" href="/Officers/ViewMember/@member.Id">View</a>
+                                    <a class="btn btn-sm btn-outline-primary" href="/Officers/Members/EditMember/@member.Id">Edit</a>
+                                    <a class="btn btn-sm btn-outline-secondary" href="/Officers/Members/ViewMember/@member.Id">View</a>
                                 </div>
                             </td>
                         </tr>

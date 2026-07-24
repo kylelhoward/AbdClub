@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace AbdClub.Pages.Officers;
+namespace AbdClub.Pages.Officers.Members;
 
 [Authorize(Roles = "Officer")]
 public class AddMemberModel : PageModel

@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 
-namespace AbdClub.Pages.Officers;
+namespace AbdClub.Pages.Officers.Members;
 
 [Authorize(Roles = "Officer")]
-public class MembersModel : PageModel
+public class MembersListModel : PageModel
 {
     private readonly AbdContext _db;
-    public MembersModel(AbdContext db) => _db = db;
+    public MembersListModel(AbdContext db) => _db = db;
 
     public List<Member> Members { get; set; } = new();
     public string Filter { get; set; } = "all";
