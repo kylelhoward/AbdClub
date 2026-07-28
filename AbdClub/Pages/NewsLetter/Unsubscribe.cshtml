@@ -1,0 +1,57 @@
+﻿@page
+@model AbdClub.Pages.Newsletter.UnsubscribeModel
+@{
+    ViewData["Title"] = "Confirm Unsubscribe";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow p-4 border-0 bg-light text-center">
+                <div class="card-body">
+
+                    @if (Model.IsValidToken)
+                    {
+                        <!-- STEP 1: Human Confirmation Form -->
+                        <div class="mb-4">
+                            <i class="bi bi-envelope-open text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="card-title mb-3">Cancel Your Subscription?</h3>
+                        <p class="text-muted">
+                            Are you sure you want to stop receiving newsletters for
+                            <strong class="text-dark">@Model.SubscriberEmail</strong>?
+                        </p>
+
+                        <!-- Anti-Forgery protection is built directly into this standard POST form -->
+                        <form method="post" asp-page-handler="Confirm">
+                            <input type="hidden" asp-for="Token" />
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    Yes, Unsubscribe Me
+                                </button>
+                                <a asp-page="/Index" class="btn btn-outline-secondary">
+                                    No, Keep Me on the List
+                                </a>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <!-- STEP 2: Resolution Screen -->
+                        <div class="mb-4">
+                            <i class="bi bi-envelope-x text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="card-title mb-3">Mailing Update</h3>
+                        <p class="lead">@Model.StatusMessage</p>
+                        <hr />
+                        <div class="d-grid mt-3">
+                            <a asp-page="/Index" class="btn btn-primary">Return to Home</a>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

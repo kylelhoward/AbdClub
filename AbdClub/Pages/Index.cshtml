@@ -1,10 +1,81 @@
 ﻿@page
-@model IndexModel
+@model AbdClub.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- A. Bootstrap Photo Carousel -->
+<div id="danceCarousel" class="carousel slide shadow rounded overflow-hidden mb-5" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#danceCarousel" data-bs-slide-to="0" class="active"></button>
+        <button type="button" data-bs-target="#danceCarousel" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#danceCarousel" data-bs-slide-to="2"></button>
+    </div>
+
+    <div class="carousel-inner" style="max-height: 450px;">
+        <!-- Place your imagery inside wwwroot/images/dances/ -->
+        <div class="carousel-item active" data-bs-interval="4000">
+            <img src="~/images/dances/dance1.jpg" class="d-block w-100 object-fit-cover" alt="Dance Event 1" style="height: 450px;">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                <h5>Our Annual Gala</h5>
+                <p>Memories from our biggest dance of the summer season.</p>
+            </div>
+        </div>
+        <div class="carousel-item" data-bs-interval="4000">
+            <img src="~/images/dances/dance2.jpg" class="d-block w-100 object-fit-cover" alt="Dance Event 2" style="height: 450px;">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                <h5>Friday Swing Nights</h5>
+                <p>Weekly social dancing open to the community.</p>
+            </div>
+        </div>
+        <div class="carousel-item" data-bs-interval="4000">
+            <img src="~/images/dances/dance3.jpg" class="d-block w-100 object-fit-cover" alt="Dance Event 3" style="height: 450px;">
+            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                <h5>Holiday Showcase</h5>
+                <p>Bringing club members together through choreography.</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#danceCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#danceCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
 </div>
+
+<!-- B. Marketing Header & Independent Signup Section -->
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center mb-4">
+        <h2>Welcome to the Club</h2>
+        <p class="lead">Stay up to date with public events, seasonal schedules, and open ticket invitations.</p>
+    </div>
+</div>
+
+<div class="card bg-light border-0 p-4 shadow-sm mx-auto" style="max-width: 600px;">
+    <div class="card-body">
+        <h4 class="card-title text-center mb-3">Join Our Public Mailing List</h4>
+        <p class="text-muted text-center small mb-4">Not ready to become a member yet? Sign up below to receive our newsletter.</p>
+
+        @if (TempData["SignupMessage"] != null)
+        {
+            <div class="alert alert-success text-center">@TempData["SignupMessage"]</div>
+        }
+        <div asp-validation-summary="All" class="text-danger small"></div>
+
+        <!-- POST explicitly routes directly to the Named Page Handler "Subscribe" -->
+        <form method="post" asp-page-handler="Subscribe">
+            <div class="row g-2">
+                <div class="col-sm-5">
+                    <input asp-for="SubscriberData.FirstName" class="form-control" placeholder="First Name" required />
+                </div>
+                <div class="col-sm-7">
+                    <input asp-for="SubscriberData.Email" type="email" class="form-control" placeholder="Email Address" required />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-3">Subscribe to Newsletter</button>
+        </form>
+    </div>
+</div>
+

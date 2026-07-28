@@ -1,4 +1,4 @@
-using AbdClub.Services;
+using AbdClub.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;

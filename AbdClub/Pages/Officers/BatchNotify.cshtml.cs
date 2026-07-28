@@ -1,0 +1,104 @@
+using AbdClub.Data;
+using AbdClub.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+
+namespace AbdClub.Pages.Officers;
+
+public class BatchNotifyModel : PageModel
+{
+    private readonly AbdContext _context;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<BatchNotifyModel> _logger;
+
+    public BatchNotifyModel(AbdContext context, IEmailService emailService, ILogger<BatchNotifyModel> logger)
+    {
+        _context = context;
+        _emailService = emailService;
+        _logger = logger;
+    }
+
+    [BindProperty]
+    public BroadcastInputDto NotificationData { get; set; } = new();
+
+    public int TotalActiveMembersCount { get; set; }
+
+    public async Task<IActionResult> OnGetAsync()
+    {
+        // Enforce your exact Officer & Tech Sergeant identity gate
+        bool isAuthorizedOfficer = User.IsInRole("Officer") &&
+                                  User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+
+        if (!isAuthorizedOfficer) return Forbid();
+
+        TotalActiveMembersCount = await _context.Members.CountAsync(m => m.IsActive);
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPostSendBroadcastAsync()
+    {
+        bool isAuthorizedOfficer = User.IsInRole("Officer") &&
+                                  User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+        if (!isAuthorizedOfficer) return Forbid();
+
+        if (!ModelState.IsValid)
+        {
+            TotalActiveMembersCount = await _context.Members.CountAsync(m => m.IsActive);
+            return Page();
+        }
+
+        // 1. Fetch active targets directly into memory
+        var targets = await _context.Members
+            .Where(m => m.IsActive)
+            .Select(m => new { m.Email, m.FullName })
+            .ToListAsync();
+
+        if (!targets.Any())
+        {
+            ModelState.AddModelError("", "There are no active club members to notify.");
+            return Page();
+        }
+
+        // 2. DISPATCH BACKGROUND QUEUE: Offloads the intensive SMTP loop from the web runner thread
+        // We capture references safely via lexical scope variables
+        var subject = NotificationData.Subject;
+        var messageContent = NotificationData.MessageContent;
+
+        _ = Task.Run(async () =>
+        {
+            _logger.LogInformation("Officer initiated batch transmission queue for {Count} recipients.", targets.Count);
+
+            foreach (var recipient in targets)
+            {
+                try
+                {
+                    await _emailService.SendBroadcastEmailAsync(recipient.Email, recipient.FullName, subject, messageContent);
+                    // Add a tiny throttle delay to stay inside local smtp4dev connection safety bounds
+                    await Task.Delay(150);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed background batch dispatch transmission block targeting {Email}", recipient.Email);
+                }
+            }
+
+            _logger.LogInformation("Batch notification pipeline finalized successfully.");
+        });
+
+        TempData["GlobalSuccessNotice"] = $"Successfully queued broadcast notifications for {targets.Count} active members in the background.";
+        return RedirectToPage();
+    }
+}
+
+public class BroadcastInputDto
+{
+    [Required(ErrorMessage = "Please supply a notification subject line.")]
+    [StringLength(100, ErrorMessage = "Subject must be under 100 characters.")]
+    public string Subject { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "The message contents cannot be empty.")]
+    [StringLength(2000, ErrorMessage = "The broadcast letter body must be under 2000 characters.")]
+    public string MessageContent { get; set; } = string.Empty;
+}

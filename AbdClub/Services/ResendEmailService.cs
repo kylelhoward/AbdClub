@@ -1,5 +1,6 @@
 using AbdClub.Data;
 using AbdClub.Models;
+using AbdClub.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Resend;
 
@@ -419,5 +420,15 @@ public class ResendEmailService : IEmailService
                 <p>— The ABD Team</p>
             "
         };
+    }
+
+    public Task SendNewsletterWelcomeEmailAsync(string email, string firstName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendBroadcastEmailAsync(string recipientEmail, string recipientName, string subject, string bodyContent)
+    {
+        throw new NotImplementedException();
     }
 }

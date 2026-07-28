@@ -1,0 +1,91 @@
+﻿@page
+@model AbdClub.Pages.Officers.BatchNotifyModel
+@{
+    ViewData["Title"] = "Officer Broadcast Center";
+}
+
+<div class="container mt-4" style="max-width: 800px;">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Officers/FileManager">Officer Panel</a></li>
+            <li class="breadcrumb-item active">Member Broadcast</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow border-0">
+        <div class="card-header bg-dark text-white p-3">
+            <h4 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Batch Member Notification</h4>
+        </div>
+        <div class="card-body p-4">
+
+            @if (TempData["GlobalSuccessNotice"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["GlobalSuccessNotice"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="alert alert-info border-0 bg-opacity-10 bg-info text-dark mb-4">
+                <div class="d-flex">
+                    <i class="bi bi-info-circle-fill text-info fs-4 me-3"></i>
+                    <div>
+                        <strong>Target Pool Status:</strong> This action will safely broadcast a bulk email out to all
+                        <span class="badge bg-primary">@Model.TotalActiveMembersCount</span> currently active members stored in your central system registers.
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" asp-page-handler="SendBroadcast" onsubmit="return confirmBroadcast();">
+                <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Broadcast Subject Line</label>
+                    <input asp-for="NotificationData.Subject" class="form-control" placeholder="e.g., Schedule Change: Friday Social Swing Dance Cancelled" required />
+                    <span asp-validation-for="NotificationData.Subject" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Message Body Content</label>
+                    <textarea asp-for="NotificationData.MessageContent" id="broadcastTextArea" class="form-control" rows="8"
+                              placeholder="Type your official announcement here. The system will automatically prepend the member's name and append official club footers." required></textarea>
+                    <div class="d-flex justify-content-between mt-1">
+                        <span asp-validation-for="NotificationData.MessageContent" class="text-danger small"></span>
+                        <small class="text-muted"><span id="charCount">0</span> / 2000 characters</small>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-dark btn-lg">
+                        <i class="bi bi-send-fill me-2"></i>Dispatch Asynchronous Broadcast
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Live client-side character count checking
+        const textarea = document.getElementById('broadcastTextArea');
+        const charCount = document.getElementById('charCount');
+
+        textarea.addEventListener('input', () => {
+            const length = textarea.value.length;
+            charCount.textContent = length;
+            if (length > 1900) {
+                charCount.className = "text-danger fw-bold";
+            } else {
+                charCount.className = "text-muted";
+            }
+        });
+
+        // Prompt security intercept gate
+        function confirmBroadcast() {
+            return confirm("CRITICAL: You are about to queue a batch broadcast to ALL active club members. Are you sure you want to execute transmission?");
+        }
+    </script>
+}
+

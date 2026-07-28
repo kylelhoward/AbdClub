@@ -17,6 +17,7 @@ public class AbdContext : DbContext
     public DbSet<Lesson> Lessons { get; set; } = null!;
     public DbSet<DJ> Djs { get; set; } = null!;
     public DbSet<Volunteer> Volunteers { get; set; } = null!;
+    public DbSet<NewsletterSubscriber> NewsletterSubscribers { get; set; } = null!;
 
     public DbSet<MagicLink> MagicLinks { get; set; } = null!;
 
@@ -56,5 +57,15 @@ public class AbdContext : DbContext
             .HasMany(d => d.AttendingOfficers)
             .WithMany()
             .UsingEntity(join => join.ToTable("DanceAttendingOfficers"));
+
+        modelBuilder.Entity<ClubFile>()
+            .HasOne(f => f.UploadedBy)
+            .WithMany() // or .WithMany(m => m.ClubFiles) if Member has a collection
+            .HasForeignKey(f => f.UploadedByMemberId)
+            .HasConstraintName("FK_ClubFiles_Members_UploadedById"); // Maps cleanly to your Postgres constraint
+
+        modelBuilder.Entity<NewsletterSubscriber>()
+            .HasIndex(n => n.Email)
+            .IsUnique();
     }
 }

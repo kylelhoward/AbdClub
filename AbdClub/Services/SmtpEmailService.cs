@@ -1,5 +1,6 @@
 using AbdClub.Data;
 using AbdClub.Models;
+using AbdClub.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Mail;
@@ -348,4 +349,72 @@ public class SmtpEmailService : IEmailService
             "
         };
     }
+
+    // Implement the new service method
+    // 2. ADD THE NEW NEWSLETTER METHOD HERE
+   public async Task SendNewsletterWelcomeEmailAsync(string email, string firstName)
+    {
+        // Fetch the subscriber from the database to get their unique token
+        var subscriber = await _db.NewsletterSubscribers
+            .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
+
+        if (subscriber == null) return;
+        if (subscriber != null)
+        {
+            // Catch-all: If the token is empty (all zeros), patch it instantly
+            if (subscriber.UnsubscribeToken == Guid.Empty)
+            {
+                subscriber.UnsubscribeToken = Guid.NewGuid();
+                _db.NewsletterSubscribers.Update(subscriber);
+                await _db.SaveChangesAsync();
+            }
+        }
+        var senderEmail = _config["Email:Username"] ?? "newsletter@abdclub.com";
+
+        // Dynamically build the absolute URL pointing to your new endpoint
+        var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:7193"; // Update to match your actual port
+        var unsubscribeUrl = $"{baseUrl}/Newsletter/Unsubscribe?token={subscriber.UnsubscribeToken}";
+
+        var mailMessage = new MailMessage(senderEmail, email)
+        {
+            Subject = "Welcome to the AbdClub Newsletter!",
+            Body = $"Hi {firstName},\n\n" +
+                   $"Thank you for signing up for our public dance updates!\n\n" +
+                   $"Warm regards,\nThe AbdClub Team\n\n" +
+                   $"---\n" +
+                   $"If you wish to stop receiving these updates, you can safely opt-out at any time by clicking here:\n" +
+                   $"{unsubscribeUrl}",
+            IsBodyHtml = false
+        };
+
+        using (var smtpClient = GetSmtpClient())
+        {
+            await smtpClient.SendMailAsync(mailMessage);
+        }
+    }
+
+    public async Task SendBroadcastEmailAsync(string recipientEmail, string recipientName, string subject, string bodyContent)
+    {
+        var senderEmail = _config["Email:Username"] ?? "management@abdclub.com";
+
+        // Personalize the core body text automatically
+        var personalizedBody = $"Dear {recipientName},\n\n" +
+                               $"{bodyContent}\n\n" +
+                               $"---\n" +
+                               $"Sent via AbdClub Officer Management Broadcast Channel.";
+
+        var mailMessage = new MailMessage(senderEmail, recipientEmail)
+        {
+            Subject = subject,
+            Body = personalizedBody,
+            IsBodyHtml = false
+        };
+
+        using (var smtpClient = GetSmtpClient())
+        {
+            await smtpClient.SendMailAsync(mailMessage);
+        }
+    }
+
+
 }

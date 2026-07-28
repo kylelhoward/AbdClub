@@ -1,14 +1,9 @@
 ﻿using AbdClub.Data;
 using AbdClub.Models;
+using AbdClub.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Services;
-
-public interface IMagicLinkService
-{
-    Task<bool> SendMagicLinkAsync(string email, string baseUrl);
-    Task<Member?> ValidateTokenAsync(string token);
-}
 
 public class MagicLinkService : IMagicLinkService
 {

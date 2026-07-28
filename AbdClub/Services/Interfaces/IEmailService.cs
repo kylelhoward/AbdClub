@@ -1,6 +1,6 @@
 using AbdClub.Models;
 
-namespace AbdClub.Services;
+namespace AbdClub.Services.Interfaces;
 
 public interface IEmailService
 {
@@ -11,5 +11,7 @@ public interface IEmailService
     Task SendReminderAsync(Member member, string emailType);
     Task SendBroadcastAsync(List<Member> recipients, string subject, string body);
     Task SendMagicLinkEmailAsync(Member member, string magicUrl);  // ← add this
-
+    Task SendNewsletterWelcomeEmailAsync(string email, string firstName);
+    // Add the new batch method signature here
+    Task SendBroadcastEmailAsync(string recipientEmail, string recipientName, string subject, string bodyContent);
 }

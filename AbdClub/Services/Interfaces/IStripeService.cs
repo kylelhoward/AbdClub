@@ -1,4 +1,4 @@
-﻿namespace AbdClub.Services;
+﻿namespace AbdClub.Services.Interfaces;
 
 public interface IStripeService
 {

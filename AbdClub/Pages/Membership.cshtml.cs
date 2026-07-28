@@ -1,5 +1,5 @@
 using AbdClub.Data;
-using AbdClub.Services;
+using AbdClub.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
