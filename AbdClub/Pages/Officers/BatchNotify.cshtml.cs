@@ -3,7 +3,6 @@ using AbdClub.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace AbdClub.Pages.Officers;
 
@@ -90,15 +89,24 @@ public class BatchNotifyModel : PageModel
         TempData["GlobalSuccessNotice"] = $"Successfully queued broadcast notifications for {targets.Count} active members in the background.";
         return RedirectToPage();
     }
-}
 
-public class BroadcastInputDto
-{
-    [Required(ErrorMessage = "Please supply a notification subject line.")]
-    [StringLength(100, ErrorMessage = "Subject must be under 100 characters.")]
-    public string Subject { get; set; } = string.Empty;
+    // NEW PREVIEW HANDLER PIPELINE (Invoked via AJAX)
+    public IActionResult OnPostPreviewLayout([FromBody] PreviewRequestDto request)
+    {
+        // Enforce role-based access identity gate
+        bool isAuthorizedOfficer = User.IsInRole("Officer") &&
+                                  User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+        if (!isAuthorizedOfficer) return Forbid();
 
-    [Required(ErrorMessage = "The message contents cannot be empty.")]
-    [StringLength(2000, ErrorMessage = "The broadcast letter body must be under 2000 characters.")]
-    public string MessageContent { get; set; } = string.Empty;
+        if (string.IsNullOrEmpty(request.MessageBody))
+        {
+            return Content("<p class='text-danger'>Message body content is empty. Type a note before previewing.</p>", "text/html");
+        }
+
+        // Generate the formatted layout template using a sample placeholder recipient
+        string previewHtml = _emailService.GenerateBroadcastHtmlBody("John Doe (Sample Member)", request.MessageBody);
+
+        // Return raw html text straight to the client pipeline
+        return Content(previewHtml, "text/html");
+    }
 }

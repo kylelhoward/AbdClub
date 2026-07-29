@@ -431,4 +431,9 @@ public class ResendEmailService : IEmailService
     {
         throw new NotImplementedException();
     }
+
+    public string GenerateBroadcastHtmlBody(string recipientName, string bodyContent)
+    {
+        throw new NotImplementedException();
+    }
 }

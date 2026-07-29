@@ -14,4 +14,5 @@ public interface IEmailService
     Task SendNewsletterWelcomeEmailAsync(string email, string firstName);
     // Add the new batch method signature here
     Task SendBroadcastEmailAsync(string recipientEmail, string recipientName, string subject, string bodyContent);
+    string GenerateBroadcastHtmlBody(string recipientName, string bodyContent);
 }

@@ -4,6 +4,7 @@ using AbdClub.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Mail;
+using System.Net.Mime;
 
 namespace AbdClub.Services;
 
@@ -12,12 +13,14 @@ public class SmtpEmailService : IEmailService
     private readonly IConfiguration _config;
     private readonly ILogger<SmtpEmailService> _logger;
     private readonly AbdContext _db;
+    private readonly IWebHostEnvironment _env; // Inject environment to resolve web root paths
 
-    public SmtpEmailService(IConfiguration config, ILogger<SmtpEmailService> logger, AbdContext db)
+    public SmtpEmailService(IConfiguration config, ILogger<SmtpEmailService> logger, AbdContext db, IWebHostEnvironment env)
     {
         _config = config;
         _logger = logger;
         _db = db;
+        _env = env;
     }
 
     private SmtpClient GetSmtpClient()
@@ -27,12 +30,17 @@ public class SmtpEmailService : IEmailService
         var username = _config["Email:Username"]!;
         var password = _config["Email:Password"]!;
 
+        // Read the boolean directly out of appsettings, defaulting to true if missing
+        bool useSsl = bool.Parse(_config["Email:EnableSsl"] ?? "true");
+
         return new SmtpClient(host, port)
         {
             Credentials = new NetworkCredential(username, password),
-            EnableSsl = true
+            EnableSsl = useSsl
         };
     }
+
+
 
     private MailMessage BuildMessage(string toEmail, string toName, string subject, string body, bool isHtml = false)
     {
@@ -352,62 +360,145 @@ public class SmtpEmailService : IEmailService
 
     // Implement the new service method
     // 2. ADD THE NEW NEWSLETTER METHOD HERE
-   public async Task SendNewsletterWelcomeEmailAsync(string email, string firstName)
+
+    public async Task SendNewsletterWelcomeEmailAsync(string email, string firstName)
     {
-        // Fetch the subscriber from the database to get their unique token
         var subscriber = await _db.NewsletterSubscribers
             .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
 
         if (subscriber == null) return;
-        if (subscriber != null)
-        {
-            // Catch-all: If the token is empty (all zeros), patch it instantly
-            if (subscriber.UnsubscribeToken == Guid.Empty)
-            {
-                subscriber.UnsubscribeToken = Guid.NewGuid();
-                _db.NewsletterSubscribers.Update(subscriber);
-                await _db.SaveChangesAsync();
-            }
-        }
-        var senderEmail = _config["Email:Username"] ?? "newsletter@abdclub.com";
 
-        // Dynamically build the absolute URL pointing to your new endpoint
-        var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:7193"; // Update to match your actual port
+        var senderEmail = _config["Email:Username"] ?? "newsletter@abdclub.com";
+        var baseUrl = _config["App:BaseUrl"] ?? "https://localhost:7193";
         var unsubscribeUrl = $"{baseUrl}/Newsletter/Unsubscribe?token={subscriber.UnsubscribeToken}";
+
+        // 1. Establish unique Content-IDs (CIDs) for your images
+        string logoCid = "club_logo_header";
+
+        // 2. Reference the images inside your HTML layout markup using standard 'cid:' syntax
+        var htmlContent = $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body {{ font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; }}
+                .container {{ max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 8px; overflow: hidden; }}
+                .header {{ background-color: #212529; padding: 20px; text-align: center; }}
+                .logo-img {{ max-height: 80px; width: auto; display: inline-block; }}
+                .content {{ padding: 30px; line-height: 1.6; font-size: 16px; color: #333333; }}
+                .footer {{ background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #6c757d; }}
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='header'>
+                    <!-- Inline mapping points dynamically to the structural attachment payload -->
+                    <img src='cid:{logoCid}' alt='AbdClub Logo' class='logo-img' />
+                </div>
+                <div class='content'>
+                    <p>Hi <strong>{firstName}</strong>,</p>
+                    <p>Thank you for joining our public mailing list! You are now locked in to receive our official updates and seasonal dance calendars.</p>
+                    <p>Warm regards,<br><strong>The AbdClub Team</strong></p>
+                </div>
+                <div class='footer'>
+                    <p>Changed your mind? <a href='{unsubscribeUrl}'>Unsubscribe here</a>.</p>
+                </div>
+            </div>
+        </body>
+        </html>";
 
         var mailMessage = new MailMessage(senderEmail, email)
         {
-            Subject = "Welcome to the AbdClub Newsletter!",
-            Body = $"Hi {firstName},\n\n" +
-                   $"Thank you for signing up for our public dance updates!\n\n" +
-                   $"Warm regards,\nThe AbdClub Team\n\n" +
-                   $"---\n" +
-                   $"If you wish to stop receiving these updates, you can safely opt-out at any time by clicking here:\n" +
-                   $"{unsubscribeUrl}",
-            IsBodyHtml = false
+            Subject = "Welcome to the AbdClub Newsletter!"
         };
 
-        using (var smtpClient = GetSmtpClient())
+        // 3. Construct the HTML Alternate View container
+        var htmlView = AlternateView.CreateAlternateViewFromString(htmlContent, null, MediaTypeNames.Text.Html);
+
+        // 4. Resolve the local image file path on disk (e.g., located inside wwwroot/images/)
+        //var imagePath = Path.Combine(_env.WebRootPath, "images", "club-logo.png");
+        var imagePath = Path.Combine(_env.WebRootPath, "images", "club-logo.webp");
+
+        if (File.Exists(imagePath))
         {
-            await smtpClient.SendMailAsync(mailMessage);
+            // Create the linked resource mapping from the file stream bytes
+            var logoResource = new LinkedResource(imagePath, "image/png")
+            {
+                ContentId = logoCid,
+                TransferEncoding = TransferEncoding.Base64
+            };
+
+            // Bind the asset context to the view layer metadata lists
+            htmlView.LinkedResources.Add(logoResource);
         }
+        else
+        {
+            _logger.LogWarning("Inline email mapping target asset was missing at path: {Path}", imagePath);
+        }
+
+        // Attach the compiled alternative multi-part view directly to your root message object
+        mailMessage.AlternateViews.Add(htmlView);
+
+        try
+        {
+            using (var smtpClient = GetSmtpClient())
+            {
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            _logger.LogInformation("HTML Newsletter with mapped inline assets sent to {Email}", email);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to execute inline asset email transmission to {Email}.", email);
+        }
+    }
+
+    // New method required by the IEmailService interface to generate raw HTML for previews
+    public string GenerateBroadcastHtmlBody(string recipientName, string bodyContent)
+    {
+        var formattedBody = bodyContent?.Replace("\n", "<br />") ?? string.Empty;
+
+        return $@"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='utf-8'>
+            <style>
+                body {{ font-family: Arial, sans-serif; padding: 15px; background-color: #f9f9f9; margin: 0; }}
+                .wrapper {{ background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 4px; max-width: 600px; margin: 0 auto; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }}
+                .banner {{ background-color: #343a40; color: #ffffff; padding: 15px 20px; font-size: 18px; font-weight: bold; text-align: center; }}
+                .body-text {{ padding: 25px; line-height: 1.5; font-size: 15px; color: #222222; }}
+                .footer {{ background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 11px; color: #777777; border-top: 1px solid #e0e0e0; }}
+            </style>
+        </head>
+        <body>
+            <div class='wrapper'>
+                <div class='banner'>Official AbdClub Announcement</div>
+                <div class='body-text'>
+                    <p>Dear {recipientName},</p>
+                    <p>{formattedBody}</p>
+                </div>
+                <div class='footer'>
+                    This email was broadcasted by an authorized club officer to active system members.
+                </div>
+            </div>
+        </body>
+        </html>";
     }
 
     public async Task SendBroadcastEmailAsync(string recipientEmail, string recipientName, string subject, string bodyContent)
     {
         var senderEmail = _config["Email:Username"] ?? "management@abdclub.com";
 
-        // Personalize the core body text automatically
-        var personalizedBody = $"Dear {recipientName},\n\n" +
-                               $"{bodyContent}\n\n" +
-                               $"---\n" +
-                               $"Sent via AbdClub Officer Management Broadcast Channel.";
+        // Call the unified template generator
+        var htmlContent = GenerateBroadcastHtmlBody(recipientName, bodyContent);
 
         var mailMessage = new MailMessage(senderEmail, recipientEmail)
         {
             Subject = subject,
-            Body = personalizedBody,
-            IsBodyHtml = false
+            Body = htmlContent,
+            IsBodyHtml = true
         };
 
         using (var smtpClient = GetSmtpClient())
@@ -415,6 +506,4 @@ public class SmtpEmailService : IEmailService
             await smtpClient.SendMailAsync(mailMessage);
         }
     }
-
-
 }

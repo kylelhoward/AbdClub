@@ -36,6 +36,7 @@ namespace AbdClub.Pages
                 return Page();
             }
 
+            // Step A: Save the data row first. This is preserved regardless of email connection status
             var newSubscriber = new NewsletterSubscriber
             {
                 FirstName = SubscriberData.FirstName,
@@ -46,11 +47,14 @@ namespace AbdClub.Pages
             _context.NewsletterSubscribers.Add(newSubscriber);
             await _context.SaveChangesAsync();
 
-            // CLEAN PATTERN CALL: Simple, readable, single line abstract method invocation
+            // Step B: Call the service. The internal service handles errors gracefully
             await _emailService.SendNewsletterWelcomeEmailAsync(newSubscriber.Email, newSubscriber.FirstName);
 
+            // Step C: The user is redirected to the confirmation screen successfully
             TempData["SignupMessage"] = $"Thank you, {SubscriberData.FirstName}! You are now on our list.";
             return RedirectToPage();
         }
+
+
     }
 }

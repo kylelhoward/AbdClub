@@ -37,5 +37,7 @@ Possible file categories: Tax Documents, Policies, Dance Flyers,General,...,..,.
 Upload Date,File Name,File Type,Description,Uploaded By
 ,Access Level,Download Link,Email Notification action,...,.
 
-
-
+						  Building a Database Audit Log table to permanently record which officer sent which announcement and when.
+An automated dashboard graph/chart feature to track subscriber sign-ups and unsubscribes over time?
+The anti-spam click confirmation screen next so automated email scanners don't trigger accidental unsubscriptions?
+A feature to let Tech Sergeant Chen manually reset tokens from the Officer Dashboard if a user requests it?
