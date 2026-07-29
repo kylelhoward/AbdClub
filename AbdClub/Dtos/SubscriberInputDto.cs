@@ -1,4 +1,4 @@
-namespace AbdClub.Pages
+namespace AbdClub.Dtos
 {
     public class SubscriberInputDto
     {

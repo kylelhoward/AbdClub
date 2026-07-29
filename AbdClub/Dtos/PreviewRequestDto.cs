@@ -1,4 +1,4 @@
-namespace AbdClub.Pages.Officers;
+namespace AbdClub.Dtos;
 
 public class PreviewRequestDto
 {

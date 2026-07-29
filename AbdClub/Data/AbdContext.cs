@@ -18,7 +18,7 @@ public class AbdContext : DbContext
     public DbSet<DJ> Djs { get; set; } = null!;
     public DbSet<Volunteer> Volunteers { get; set; } = null!;
     public DbSet<NewsletterSubscriber> NewsletterSubscribers { get; set; } = null!;
-
+    public DbSet<BroadcastAuditLog> BroadcastAuditLogs { get; set; }
     public DbSet<MagicLink> MagicLinks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

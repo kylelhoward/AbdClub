@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AbdClub.Pages.Officers;
+namespace AbdClub.Dtos;
 
 public class BroadcastInputDto
 {

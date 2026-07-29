@@ -92,66 +92,151 @@
         </div>
     </div>
 </div>
+<hr class="my-5" />
+
+<div class="card shadow border-0">
+    <div class="card-header bg-secondary text-white p-3">
+        <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Historical Broadcast Audit Ledger</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Sent Date</th>
+                        <th>Officer</th>
+                        <th>Subject Line</th>
+                        <th class="text-center">Recipients</th>
+                        <th class="pe-3 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.PastAnnouncements.Any())
+                    {
+                        foreach (var log in Model.PastAnnouncements)
+                        {
+                            <tr>
+                                <td class="ps-3 text-muted small">@log.SentAt.ToLocalTime().ToString("g")</td>
+                                <td class="fw-bold">
+                                    @(log.SentByOfficer != null ? $"{log.SentByOfficer.FullName}" : "System")
+                                </td>
+                                <td><span class="text-truncate d-inline-block" style="max-width: 300px;">@log.Subject</span></td>
+                                <td class="text-center"><span class="badge bg-secondary">@log.RecipientCount members</span></td>
+                                <td class="pe-3 text-end">
+                                    <!-- Leverages the same iframe preview engine logic established earlier to view past copy texts -->
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-dark view-log-btn"
+                                            data-message="@log.MessageContent">
+                                        View Text
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center p-4 text-muted">No historical announcements have been broadcasted yet.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Live client-side character count checking
+        // 1. Core Global DOM References (Declared once)
         const textarea = document.getElementById('broadcastTextArea');
         const charCount = document.getElementById('charCount');
+        const previewBtn = document.getElementById('previewBtn');
+        const previewIframe = document.getElementById('previewIframe');
+        
+        // Initialize a single shared Bootstrap Modal instance
+        let bootstrapModalInstance = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            bootstrapModalInstance = new bootstrap.Modal(document.getElementById('previewModal'));
+            
+            // 2. Event Listener for the Historical Ledger "View Text" Buttons
+            document.querySelectorAll('.view-log-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const rawMessageContent = this.dataset.message || '';
+                    const formattedHtml = rawMessageContent.replace(/(?:\r\n|\r|\n)/g, '<br />');
 
-        textarea.addEventListener('input', () => {
-            const length = textarea.value.length;
-            charCount.textContent = length;
-            if (length > 1900) {
-                charCount.className = "text-danger fw-bold";
-            } else {
-                charCount.className = "text-muted";
-            }
+                    const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+                    
+                    // FIXED: Using innerHTML avoids embedding literal tags that crash the browser parser
+                    doc.open();
+                    doc.close(); 
+                    doc.body.style.fontFamily = 'Arial, sans-serif';
+                    doc.body.style.padding = '20px';
+                    doc.body.style.lineHeight = '1.5';
+                    doc.body.style.color = '#333';
+                    doc.body.innerHTML = formattedHtml;
+
+                    bootstrapModalInstance.show();
+                });
+            });
         });
 
-        // Prompt security intercept gate
+        // 3. Live Client-Side Character Count Checking
+        if (textarea) {
+            textarea.addEventListener('input', () => {
+                const length = textarea.value.length;
+                charCount.textContent = length;
+                if (length > 1900) {
+                    charCount.className = "text-danger fw-bold";
+                } else {
+                    charCount.className = "text-muted";
+                }
+            });
+        }
+
+        // 4. Prompt Security Intercept Gate
         function confirmBroadcast() {
             return confirm("CRITICAL: You are about to queue a batch broadcast to ALL active club members. Are you sure you want to execute transmission?");
         }
-        // NEW ASYNCHRONOUS LIVE PREVIEW IMPLEMENTATION
-        const previewBtn = document.getElementById('previewBtn');
-        const broadcastText = document.getElementById('broadcastTextArea');
-        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-        const previewIframe = document.getElementById('previewIframe');
 
-        previewBtn.addEventListener('click', function () {
-            const bodyValue = broadcastText.value;
-
-            // Fetch anti-forgery verification tokens generated natively by the page form
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-            // Execute secure background parsing fetch sequence
-            fetch('?handler=PreviewLayout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': token
-                },
-                body: JSON.stringify({ messageBody: bodyValue })
-            })
-            .then(response => response.text())
-            .then(htmlOutput => {
-                // Open and pipe the raw string response straight into the isolated iframe canvas layer
-                const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-                doc.open();
-                doc.write(htmlOutput);
-                doc.close();
+        // 5. Asynchronous Live Composition Draft Preview
+        if (previewBtn) {
+            previewBtn.addEventListener('click', function() {
+                const bodyValue = textarea.value;
+                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
                 
-                // Show the container frame view
-                previewModal.show();
-            })
-            .catch(err => {
-                alert('An error occurred while rendering the email template preview.');
-                console.error(err);
+                if (!tokenElement) {
+                    alert('Security Token Missing.');
+                    return;
+                }
+
+                fetch('?handler=PreviewLayout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': tokenElement.value
+                    },
+                    body: JSON.stringify({ messageBody: bodyValue })
+                })
+                .then(response => response.text())
+                .then(htmlOutput => {
+                    const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+                    doc.open();
+                    doc.write(htmlOutput);
+                    doc.close();
+
+                    if (bootstrapModalInstance) {
+                        bootstrapModalInstance.show();
+                    }
+                })
+                .catch(err => {
+                    alert('An error occurred while rendering the email template preview.');
+                    console.error(err);
+                });
             });
-        });
+        }
     </script>
 }
 
