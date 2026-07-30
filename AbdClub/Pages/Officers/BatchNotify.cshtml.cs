@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using AbdClub.Models;
 using AbdClub.Dtos;
+
 namespace AbdClub.Pages.Officers;
 
 public class BatchNotifyModel : PageModel
@@ -43,80 +44,126 @@ public class BatchNotifyModel : PageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostSendBroadcastAsync()
+public async Task<IActionResult> OnPostSendBroadcastAsync()
     {
-        bool isAuthorizedOfficer = User.IsInRole("Officer") &&
+        bool isAuthorizedOfficer = User.IsInRole("Officer") && 
                                   User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
         if (!isAuthorizedOfficer) return Forbid();
 
         if (!ModelState.IsValid)
         {
-            TotalActiveMembersCount = await _context.Members.CountAsync(m => m.IsActive);
+            await RefreshPageDataAsync();
             return Page();
         }
-        //  Resolve the sending Officer's primary database key from their custom cookie claim
+
         var officerIdClaim = User.FindFirst("MemberId")?.Value;
         if (string.IsNullOrEmpty(officerIdClaim) || !int.TryParse(officerIdClaim, out int loggedInOfficerId))
         {
-            ModelState.AddModelError("", "Your login session context is invalid. Please sign out and sign back in.");
-            TotalActiveMembersCount = await _context.Members.CountAsync(m => m.IsActive);
+            ModelState.AddModelError("", "Your login session context is invalid.");
+            await RefreshPageDataAsync();
             return Page();
         }
 
-        //  Fetch active targets directly into memory
-        var targets = await _context.Members
-            .Where(m => m.IsActive)
-            .Select(m => new { m.Email, m.FullName })
-            .ToListAsync();
+        // 1. Build an internal container to collect unique email targets
+        var targets = new List<RecipientDetails>();
+
+        switch (NotificationData.TargetAudience)
+        {
+            case "MembersOnly":
+                targets = await _context.Members
+                    .Where(m => m.IsActive)
+                    .Select(m => new RecipientDetails { Email = m.Email, FullName = m.FullName })
+                    .ToListAsync();
+                break;
+
+            case "Everyone":
+                // Fetch active members
+                var members = await _context.Members
+                    .Where(m => m.IsActive)
+                    .Select(m => new RecipientDetails { Email = m.Email, FullName = m.FullName})
+                    .ToListAsync();
+
+                // Fetch newsletter subscribers
+                var subscribers = await _context.NewsletterSubscribers
+                    .Select(s => new RecipientDetails { Email = s.Email, FullName = s.FirstName })
+                    .ToListAsync();
+
+                // Merge and deduplicate by email address to ensure nobody gets double-emailed if they are in both tables
+                targets = members.Concat(subscribers)
+                    .GroupBy(t => t.Email.ToLowerInvariant())
+                    .Select(g => g.First())
+                    .ToList();
+                break;
+
+            case "OfficersOnly":
+                targets = await _context.Members
+                    .Where(m => m.IsActive && m.IsOfficer) // Filters explicitly for active officer flags
+                    .Select(m => new RecipientDetails { Email = m.Email, FullName = m.FullName })
+                    .ToListAsync();
+                break;
+
+            default:
+                ModelState.AddModelError("NotificationData.TargetAudience", "Invalid recipient audience selection.");
+                await RefreshPageDataAsync();
+                return Page();
+        }
 
         if (!targets.Any())
         {
-            ModelState.AddModelError("", "There are no active club members to notify.");
+            ModelState.AddModelError("", "The selected target audience contains zero valid recipients.");
+            await RefreshPageDataAsync();
             return Page();
         }
-        //  AUDIT INSIGHT PIPELINE: Create and persist the audit record BEFORE starting the background thread
+
+        // 2. Persist the record inside your Database Ledger
         var auditEntry = new BroadcastAuditLog
         {
             SentByOfficerId = loggedInOfficerId,
-            Subject = NotificationData.Subject,
+            Subject = $"[{NotificationData.TargetAudience}] {NotificationData.Subject}", // Appends context tag
             MessageContent = NotificationData.MessageContent,
             RecipientCount = targets.Count,
             SentAt = DateTime.UtcNow
         };
 
         _context.BroadcastAuditLogs.Add(auditEntry);
-        await _context.SaveChangesAsync(); // Generates a permanent database row
-        //  DISPATCH BACKGROUND QUEUE: Offloads the intensive SMTP loop from the web runner thread
-        // We capture references safely via lexical scope variables
+        await _context.SaveChangesAsync();
+
+        // 3. Dispatch the Background Task Loop
         var subject = NotificationData.Subject;
         var messageContent = NotificationData.MessageContent;
 
         _ = Task.Run(async () =>
         {
-            _logger.LogInformation("Officer initiated batch transmission queue for {Count} recipients.", targets.Count);
-
             foreach (var recipient in targets)
             {
                 try
                 {
                     await _emailService.SendBroadcastEmailAsync(recipient.Email, recipient.FullName, subject, messageContent);
-                    // Add a tiny throttle delay to stay inside local smtp4dev connection safety bounds
-                    await Task.Delay(150);
+                    await Task.Delay(150); 
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed background batch dispatch transmission block targeting {Email}", recipient.Email);
+                    _logger.LogError(ex, "Failed background broadcast targeting {Email}", recipient.Email);
                 }
             }
-
-            _logger.LogInformation("Batch notification pipeline finalized successfully.");
         });
 
-        TempData["GlobalSuccessNotice"] = $"Successfully queued broadcast notifications for {targets.Count} active members in the background.";
+        TempData["GlobalSuccessNotice"] = $"Successfully logged entry and queued broadcast to {targets.Count} recipients via the {NotificationData.TargetAudience} filter channel.";
         return RedirectToPage();
     }
 
-    // NEW PREVIEW HANDLER PIPELINE (Invoked via AJAX)
+    private async Task RefreshPageDataAsync()
+    {
+        TotalActiveMembersCount = await _context.Members.CountAsync(m => m.IsActive);
+        PastAnnouncements = await _context.BroadcastAuditLogs
+            .Include(a => a.SentByOfficer)
+            .OrderByDescending(a => a.SentAt)
+            .Take(10)
+            .ToListAsync();
+    }
+
+
+      // NEW PREVIEW HANDLER PIPELINE (Invoked via AJAX)
     public IActionResult OnPostPreviewLayout([FromBody] PreviewRequestDto request)
     {
         // Enforce role-based access identity gate
@@ -135,4 +182,11 @@ public class BatchNotifyModel : PageModel
         // Return raw html text straight to the client pipeline
         return Content(previewHtml, "text/html");
     }
+}
+
+// Auxiliary structures
+public class RecipientDetails
+{
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
 }

@@ -4,6 +4,9 @@ namespace AbdClub.Dtos;
 
 public class BroadcastInputDto
 {
+    [Required(ErrorMessage = "Please select a target audience filter.")]
+    public string TargetAudience { get; set; } = "MembersOnly"; // Defaults to members configuration layer
+
     [Required(ErrorMessage = "Please supply a notification subject line.")]
     [StringLength(100, ErrorMessage = "Subject must be under 100 characters.")]
     public string Subject { get; set; } = string.Empty;

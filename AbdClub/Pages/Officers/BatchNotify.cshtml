@@ -38,7 +38,16 @@
 
             <form id="broadcastForm" method="post" asp-page-handler="SendBroadcast" onsubmit="return confirmBroadcast();">
                 <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-
+                 <!-- NEW TARGET SELECTION COMPONENT DROPDOWN -->
+    <div class="mb-3">
+        <label class="form-label fw-bold">Select Target Audience</label>
+        <select asp-for="NotificationData.TargetAudience" class="form-select bg-light fw-bold" id="audienceSelect" required>
+            <option value="MembersOnly">Active Members Only</option>
+            <option value="Everyone">All Members + Newsletter Subscribers</option>
+            <option value="OfficersOnly">Club Officers Only</option>
+        </select>
+        <span asp-validation-for="NotificationData.TargetAudience" class="text-danger small"></span>
+    </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Broadcast Subject Line</label>
                     <input asp-for="NotificationData.Subject" class="form-control" placeholder="e.g., Schedule Change: Friday Social Swing Dance Cancelled" required />
@@ -198,7 +207,10 @@
 
         // 4. Prompt Security Intercept Gate
         function confirmBroadcast() {
-            return confirm("CRITICAL: You are about to queue a batch broadcast to ALL active club members. Are you sure you want to execute transmission?");
+            const audienceSelect = document.getElementById('audienceSelect');
+            const selectedText = audienceSelect.options[audienceSelect.selectedIndex].text;
+    
+            return confirm("CRITICAL: You are about to queue a background bulk broadcast targeting: \n\n» " + selectedText + "\n\nAre you sure you want to execute transmission?");
         }
 
         // 5. Asynchronous Live Composition Draft Preview
