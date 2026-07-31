@@ -3,67 +3,93 @@
 @{
     ViewData["Title"] = "Officer Broadcast Center";
 }
+<!-- Include Alpine.js directly in the head layout context -->
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 
 <div class="container mt-4" style="max-width: 800px;">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-page="/Officers/FileManager">Officer Panel</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
             <li class="breadcrumb-item active">Member Broadcast</li>
         </ol>
     </nav>
 
-    <div class="card shadow border-0">
+   <!-- Initialize Alpine data tracking state wrapper -->
+    <div class="card shadow border-0" 
+         x-data="{ 
+            selectedAudience: 'MembersOnly',
+            recipientCount: @Model.MembersCount,
+            updateCount() {
+                // Instantly grabs the data-count attribute from the chosen option node
+                const selectEl = document.getElementById('audienceSelect');
+                const selectedOpt = selectEl.options[selectEl.selectedIndex];
+                this.recipientCount = selectedOpt.getAttribute('data-count');
+            }
+         }">
+         
         <div class="card-header bg-dark text-white p-3">
             <h4 class="mb-0"><i class="bi bi-megaphone-fill me-2"></i>Batch Member Notification</h4>
         </div>
+        
         <div class="card-body p-4">
-
-            @if (TempData["GlobalSuccessNotice"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["GlobalSuccessNotice"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            }
-
+            
+            <!-- REAL-TIME REACTIVE BADGE ALERT: Binds styling and count context dynamically -->
             <div class="alert alert-info border-0 bg-opacity-10 bg-info text-dark mb-4">
-                <div class="d-flex">
+                <div class="d-flex align-items-center">
                     <i class="bi bi-info-circle-fill text-info fs-4 me-3"></i>
                     <div>
-                        <strong>Target Pool Status:</strong> This action will safely broadcast a bulk email out to all
-                        <span class="badge bg-primary">@Model.TotalActiveMembersCount</span> currently active members stored in your central system registers.
+                        <strong>Target Pool Status:</strong> This action will broadcast a bulk email out to 
+                        <!-- Alpine.js x-text replaces text content smoothly without page flickers -->
+                        <span class="badge bg-primary fs-6" x-text="recipientCount + ' total targets'"></span> 
+                        matching your active system audience filters.
                     </div>
                 </div>
             </div>
 
-            <form id="broadcastForm" method="post" asp-page-handler="SendBroadcast" onsubmit="return confirmBroadcast();">
+            <!-- UPDATED FORM ATTR LINE -->
+            <form id="broadcastForm" method="post" asp-page-handler="SendBroadcast"
+                  x-on:submit.prevent="
+                const selectEl = document.getElementById('audienceSelect');
+                document.getElementById('modalTargetAudienceText').textContent = selectEl.options[selectEl.selectedIndex].text;
+                const confirmModal = new bootstrap.Modal(document.getElementById('sendConfirmModal'));
+                confirmModal.show();">
                 <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-                 <!-- NEW TARGET SELECTION COMPONENT DROPDOWN -->
-    <div class="mb-3">
-        <label class="form-label fw-bold">Select Target Audience</label>
-        <select asp-for="NotificationData.TargetAudience" class="form-select bg-light fw-bold" id="audienceSelect" required>
-            <option value="MembersOnly">Active Members Only</option>
-            <option value="Everyone">All Members + Newsletter Subscribers</option>
-            <option value="OfficersOnly">Club Officers Only</option>
-        </select>
-        <span asp-validation-for="NotificationData.TargetAudience" class="text-danger small"></span>
-    </div>
+
+                <!-- TARGET SELECTION SYSTEM WITH ALPINE INTEGRATION -->
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Broadcast Subject Line</label>
-                    <input asp-for="NotificationData.Subject" class="form-control" placeholder="e.g., Schedule Change: Friday Social Swing Dance Cancelled" required />
-                    <span asp-validation-for="NotificationData.Subject" class="text-danger small"></span>
+                    <label class="form-label fw-bold">Select Target Audience</label>
+                    <select asp-for="NotificationData.TargetAudience" 
+                            class="form-select bg-light fw-bold" 
+                            id="audienceSelect" 
+                            x-model="selectedAudience"
+                            x-on:change="updateCount()"
+                            required>
+                        <option value="MembersOnly" data-count="@Model.MembersCount">Active Members Only</option>
+                        <option value="Everyone" data-count="@Model.EveryoneCount">All Members + Newsletter Subscribers</option>
+                        <option value="OfficersOnly" data-count="@Model.OfficersCount">Club Officers Only</option>
+                    </select>
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label fw-bold">Broadcast Subject Line</label>
+                    <input asp-for="NotificationData.Subject" class="form-control" placeholder="e.g., Schedule Change" required />
+                </div>
+
+                <!-- Text Area Input tracking character length natively via Alpine.js context state variables -->
+                <div class="mb-3" x-data="{ textLength: 0 }">
                     <label class="form-label fw-bold">Message Body Content</label>
-                    <textarea asp-for="NotificationData.MessageContent" id="broadcastTextArea" class="form-control" rows="8" placeholder="Type your official announcement here..." required></textarea>
+                    <textarea asp-for="NotificationData.MessageContent" id="broadcastTextArea" class="form-control" rows="8" 
+                              x-on:input="textLength = $el.value.length"
+                              placeholder="Type your official announcement here..." required></textarea>
                     <div class="d-flex justify-content-between mt-1">
                         <span asp-validation-for="NotificationData.MessageContent" class="text-danger small"></span>
-                        <small class="text-muted"><span id="charCount">0</span> / 2000 characters</small>
+                        <small :class="textLength > 1900 ? 'text-danger fw-bold' : 'text-muted'">
+                            <span x-text="textLength">0</span> / 2000 characters
+                        </small>
                     </div>
                 </div>
 
-                <!-- UPDATED ACTION ZONE BUTTONS -->
                 <div class="row g-2 mt-4">
                     <div class="col-md-4">
                         <button type="button" id="previewBtn" class="btn btn-outline-secondary btn-lg w-100">
@@ -77,10 +103,35 @@
                     </div>
                 </div>
             </form>
-
-
+        </div>
+    </div>    
+    <!-- BATCH SEND CONFIRMATION MODAL -->
+    <div class="modal fade" id="sendConfirmModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger shadow-lg">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Critical Authorization Verification</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <p class="fs-5 fw-bold text-danger mb-3">You are about to launch a bulk communication broadcast!</p>
+                    <p class="text-muted mb-0">This message will be permanently queued and transmitted directly out to your chosen audience pool filter: </p>
+                    <!-- Alpine.js dynamic text inject slot -->
+                    <p class="mt-2 fs-5 fw-extrabold text-primary" id="modalTargetAudienceText"></p>
+                    <p class="small text-secondary mt-3">Are you absolutely sure you want to execute background dispatch processing?</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel and Abort</button>
+                    <!-- Clicking this triggers our final form confirmation injection function -->
+                    <button type="button" id="finalSubmitBtn" class="btn btn-danger px-4">
+                        <i class="bi bi-send-check-fill me-2"></i>Confirm Send
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
+
 </div>
 
 <!-- LIVE EMAIL PREVIEW MODAL CONTAINER -->
@@ -158,71 +209,51 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // 1. Core Global DOM References (Declared once)
+                // Keep the clean, tag-safe iframe preview logic
+                const previewBtn = document.getElementById('previewBtn');
         const textarea = document.getElementById('broadcastTextArea');
-        const charCount = document.getElementById('charCount');
-        const previewBtn = document.getElementById('previewBtn');
         const previewIframe = document.getElementById('previewIframe');
-        
-        // Initialize a single shared Bootstrap Modal instance
         let bootstrapModalInstance = null;
-        
+
         document.addEventListener('DOMContentLoaded', function() {
-            bootstrapModalInstance = new bootstrap.Modal(document.getElementById('previewModal'));
-            
-            // 2. Event Listener for the Historical Ledger "View Text" Buttons
+                    bootstrapModalInstance = new bootstrap.Modal(document.getElementById('previewModal'));
+
             document.querySelectorAll('.view-log-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const rawMessageContent = this.dataset.message || '';
-                    const formattedHtml = rawMessageContent.replace(/(?:\r\n|\r|\n)/g, '<br />');
-
+                            const formattedHtml = rawMessageContent.replace(/(?:\r\n|\r|\n)/g, '<br />');
                     const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
-                    
-                    // FIXED: Using innerHTML avoids embedding literal tags that crash the browser parser
+
                     doc.open();
-                    doc.close(); 
+                    doc.close();
                     doc.body.style.fontFamily = 'Arial, sans-serif';
-                    doc.body.style.padding = '20px';
+                            doc.body.style.padding = '20px';
                     doc.body.style.lineHeight = '1.5';
                     doc.body.style.color = '#333';
                     doc.body.innerHTML = formattedHtml;
 
                     bootstrapModalInstance.show();
-                });
-            });
+                        });
+                    });
+                     const finalSubmitBtn = document.getElementById('finalSubmitBtn');
+    const broadcastForm = document.getElementById('broadcastForm');
+
+    if (finalSubmitBtn && broadcastForm) {
+        finalSubmitBtn.addEventListener('click', function() {
+            // Disable button text elements dynamically to protect against rapid multi-click form submissions
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Queueing Broadcast...';
+            
+            // Bypass Alpine intercept boundaries and push the form to your ASP.NET Core PageModel handler pipeline
+            broadcastForm.submit();
         });
+    }
+                });
 
-        // 3. Live Client-Side Character Count Checking
-        if (textarea) {
-            textarea.addEventListener('input', () => {
-                const length = textarea.value.length;
-                charCount.textContent = length;
-                if (length > 1900) {
-                    charCount.className = "text-danger fw-bold";
-                } else {
-                    charCount.className = "text-muted";
-                }
-            });
-        }
-
-        // 4. Prompt Security Intercept Gate
-        function confirmBroadcast() {
-            const audienceSelect = document.getElementById('audienceSelect');
-            const selectedText = audienceSelect.options[audienceSelect.selectedIndex].text;
-    
-            return confirm("CRITICAL: You are about to queue a background bulk broadcast targeting: \n\n» " + selectedText + "\n\nAre you sure you want to execute transmission?");
-        }
-
-        // 5. Asynchronous Live Composition Draft Preview
         if (previewBtn) {
-            previewBtn.addEventListener('click', function() {
+                    previewBtn.addEventListener('click', function() {
                 const bodyValue = textarea.value;
                 const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-                
-                if (!tokenElement) {
-                    alert('Security Token Missing.');
-                    return;
-                }
 
                 fetch('?handler=PreviewLayout', {
                     method: 'POST',
@@ -231,24 +262,16 @@
                         'RequestVerificationToken': tokenElement.value
                     },
                     body: JSON.stringify({ messageBody: bodyValue })
-                })
+                        })
                 .then(response => response.text())
                 .then(htmlOutput => {
                     const doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
                     doc.open();
-                    doc.write(htmlOutput);
+                            doc.write(htmlOutput);
                     doc.close();
-
-                    if (bootstrapModalInstance) {
-                        bootstrapModalInstance.show();
-                    }
-                })
-                .catch(err => {
-                    alert('An error occurred while rendering the email template preview.');
-                    console.error(err);
+                    bootstrapModalInstance.show();
                 });
             });
-        }
+                }
     </script>
 }
-

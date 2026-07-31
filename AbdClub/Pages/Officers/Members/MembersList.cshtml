@@ -6,9 +6,20 @@
 
 <div class="container my-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="h3 mb-0">Members</h1>
-            <small class="text-muted">Manage club members and their statuses</small>
+                <!-- Breadcrumb Routing Consistency -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Members List</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="bi bi-mailbox2 me-2"></i>Members</h2>
+                <p class="text-muted mb-0">Manage club members and their statuses</p>
+            </div>
+           
         </div>
 
         <div>
@@ -37,7 +48,7 @@
     </nav>
 
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <div class="text-muted">
+        <div class="text-info">
             @Model.Members.Count member(s) found.
         </div>
         <div>

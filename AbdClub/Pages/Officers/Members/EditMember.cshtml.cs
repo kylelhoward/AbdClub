@@ -58,6 +58,6 @@ public class EditMemberModel : PageModel
         memberInDb.Phone = Member.Phone;
 
         await _db.SaveChangesAsync();
-        return RedirectToPage("./Members");
+        return RedirectToPage("./MembersList");
     }
 }

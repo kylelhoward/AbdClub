@@ -1,0 +1,154 @@
+﻿@page
+@model AbdClub.Pages.Officers.Newsletter.IndexModel
+@{
+    ViewData["Title"] = "Manage Newsletter Subscribers";
+}
+
+<div class="container mt-4">
+    <!-- Breadcrumb Routing Consistency -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Newsletter Management</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-mailbox2 me-2"></i>Newsletter Subscribers</h2>
+            <p class="text-muted mb-0">Manage public mailing records separate from the main club membership register.</p>
+        </div>
+        <div class="card bg-primary text-white border-0 shadow-sm px-4 py-2">
+            <div class="small">Active Subscribers</div>
+            <div class="fs-4 fw-bold text-center">@Model.TotalSubscribersCount</div>
+        </div>
+    </div>
+
+    @if (Model.StatusMessage != null)
+    {
+        <div class="alert @(Model.StatusMessage.StartsWith("Error") ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi @(Model.StatusMessage.StartsWith("Error") ? "bi-x-circle-fill" : "bi-check-circle-fill") me-2"></i>
+            @Model.StatusMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- SUBSCRIBERS DATA LEDGER GRID -->
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="ps-3" style="width: 80px;">ID</th>
+                            <th>First Name</th>
+                            <th>Email Address</th>
+                            <th>Subscribed Date</th>
+                            <th class="pe-3 text-end" style="width: 150px;">Management Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Subscribers.Any())
+                        {
+                            foreach (var sub in Model.Subscribers)
+                            {
+                                <tr>
+                                    <td class="ps-3 text-muted small">@sub.Id</td>
+                                    <td class="fw-bold">@sub.FirstName</td>
+                                    <td><a href="mailto:@sub.Email" class="text-decoration-none">@sub.Email</a></td>
+                                    <td class="text-muted small">@sub.SubscribedAt.ToLocalTime().ToString("g")</td>
+                                    <td class="pe-3 text-end">
+                                        <!-- Triggering our modal setup while baking context targets directly into custom data fields -->
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger admin-unsub-btn"
+                                                data-id="@sub.Id"
+                                                data-email="@sub.Email"
+                                                data-name="@sub.FirstName">
+                                            <i class="bi bi-person-dash-fill me-1"></i>Unsubscribe
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center p-5 text-muted">
+                                    <i class="bi bi-envelope-open d-block fs-1 mb-2 text-secondary"></i>
+                                    No public non-members have registered for updates yet.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADMINISTRATIVE UNSUBSCRIBE VERIFICATION MODAL -->
+<div class="modal fade" id="adminUnsubModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-shield-exclamation me-2"></i>Confirm Management Override</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-backdrop="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="adminUnsubForm" method="post" asp-page-handler="Unsubscribe">
+                <div class="modal-body p-4 text-center">
+                    <input type="hidden" name="id" id="unsubTargetId" />
+                    <p class="fs-5 fw-bold text-danger mb-2">Manually remove subscriber?</p>
+                    <p class="text-muted mb-3">You are executing an administrative delete action for user:</p>
+
+                    <div class="bg-light p-3 rounded border mb-3">
+                        <div class="fw-bold text-dark fs-5" id="unsubTargetName"></div>
+                        <div class="text-muted small" id="unsubTargetEmail"></div>
+                    </div>
+
+                    <p class="small text-secondary mb-0">This row entity will be immediately purged from system registries.</p>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep Subscriber</button>
+                    <button type="submit" id="confirmUnsubSubmit" class="btn btn-danger px-4">
+                        <i class="bi bi-trash3-fill me-2"></i>Execute Unsubscribe
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const unsubModal = new bootstrap.Modal(document.getElementById('adminUnsubModal'));
+            const targetIdInput = document.getElementById('unsubTargetId');
+            const targetNameDiv = document.getElementById('unsubTargetName');
+            const targetEmailDiv = document.getElementById('unsubTargetEmail');
+            const unsubForm = document.getElementById('adminUnsubForm');
+            const confirmBtn = document.getElementById('confirmUnsubSubmit');
+
+            // Wire click listeners securely across all deletion nodes
+            document.querySelectorAll('.admin-unsub-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Populate current context items inside our modal inputs safely
+                    targetIdInput.value = this.dataset.id;
+                    targetNameDiv.textContent = this.dataset.name;
+                    targetEmailDiv.textContent = this.dataset.email;
+
+                    unsubModal.show();
+                });
+            });
+
+            // Prevent rapid multi-click database processing errors
+            if (unsubForm) {
+                unsubForm.addEventListener('submit', function() {
+                    if (confirmBtn) {
+                        confirmBtn.disabled = true;
+                        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Purging...';
+                    }
+                });
+            }
+        });
+    </script>
+}
