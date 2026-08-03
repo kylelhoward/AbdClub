@@ -19,12 +19,12 @@ public class DanceService
     public async Task SendVolunteerRemindersAsync(int danceId)
     {
         var dance = await _db.Dances
-            .Include(d => d.Volunteers)
+            .Include(d => d.AssignedVolunteers)
             .FirstOrDefaultAsync(d => d.Id == danceId);
 
         if (dance == null) return;
 
-        foreach (var volunteer in dance.Volunteers)
+        foreach (var volunteer in dance.AssignedVolunteers)
         {
             await _email.SendVolunteerReminderAsync(dance, volunteer);
         }

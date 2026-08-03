@@ -125,7 +125,6 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
-
 var app = builder.Build();
 
 // --- Middleware pipeline ---

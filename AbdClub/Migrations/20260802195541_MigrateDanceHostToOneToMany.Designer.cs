@@ -3,6 +3,7 @@ using System;
 using AbdClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AbdClub.Migrations
 {
     [DbContext(typeof(AbdContext))]
-    partial class AbdContextModelSnapshot : ModelSnapshot
+    [Migration("20260802195541_MigrateDanceHostToOneToMany")]
+    partial class MigrateDanceHostToOneToMany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -87,6 +90,69 @@ namespace AbdClub.Migrations
                     b.HasIndex("UploadedByMemberId");
 
                     b.ToTable("ClubFiles");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.DJ", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DanceId")
+                        .IsUnique();
+
+                    b.ToTable("Djs");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.DanceHost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DanceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DanceId");
+
+                    b.ToTable("DanceHost");
                 });
 
             modelBuilder.Entity("AbdClub.Models.EmailLog", b =>
@@ -180,8 +246,9 @@ namespace AbdClub.Migrations
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<int>("InstructorId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Instructor")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
@@ -193,8 +260,6 @@ namespace AbdClub.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DanceId");
-
-                    b.HasIndex("InstructorId");
 
                     b.ToTable("Lessons");
                 });
@@ -227,110 +292,6 @@ namespace AbdClub.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("MagicLinks");
-                });
-
-            modelBuilder.Entity("AbdClub.Models.MasterDJ", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MasterDjs");
-                });
-
-            modelBuilder.Entity("AbdClub.Models.MasterHost", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MasterHosts");
-                });
-
-            modelBuilder.Entity("AbdClub.Models.MasterInstructor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MasterInstructors");
-                });
-
-            modelBuilder.Entity("AbdClub.Models.MasterVolunteer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MasterVolunteers");
                 });
 
             modelBuilder.Entity("AbdClub.Models.MeetingNote", b =>
@@ -379,9 +340,6 @@ namespace AbdClub.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("DanceId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -415,8 +373,6 @@ namespace AbdClub.Migrations
                         .HasColumnType("boolean");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DanceId");
 
                     b.ToTable("Members");
                 });
@@ -488,59 +444,55 @@ namespace AbdClub.Migrations
                     b.ToTable("Payments");
                 });
 
-            modelBuilder.Entity("DanceMasterHost", b =>
+            modelBuilder.Entity("AbdClub.Models.Volunteer", b =>
                 {
-                    b.Property<int>("AssignedHostsId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("DanceId")
                         .HasColumnType("integer");
 
-                    b.HasKey("AssignedHostsId", "DanceId");
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("DanceId");
 
-                    b.ToTable("DanceAssignedHosts", (string)null);
+                    b.ToTable("Volunteers");
                 });
 
-            modelBuilder.Entity("DanceMasterInstructor", b =>
+            modelBuilder.Entity("DanceMember", b =>
                 {
-                    b.Property<int>("AssignedInstructorsId")
+                    b.Property<int>("AttendingOfficersId")
                         .HasColumnType("integer");
 
                     b.Property<int>("DanceId")
                         .HasColumnType("integer");
 
-                    b.HasKey("AssignedInstructorsId", "DanceId");
+                    b.HasKey("AttendingOfficersId", "DanceId");
 
                     b.HasIndex("DanceId");
 
-                    b.ToTable("DanceAssignedInstructors", (string)null);
-                });
-
-            modelBuilder.Entity("DanceMasterVolunteer", b =>
-                {
-                    b.Property<int>("AssignedVolunteersId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("DanceId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("AssignedVolunteersId", "DanceId");
-
-                    b.HasIndex("DanceId");
-
-                    b.ToTable("DanceAssignedVolunteers", (string)null);
+                    b.ToTable("DanceAttendingOfficers", (string)null);
                 });
 
             modelBuilder.Entity("AbdClub.Models.Dance", b =>
                 {
                     b.HasBaseType("AbdClub.Models.Event");
-
-                    b.Property<int?>("AssignedDjId")
-                        .HasColumnType("integer");
-
-                    b.HasIndex("AssignedDjId");
 
                     b.HasDiscriminator().HasValue("Dance");
                 });
@@ -568,6 +520,28 @@ namespace AbdClub.Migrations
                     b.Navigation("UploadedBy");
                 });
 
+            modelBuilder.Entity("AbdClub.Models.DJ", b =>
+                {
+                    b.HasOne("AbdClub.Models.Dance", "Dance")
+                        .WithOne("Dj")
+                        .HasForeignKey("AbdClub.Models.DJ", "DanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dance");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.DanceHost", b =>
+                {
+                    b.HasOne("AbdClub.Models.Dance", "Dance")
+                        .WithMany("DanceHosts")
+                        .HasForeignKey("DanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dance");
+                });
+
             modelBuilder.Entity("AbdClub.Models.EmailLog", b =>
                 {
                     b.HasOne("AbdClub.Models.Member", "Member")
@@ -587,15 +561,7 @@ namespace AbdClub.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AbdClub.Models.MasterInstructor", "Instructor")
-                        .WithMany()
-                        .HasForeignKey("InstructorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Dance");
-
-                    b.Navigation("Instructor");
                 });
 
             modelBuilder.Entity("AbdClub.Models.MeetingNote", b =>
@@ -609,13 +575,6 @@ namespace AbdClub.Migrations
                     b.Navigation("UploadedBy");
                 });
 
-            modelBuilder.Entity("AbdClub.Models.Member", b =>
-                {
-                    b.HasOne("AbdClub.Models.Dance", null)
-                        .WithMany("AttendingOfficers")
-                        .HasForeignKey("DanceId");
-                });
-
             modelBuilder.Entity("AbdClub.Models.Payment", b =>
                 {
                     b.HasOne("AbdClub.Models.Member", "Member")
@@ -627,11 +586,22 @@ namespace AbdClub.Migrations
                     b.Navigation("Member");
                 });
 
-            modelBuilder.Entity("DanceMasterHost", b =>
+            modelBuilder.Entity("AbdClub.Models.Volunteer", b =>
                 {
-                    b.HasOne("AbdClub.Models.MasterHost", null)
+                    b.HasOne("AbdClub.Models.Dance", "Dance")
+                        .WithMany("Volunteers")
+                        .HasForeignKey("DanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Dance");
+                });
+
+            modelBuilder.Entity("DanceMember", b =>
+                {
+                    b.HasOne("AbdClub.Models.Member", null)
                         .WithMany()
-                        .HasForeignKey("AssignedHostsId")
+                        .HasForeignKey("AttendingOfficersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -640,46 +610,6 @@ namespace AbdClub.Migrations
                         .HasForeignKey("DanceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("DanceMasterInstructor", b =>
-                {
-                    b.HasOne("AbdClub.Models.MasterInstructor", null)
-                        .WithMany()
-                        .HasForeignKey("AssignedInstructorsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AbdClub.Models.Dance", null)
-                        .WithMany()
-                        .HasForeignKey("DanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("DanceMasterVolunteer", b =>
-                {
-                    b.HasOne("AbdClub.Models.MasterVolunteer", null)
-                        .WithMany()
-                        .HasForeignKey("AssignedVolunteersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AbdClub.Models.Dance", null)
-                        .WithMany()
-                        .HasForeignKey("DanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("AbdClub.Models.Dance", b =>
-                {
-                    b.HasOne("AbdClub.Models.MasterDJ", "AssignedDj")
-                        .WithMany()
-                        .HasForeignKey("AssignedDjId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("AssignedDj");
                 });
 
             modelBuilder.Entity("AbdClub.Models.Member", b =>
@@ -691,9 +621,13 @@ namespace AbdClub.Migrations
 
             modelBuilder.Entity("AbdClub.Models.Dance", b =>
                 {
-                    b.Navigation("AttendingOfficers");
+                    b.Navigation("DanceHosts");
+
+                    b.Navigation("Dj");
 
                     b.Navigation("Lessons");
+
+                    b.Navigation("Volunteers");
                 });
 #pragma warning restore 612, 618
         }

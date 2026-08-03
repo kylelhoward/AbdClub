@@ -1,0 +1,270 @@
+﻿@page
+@model AbdClub.Pages.Officers.Dances.IndexModel
+@{
+    ViewData["Title"] = "Manage Club Dances";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-calendar-event me-2"></i>Official Dance Matrix</h2>
+        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createDanceModal">
+            <i class="bi bi-plus-circle me-1"></i>Create New Dance
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-3">Scheduled Date</th>
+                        <th>Dance Event Title</th>
+                        <th>Location Venue</th>
+                        <th>Time Window</th>
+                        <th>Assigned DJ</th>
+                        <th class="pe-3 text-end">Action Controls</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.UpcomingDances.Any())
+                    {
+                        foreach (var dance in Model.UpcomingDances)
+                        {
+                            <tr>
+                                <td class="ps-3 fw-bold">@dance.Date.ToString("ddd, MMM dd, yyyy")</td>
+                                <td>
+                                    <span class="d-block fw-semibold text-primary">@dance.Title</span>
+                                    <small class="text-muted">@dance.Lessons.Count lessons mapped</small>
+                                </td>
+                                <td>@dance.Location</td>
+                                <td><span class="badge bg-secondary">@dance.StartTime.ToString("h:mm tt") - @dance.EndTime.ToString("h:mm tt")</span></td>
+                                <td>@(dance.AssignedDj != null ? dance.AssignedDj.Name : "Unassigned")</td>
+                                <td class="pe-3 text-end">
+                                    <div class="btn-group gap-1">
+                                        <!-- 1. NEW COMPONENT LINK: Navigates straight to your Generic Contact Manager directory -->
+                                        <a class="btn btn-sm btn-outline-info" asp-page="./ManageContacts" asp-route-id="@dance.Id">
+                                            <i class="bi bi-person-lines-fill me-1"></i> Staff Directory
+                                        </a>
+                                        <!-- Navigation trigger jump to attendance panel management layers -->
+                                        <a class="btn btn-sm btn-outline-success" asp-page="./AttendingOfficers" asp-route-id="@dance.Id">
+                                            <i class="bi bi-shield-check"></i> Attendance
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-primary" asp-page="./Volunteers" asp-route-id="@dance.Id">
+                                            <i class="bi bi-people-fill"></i> Volunteers
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-dark" asp-page="./Edit" asp-route-id="@dance.Id">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center p-5 text-muted">No scheduled dances exist within your database.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- REFACTORED CREATION INPUT MODAL PANEL WITH ALL PROPERTIES -->
+<div class="modal fade" id="createDanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form method="post" asp-page-handler="CreateDance" class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Schedule Registry Dance Event</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+
+                <!-- Section 1: Core Event Text Fields -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
+                        <input asp-for="NewDance.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
+                        <span asp-validation-for="NewDance.Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted mb-1">Location / Venue Room</label>
+                        <input asp-for="NewDance.Location" class="form-control" placeholder="e.g., Main Hall Ballroom" required />
+                        <span asp-validation-for="NewDance.Location" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Section 2: Date and Time Operations Configurations -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold small text-muted mb-1">Scheduled Event Date</label>
+                        <input asp-for="NewDance.Date" type="date" class="form-control" required />
+                        <span asp-validation-for="NewDance.Date" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted mb-1">Start Time</label>
+                        <input asp-for="NewDance.StartTime" type="time" class="form-control" required />
+                        <span asp-validation-for="NewDance.StartTime" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted mb-1">End Time</label>
+                        <input asp-for="NewDance.EndTime" type="time" class="form-control" required />
+                        <span asp-validation-for="NewDance.EndTime" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Section 3: Contact & Descriptive Metadata Elements -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold small text-muted mb-1">Public Coordination Contact Email</label>
+                        <input asp-for="NewDance.ContactEmail" type="email" class="form-control" placeholder="management@abdclub.com" />
+                        <span asp-validation-for="NewDance.ContactEmail" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label fw-bold small text-muted mb-1">Public Description / Calendar Announcements</label>
+                        <textarea asp-for="NewDance.Description" class="form-control" rows="2" placeholder="Add specific open schedules, pricing, dress code restrictions..."></textarea>
+                        <span asp-validation-for="NewDance.Description" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4 border-light-subtle" />
+
+                <!-- Section 4: Single-Select Master DJ Lookup Directory -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-primary mb-1"><i class="bi bi-disc-fill me-1"></i>Select Event DJ Assignment</label>
+                    <select asp-for="NewDance.SelectedDjId" class="form-select bg-light border-primary-subtle fw-medium">
+                        <option value="">-- No DJ Assigned / Vacant Position --</option>
+                        @foreach (var dj in Model.RegistryDjs)
+                        {
+                            <option value="@dj.Id">@dj.Name @(!string.IsNullOrEmpty(dj.Notes) ? $"— {dj.Notes}" : "")</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Section 5: Triple-Column Roster Grid System -->
+                <div class="row g-3 mb-4">
+                    <!-- Hosts Column -->
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
+                            <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-person-badge-fill text-primary me-1"></i>Dance Hosts</label>
+                            <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
+                                @if (Model.RegistryHosts.Any())
+                                {
+                                    foreach (var host in Model.RegistryHosts)
+                                    {
+                                        <div class="form-check mb-1">
+                                            <input class="form-check-input" type="checkbox" name="NewDance.SelectedHostIds" value="@host.Id" id="h_@host.Id" />
+                                            <label class="form-check-label small fw-semibold text-dark" for="h_@host.Id">@host.Name</label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small italic p-1 d-block">Registry empty</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructors Column -->
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
+                            <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-mortarboard-fill text-success me-1"></i>Instructors</label>
+                            <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
+                                @if (Model.RegistryInstructors.Any())
+                                {
+                                    foreach (var instructor in Model.RegistryInstructors)
+                                    {
+                                        <div class="form-check mb-1">
+                                            <input class="form-check-input" type="checkbox" name="NewDance.SelectedInstructorIds" value="@instructor.Id" id="i_@instructor.Id" />
+                                            <label class="form-check-label small fw-semibold text-dark" for="i_@instructor.Id">@instructor.Name</label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small italic p-1 d-block">Registry empty</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Volunteers Column -->
+                    <div class="col-md-4">
+                        <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
+                            <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-heart-fill text-danger me-1"></i>Volunteers</label>
+                            <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
+                                @if (Model.RegistryVolunteers.Any())
+                                {
+                                    foreach (var vol in Model.RegistryVolunteers)
+                                    {
+                                        <div class="form-check mb-1">
+                                            <input class="form-check-input" type="checkbox" name="NewDance.SelectedVolunteerIds" value="@vol.Id" id="v_@vol.Id" />
+                                            <label class="form-check-label small fw-semibold text-dark" for="v_@vol.Id">@vol.Name</label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted small italic p-1 d-block">Registry empty</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Section 6: Many-to-Many Attending Club Officers Checklist -->
+                <div class="mb-2">
+                    <div class="p-3 border rounded bg-light shadow-sm border-light-subtle">
+                        <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-shield-lock-fill text-secondary me-1"></i>Assign Duty Roster Officers</label>
+                        <div class="bg-white border rounded p-2" style="max-height: 130px; overflow-y: auto;">
+                            @if (Model.AvailableOfficers != null && Model.AvailableOfficers.Any())
+                            {
+                                @foreach (var officer in Model.AvailableOfficers)
+                                {
+                                    <div class="form-check mb-1">
+                                        <input 
+                                            class="form-check-input" 
+                                            type="checkbox"
+                                               name="NewDance.SelectedOfficerIds"
+                                               value="@officer.Id" id="o_@officer.Id" />
+                                        <label 
+                                            class="form-check-label small fw-semibold text-dark" 
+                                               for="o_@officer.Id">@officer.FullName</label>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small italic p-1 d-block">No active officers available in system data.</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary px-4">Create Master Schedule</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+               document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('#createDanceModal form');
+            const submitBtn = document.getElementById('createDanceSubmitBtn');
+
+            if (form && submitBtn) {
+                form.addEventListener('submit', function() {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Scheduling Event & Emailing Officers...';
+                });
+            }
+        });
+    </script>
+}

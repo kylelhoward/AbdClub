@@ -182,42 +182,6 @@ public class SmtpEmailService : IEmailService
         }
     }
 
-    public async Task SendVolunteerReminderAsync(Dance dance, Volunteer volunteer)
-    {
-        if (string.IsNullOrEmpty(volunteer.Email)) return;
-
-        var subject = $"Volunteer Reminder: {dance.Title}";
-        var body = $@"
-            <h2>Volunteer Reminder</h2>
-            <p>Hi {volunteer.Name},</p>
-            <p>Thank you for volunteering for <strong>{dance.Title}</strong>!</p>
-            <h3>Event Details:</h3>
-            <ul>
-                <li>Date: {dance.Date:MMMM d, yyyy}</li>
-                <li>Time: {dance.StartTime} - {dance.EndTime}</li>
-                <li>Location: {dance.Location}</li>
-                <li>Contact: {dance.ContactEmail ?? "Not provided"}</li>
-            </ul>
-            <p>We appreciate your support!<br/>— The ABD Team</p>
-        ";
-
-        try
-        {
-            using var smtp = GetSmtpClient();
-            using var message = BuildMessage(volunteer.Email, volunteer.Name, subject, body, isHtml: true);
-
-            await smtp.SendMailAsync(message);
-
-            _logger.LogInformation("Volunteer reminder sent via SMTP to {Email} for dance {DanceId}",
-                volunteer.Email, dance.Id);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Failed to send volunteer reminder to {Email}: {Exception}",
-                volunteer.Email, ex.Message);
-        }
-    }
-
     public async Task SendOfficerReminderAsync(Dance dance, Member officer)
     {
         if (string.IsNullOrEmpty(officer.Email)) return;
@@ -505,5 +469,119 @@ public class SmtpEmailService : IEmailService
         {
             await smtpClient.SendMailAsync(mailMessage);
         }
+    }
+
+    public async Task SendVolunteerAssignmentNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyType, bool isAddition)
+    {
+        if (string.IsNullOrEmpty(recipientEmail)) return;
+
+        var senderEmail = _config["Email:Username"] ?? "coordination@abdclub.com";
+        string subjectAction = isAddition ? "Assignment Confirmed" : "Assignment Cancelled";
+
+        string statusBodyText = isAddition
+            ? $"Excellent news! You have been successfully scheduled for the <strong>{dutyType}</strong> team position."
+            : $"This notification confirms that your scheduled shift position for <strong>{dutyType}</strong> has been cancelled.";
+
+        var htmlContent = $@"
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset='utf-8'></head>
+    <body style='font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px;'>
+        <div style='background-color: #ffffff; padding: 25px; border-radius: 6px; max-width: 550px; margin: 0 auto; border: 1px solid #dee2e6;'>
+            <h3 style='color: {(isAddition ? "#198754" : "#dc3545")}; margin-top: 0;'>AbdClub Staffing Update: {subjectAction}</h3>
+            <p>Hi {recipientName},</p>
+            <p>{statusBodyText}</p>
+            <hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;' />
+            <p style='margin-bottom: 5px;'><strong>Event Details:</strong></p>
+            <ul style='margin-top: 0; padding-left: 20px;'>
+                <li>Event Title: {danceTitle}</li>
+                <li>Scheduled Date: {dateString}</li>
+            </ul>
+            <p style='font-size: 13px; color: #6c757d; margin-top: 25px;'>If you have scheduling questions, reply directly to this message tracking lane.</p>
+        </div>
+    </body>
+    </html>";
+
+        var mailMessage = new MailMessage(senderEmail, recipientEmail)
+        {
+            Subject = $"[Staff Notification] {danceTitle} - {subjectAction}",
+            Body = htmlContent,
+            IsBodyHtml = true
+        };
+
+        try
+        {
+            using (var smtpClient = GetSmtpClient())
+            {
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            _logger.LogInformation("Staff notification dispatch delivered successfully targeting {Email}.", recipientEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Background transport wrapper failed distributing email notifications targeting {Email}", recipientEmail);
+        }
+    }
+
+    public async Task SendOfficerDutyNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyActionText)
+    {
+        if (string.IsNullOrEmpty(recipientEmail)) return;
+
+        var senderEmail = _config["Email:Username"] ?? "coordination@abdclub.com";
+
+        var htmlContent = $@"
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset='utf-8'></head>
+    <body style='font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; color: #333;'>
+        <div style='background-color: #ffffff; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05);'>
+            <div style='background-color: #212529; color: #ffffff; padding: 15px; border-radius: 6px 6px 0 0; text-align: center; font-weight: bold; font-size: 16px; letter-spacing: 0.5px;'>
+                OFFICIAL OFFICER DUTY ROSTER NOTICE
+            </div>
+            <div style='padding-top: 20px;'>
+                <p>Attention <strong>{recipientName}</strong>,</p>
+                <p>This automated transmission confirms a change to your scheduled event assignments:</p>
+                
+                <div style='background-color: #f8f9fa; border-left: 4px solid #0d6efd; padding: 15px; margin: 20px 0; border-radius: 0 4px 4px 0;'>
+                    <p style='margin: 0 0 8px 0;'><strong>Action Status:</strong> {dutyActionText}</p>
+                    <p style='margin: 0 0 8px 0;'><strong>Dance Event:</strong> {danceTitle}</p>
+                    <p style='margin: 0;'><strong>Event Date:</strong> {dateString}</p>
+                </div>
+
+                <p style='font-size: 14px; color: #6c757d; margin-top: 30px;'>
+                    Please update your calendar accordingly. If you have conflict management concerns, reply to your commanding team or event coordinator directly.
+                </p>
+            </div>
+            <div style='border-top: 1px solid #edf2f7; margin-top: 25px; padding-top: 15px; text-align: center; font-size: 11px; color: #a0aec0;'>
+                Automated System Message | AbdClub Operations Matrix
+            </div>
+        </div>
+    </body>
+    </html>";
+
+        var mailMessage = new MailMessage(senderEmail, recipientEmail)
+        {
+            Subject = $"[Duty Roster Notice] {danceTitle} Update",
+            Body = htmlContent,
+            IsBodyHtml = true
+        };
+
+        try
+        {
+            using (var smtpClient = GetSmtpClient())
+            {
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            _logger.LogInformation("Officer notification dispatched to {Email}.", recipientEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed background transport delivery to officer destination: {Email}", recipientEmail);
+        }
+    }
+
+    public Task SendVolunteerReminderAsync(Dance dance, MasterVolunteer volunteer)
+    {
+        throw new NotImplementedException();
     }
 }

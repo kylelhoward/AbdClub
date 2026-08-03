@@ -28,7 +28,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-page="/Index">Home</a>
                         </li>
-
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Members/Dances/Index">Dances</a>
+                            </li>
                         @* {{!-- My Membership — only when logged in --}} *@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
@@ -50,7 +52,8 @@
                                     <li><a class="dropdown-item" asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
                                     <li><a class="dropdown-item" asp-page="/Officers/Members/MembersList">Members</a></li>
                                     <li><a class="dropdown-item" asp-page="/Officers/Meetings">Meetings</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/Dances">Dances</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Registry/Index">Registry</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Officers/Dances/Index">Dances</a></li>
                                     <li><a class="dropdown-item" asp-page="/Officers/FileManager">Club Files</a></li>
                                     <li><a class="dropdown-item" asp-page="/Officers/BatchNotify">Officer Broadcast Center</a></li>
                                     <li><a class="dropdown-item" asp-page="/Officers/NewsLetter/Index">Manager NewsLetter Subscribers</a></li>
@@ -128,7 +131,8 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
+    <!-- Include Alpine.js directly in the head layout context -->
+    <script defer src="~/js/vendor/alpine.min.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

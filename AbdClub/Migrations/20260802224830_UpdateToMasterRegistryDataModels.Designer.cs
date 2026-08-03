@@ -3,6 +3,7 @@ using System;
 using AbdClub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AbdClub.Migrations
 {
     [DbContext(typeof(AbdContext))]
-    partial class AbdContextModelSnapshot : ModelSnapshot
+    [Migration("20260802224830_UpdateToMasterRegistryDataModels")]
+    partial class UpdateToMasterRegistryDataModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,8 +183,9 @@ namespace AbdClub.Migrations
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time without time zone");
 
-                    b.Property<int>("InstructorId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Instructor")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
@@ -193,8 +197,6 @@ namespace AbdClub.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DanceId");
-
-                    b.HasIndex("InstructorId");
 
                     b.ToTable("Lessons");
                 });
@@ -587,15 +589,7 @@ namespace AbdClub.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("AbdClub.Models.MasterInstructor", "Instructor")
-                        .WithMany()
-                        .HasForeignKey("InstructorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Dance");
-
-                    b.Navigation("Instructor");
                 });
 
             modelBuilder.Entity("AbdClub.Models.MeetingNote", b =>

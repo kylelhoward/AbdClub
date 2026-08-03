@@ -1,0 +1,138 @@
+﻿@page
+@model AbdClub.Pages.Officers.Registry.IndexModel
+@using System.Text.Encodings.Web
+@{
+    ViewData["Title"] = "Global Club Registries Manager";
+}
+
+<!-- Initialize Alpine State Engine Container Mapping -->
+<div class="container mt-4" 
+     x-data="{ 
+        activeTab: 'Djs',
+        // Modal bound states
+        mRecordId: 0,
+        mType: 'DJ',
+        mName: '',
+        mEmail: '',
+        mPhone: '',
+        mNotes: '',
+
+        openCreateModal(type) {
+            this.mRecordId = 0;
+            this.mType = type;
+            this.mName = '';
+            this.mEmail = '';
+            this.mPhone = '';
+            this.mNotes = '';
+            new bootstrap.Modal(document.getElementById('masterRegistryModal')).show();
+        },
+        openEditModal(id, type, name, email, phone, notes) {
+            this.mRecordId = id;
+            this.mType = type;
+            this.mName = name;
+            this.mEmail = email;
+            this.mPhone = phone;
+            this.mNotes = notes;
+            new bootstrap.Modal(document.getElementById('masterRegistryModal')).show();
+        }
+     }">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-person-rolodex text-dark me-2"></i>Global Registry Directories</h2>
+            <p class="text-muted mb-0">Maintain permanent lookup records for system wide select integration drop boxes.</p>
+        </div>
+        <!-- Button maps context values dynamically via Alpine bindings -->
+        <button type="button" class="btn btn-dark btn-lg shadow-sm" x-on:click="openCreateModal(activeTab.slice(0, -1))">
+            <i class="bi bi-plus-circle me-1"></i> Add To <span x-text="activeTab"></span>
+        </button>
+    </div>
+
+    @if (Model.StatusNotice != null)
+    {
+        <div class="alert @(Model.StatusNotice.StartsWith("Error") ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm mb-4">
+            <i class="bi @(Model.StatusNotice.StartsWith("Error") ? "bi-x-circle-fill" : "bi-check-circle-fill") me-2"></i>
+            @Model.StatusNotice
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- TAB BED LINK SELECT NAVIGATION SYSTEM -->
+    <ul class="nav nav-tabs nav-fill mb-4 border-bottom shadow-sm rounded-top bg-light">
+        <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Djs' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Djs'"><i class="bi bi-disc me-2"></i>Master DJs</button></li>
+        <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Hosts' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Hosts'"><i class="bi bi-person-badge me-2"></i>Dance Hosts</button></li>
+        <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Instructors' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Instructors'"><i class="bi bi-mortarboard me-2"></i>Instructors</button></li>
+        <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Volunteers' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Volunteers'"><i class="bi bi-heart me-2"></i>Volunteers</button></li>
+    </ul>
+
+    <!-- DYNAMIC LIST CONTAINER TIERS -->
+    <!-- Tab 1: DJs -->
+    <div x-show="activeTab === 'Djs'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Djs){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="DJ" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+
+    <!-- Tab 2: Hosts -->
+    <div x-show="activeTab === 'Hosts'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Hosts){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Host', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Host" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+
+    <!-- Tab 3: Instructors -->
+    <div x-show="activeTab === 'Instructors'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Instructors){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Instructor', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Instructor" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+
+    <!-- Tab 4: Volunteers -->
+    <div x-show="activeTab === 'Volunteers'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Volunteers){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Volunteer', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Volunteer" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+
+<!-- UNIFIED REGISTRY SINGLE EDIT/CREATE POPUP MODAL -->
+<div class="modal fade" id="masterRegistryModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" asp-page-handler="SaveProfile" id="registryForm" class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-gear me-2"></i>Manage <span x-text="mType" class="text-warning"></span> Profile Directory
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Standard hidden inputs routing form data securely back to your backend input model binder properties -->
+                <input type="hidden" asp-for="FormInput.RecordId" :value="mRecordId" />
+                <input type="hidden" asp-for="FormInput.TargetType" :value="mType" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted mb-1">Full Display Name</label>
+                    <input asp-for="FormInput.Name" x-model="mName" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted mb-1">Email Address</label>
+                    <input asp-for="FormInput.Email" type="email" x-model="mEmail" class="form-control" placeholder="Optional contact address..." />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted mb-1">Phone Number</label>
+                    <input asp-for="FormInput.Phone" x-model="mPhone" class="form-control" placeholder="e.g., 555-1234" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted mb-1">Internal Reference Notes</label>
+                    <textarea asp-for="FormInput.Notes" x-model="mNotes" class="form-control" rows="3" placeholder="Add specific scheduling notes, skill rankings, or availability limits..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Discard</button>
+                <button type="submit" id="saveSubmitBtn" class="btn btn-primary px-4">Save Directory Row</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Form intercept double-click protection script block
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registryForm');
+            const btn = document.getElementById('saveSubmitBtn');
+
+            if (form && btn) {
+                form.addEventListener('submit', function() {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving to Database...';
+                });
+            }
+        });
+    </script>
+}

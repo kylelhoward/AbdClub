@@ -15,12 +15,13 @@ public class AbdContext : DbContext
     public DbSet<Event> Events { get; set; } = null!;
     public DbSet<Dance> Dances { get; set; } = null!;
     public DbSet<Lesson> Lessons { get; set; } = null!;
-    public DbSet<DJ> Djs { get; set; } = null!;
-    public DbSet<Volunteer> Volunteers { get; set; } = null!;
     public DbSet<NewsletterSubscriber> NewsletterSubscribers { get; set; } = null!;
     public DbSet<BroadcastAuditLog> BroadcastAuditLogs { get; set; }
     public DbSet<MagicLink> MagicLinks { get; set; } = null!;
-
+    public DbSet<MasterDJ> MasterDjs { get; set; }
+    public DbSet<MasterHost> MasterHosts { get; set; }
+    public DbSet<MasterInstructor> MasterInstructors { get; set; }
+    public DbSet<MasterVolunteer> MasterVolunteers { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -31,32 +32,26 @@ public class AbdContext : DbContext
             .HasValue<Event>("Event")
             .HasValue<Dance>("Dance");
 
-        // One-to-many: Dance -> Lessons
+        // One-to-Many: MasterInstructor -> Lessons (An instructor can teach multiple lessons over time)
         modelBuilder.Entity<Lesson>()
-            .HasOne(l => l.Dance)
-            .WithMany(d => d.Lessons)
-            .HasForeignKey(l => l.DanceId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasOne(l => l.Instructor)
+            .WithMany() // Leave empty if your MasterInstructor class doesn't have an explicit navigation collection list
+            .HasForeignKey(l => l.InstructorId)
+            .OnDelete(DeleteBehavior.Restrict); // Restrict stops accidental deletions of instructors with active classes
 
-        // One-to-one: DJ -> Dance
-        modelBuilder.Entity<DJ>()
-            .HasOne(j => j.Dance)
-            .WithOne(d => d.Dj)
-            .HasForeignKey<DJ>(j => j.DanceId)
-            .OnDelete(DeleteBehavior.Cascade);
 
-        // One-to-many: Dance -> Volunteers
-        modelBuilder.Entity<Volunteer>()
-            .HasOne(v => v.Dance)
-            .WithMany(d => d.Volunteers)
-            .HasForeignKey(v => v.DanceId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Many-to-many: Dance <-> Member (AttendingOfficers)
+        // One-to-Many: DJ Lookup -> Dances
         modelBuilder.Entity<Dance>()
-            .HasMany(d => d.AttendingOfficers)
+            .HasOne(d => d.AssignedDj)
             .WithMany()
-            .UsingEntity(join => join.ToTable("DanceAttendingOfficers"));
+            .HasForeignKey(d => d.AssignedDjId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Many-to-Many Junction table maps for reusable assignments
+        modelBuilder.Entity<Dance>().HasMany(d => d.AssignedHosts).WithMany().UsingEntity(j => j.ToTable("DanceAssignedHosts"));
+        modelBuilder.Entity<Dance>().HasMany(d => d.AssignedInstructors).WithMany().UsingEntity(j => j.ToTable("DanceAssignedInstructors"));
+        modelBuilder.Entity<Dance>().HasMany(d => d.AssignedVolunteers).WithMany().UsingEntity(j => j.ToTable("DanceAssignedVolunteers"));
+
 
         modelBuilder.Entity<ClubFile>()
             .HasOne(f => f.UploadedBy)

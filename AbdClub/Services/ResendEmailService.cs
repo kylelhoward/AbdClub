@@ -205,55 +205,6 @@ public class ResendEmailService : IEmailService
         }
     }
 
-    public async Task SendVolunteerReminderAsync(Dance dance, Volunteer volunteer)
-    {
-        if (string.IsNullOrEmpty(volunteer.Email)) return;
-
-        var subject = $"Volunteer Reminder: {dance.Title}";
-        var body = $@"
-            <h2>Volunteer Reminder</h2>
-            <p>Hi {volunteer.Name},</p>
-            <p>Thank you for volunteering for <strong>{dance.Title}</strong>!</p>
-            <h3>Event Details:</h3>
-            <ul>
-                <li>Date: {dance.Date:MMMM d, yyyy}</li>
-                <li>Time: {dance.StartTime} - {dance.EndTime}</li>
-                <li>Location: {dance.Location}</li>
-                <li>Contact: {dance.ContactEmail ?? "Not provided"}</li>
-            </ul>
-            <p>We appreciate your support!<br/>— The ABD Team</p>
-        ";
-
-        try
-        {
-            var email = new EmailMessage
-            {
-                From = GetFromAddress(),
-                To = volunteer.Email,
-                Subject = subject,
-                HtmlBody = body
-            };
-
-            var response = await _resendClient.EmailSendAsync(email);
-
-            if (response != null && response.Exception == null)
-            {
-                _logger.LogInformation("Volunteer reminder sent via Resend to {Email} for dance {DanceId}",
-                    volunteer.Email, dance.Id);
-            }
-            else
-            {
-                var errorMsg = response?.Exception?.Message ?? "Unknown error";
-                _logger.LogError("Failed to send volunteer reminder to {Email}: {Error}",
-                    volunteer.Email, errorMsg);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Failed to send volunteer reminder to {Email}: {Exception}",
-                volunteer.Email, ex.Message);
-        }
-    }
 
     public async Task SendOfficerReminderAsync(Dance dance, Member officer)
     {
@@ -433,6 +384,21 @@ public class ResendEmailService : IEmailService
     }
 
     public string GenerateBroadcastHtmlBody(string recipientName, string bodyContent)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendVolunteerAssignmentNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyType, bool isAddition)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendOfficerDutyNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyActionText)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SendVolunteerReminderAsync(Dance dance, MasterVolunteer volunteer)
     {
         throw new NotImplementedException();
     }
