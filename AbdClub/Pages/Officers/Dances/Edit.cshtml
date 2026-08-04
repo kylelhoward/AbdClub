@@ -1,10 +1,14 @@
 ﻿@page "{id:int}"
 @model AbdClub.Pages.Officers.Dances.EditModel
+@using System.Text.Encodings.Web
 @{
     ViewData["Title"] = "Comprehensive Event Matrix Editor";
 }
 
-<div class="container mt-4" style="max-width: 1100px;">
+<!-- Pull down Alpine tool structures natively hosted locally -->
+<script defer src="~/js/vendor/alpine.min.js" asp-append-version="true"></script>
+
+<div class="container mt-4" style="max-width: 1000px;">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-page="/Officers/FileManager">Officer Panel</a></li>
@@ -15,206 +19,287 @@
 
     <div class="mb-4">
         <h2><i class="bi bi-gear-wide-connected text-dark me-2"></i>Master Event Configuration</h2>
-        <h5 class="text-muted">Targeting: <span class="text-primary fw-bold">@Model.TargetDance.Title</span> (@Model.TargetDance.Date.ToString("yyyy-MM-dd"))</h5>
+        <h5 class="text-muted">Dance Id @Model.TargetDance.Id: <span class="text-primary fw-bold">@Model.TargetDance.Title</span> (@Model.TargetDance.Date.ToString("yyyy-MM-dd"))</h5>
     </div>
 
     @if (Model.UpdateFeedback != null)
     {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4">
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>@Model.UpdateFeedback
-            <button type="button" class="btn-close" data-bs-alert data-bs-dismiss="alert"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    <!-- Setup structural JSON serialization configurations so Alpine can read existing records natively -->
-    <form method="post" asp-page-handler="UpdateRoster" id="masterForm"
-        class="row g-4"
+    <!-- 
+        Unified Form utilizing precise single quotes for x-data boundaries.
+        The system forces exact PascalCase serialization parameters to match lesson casing fields.
+    -->
+    <form method="post" asp-page-handler="UpdateRoster" id="masterForm" class="vstack gap-4"
           x-data='{
-        lessons: @Html.Raw(Json.Serialize(Model.FormInput.Lessons ?? new List<LessonInputItem>())),
-        addLesson() {
-        this.lessons.push({ instructorid: 0, type: "", startTime: "19:00:00", endTime: "20:00:00" });
-        },
-        removeLesson(index) {
-        this.lessons.splice(index, 1);
-        }
-        }'>
+              lessons: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.FormInput.Lessons ?? new List<LessonInputItem>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null })),
+              addLesson() {
+                  this.lessons.push({ InstructorId: 0, Type: "", StartTime: "19:00", EndTime: "20:00" });
+              },
+              removeLesson(index) {
+                  this.lessons.splice(index, 1);
+              }
+          }'>
 
-              <div asp-validation-summary="ModelOnly" class="text-danger small col-12"></div>
+        <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
 
-        <!-- LEFT COLUMN: DJ AND LOOKUP REGISTRY SELECTIONS -->
-        <div class="col-lg-5">
-            <!-- TIER A: MASTER DJ LOOKUP REGISTRY SELECTION -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-dark text-white p-3">
-                    <h6 class="mb-0 text-uppercase tracking-wider fw-bold small"><i class="bi bi-disc-fill me-2"></i>Assigned Event DJ</h6>
-                </div>
-                <div class="card-body p-3">
-                    <label class="form-label small fw-bold text-muted mb-1">Select Lookup Registry DJ</label>
-                    <select asp-for="FormInput.SelectedDjId" class="form-select bg-light fw-semibold">
-                        <option value="">-- No DJ Assigned / Vacant Position --</option>
-                        @foreach (var dj in Model.RegistryDjs)
-                        {
-                            <option value="@dj.Id">@dj.Name</option>
-                        }
-                    </select>
-                </div>
-            </div>
-
-            <!-- TIER B: MULTI-SELECT ROSTER GRID SYSTEM (LOOKUPS) -->
-            <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-dark text-white p-3">
-                    <h6 class="mb-0 text-uppercase tracking-wider fw-bold small"><i class="bi bi-person-lines-fill me-2"></i>Staff & Helper Registries</h6>
-                </div>
-                <div class="card-body p-3 vstack gap-3">
-                    <!-- Hosts Selection -->
-                    <div>
-                        <label class="fw-bold small mb-1 text-muted d-block"><i class="bi bi-person-badge-fill me-1 text-primary"></i>Dance Hosts</label>
-                        <div class="border bg-white rounded p-2" style="max-height: 110px; overflow-y: auto;">
-                            @foreach (var host in Model.RegistryHosts)
-                            {
-                                bool isChecked = Model.CurrentlyAssignedHostIds.Contains(host.Id);
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="FormInput.SelectedHostIds" value="@host.Id" id="h_@host.Id" @(isChecked ? "checked" : "") />
-                                    <label class="form-check-label small" for="h_@host.Id">@host.Name</label>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- Volunteers Selection -->
-                    <div>
-                        <label class="fw-bold small mb-1 text-muted d-block"><i class="bi bi-heart-fill me-1 text-danger"></i>Volunteers</label>
-                        <div class="border bg-white rounded p-2" style="max-height: 110px; overflow-y: auto;">
-                            @foreach (var vol in Model.RegistryVolunteers)
-                            {
-                                bool isChecked = Model.CurrentlyAssignedVolunteerIds.Contains(vol.Id);
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="FormInput.SelectedVolunteerIds" value="@vol.Id" id="v_@vol.Id" @(isChecked ? "checked" : "") />
-                                    <label class="form-check-label small" for="v_@vol.Id">@vol.Name</label>
-                                </div>
-                            }
+        <!-- MASTER STAFFING ACCORDION SYSTEM -->
+        <div class="accordion shadow-sm" id="danceMatrixAccordion">
+           
+                        <!-- ACCORDION ITEM 0: CORE EVENT TEXT DETAILS -->
+            <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+                <h2 class="accordion-header" id="headingCoreInfo">
+                    <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoreInfo" aria-expanded="true" aria-controls="collapseCoreInfo">
+                        <i class="bi bi-info-circle-fill me-2 text-warning"></i>Core Event Details
+                    </button>
+                </h2>
+                <div id="collapseCoreInfo" class="accordion-collapse collapse show" aria-labelledby="headingCoreInfo" data-bs-parent="#danceMatrixAccordion">
+                    <div class="accordion-body bg-white p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-muted mb-1">Dance Event Title</label>
+                                <input asp-for="FormInput.Title" class="form-control form-control-lg fw-semibold" placeholder="e.g., Summer Retro Swing Gala" required />
+                                <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small text-muted mb-1">Public Calendar Announcement Description</label>
+                                <textarea asp-for="FormInput.Description" class="form-control" rows="3" placeholder="Provide public details about pricing, themes, attire rules..."></textarea>
+                                <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TIER C: SHIFT CHECKLIST FOR ATTENDING OFFICERS -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark text-white p-3">
-                    <h6 class="mb-0 text-uppercase tracking-wider fw-bold small"><i class="bi bi-shield-lock-fill me-2"></i>Attending Duty Officers</h6>
-                </div>
-                <div class="card-body p-3">
-                    <div class="border rounded bg-white p-2" style="max-height: 180px; overflow-y: auto;">
-                        @foreach (var officer in Model.AllActiveOfficers)
+
+
+
+            <!-- ACCORDION ACCORDION ITEM 1: MASTER DJ CONFIGURATION -->
+            <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+                <h2 class="accordion-header" id="headingDj">
+                    <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDj" aria-expanded="true" aria-controls="collapseDj">
+                        <i class="bi bi-disc-fill me-2 text-warning"></i>Assigned Event DJ Lookup
+                    </button>
+                </h2>
+                <div id="collapseDj" class="accordion-collapse collapse " aria-labelledby="headingDj" data-bs-parent="#danceMatrixAccordion">
+                    <div class="accordion-body bg-white p-4">
+                        <label class="form-label small fw-bold text-muted mb-1">Select Lookup Registry DJ</label>
+                        <select asp-for="FormInput.SelectedDjId" class="form-select form-select-lg bg-light border-light-subtle fw-semibold text-dark">
+                            <option value="">-- No DJ Assigned / Vacant Position --</option>
+                            @foreach (var dj in Model.RegistryDjs)
+                            {
+                                <option value="@dj.Id">@dj.Name @(!string.IsNullOrEmpty(dj.Email) ? $"({dj.Email})" : "")</option>
+                            }
+                        </select>
+                        @if (Model.TargetDance.AssignedDj != null && !string.IsNullOrEmpty(Model.TargetDance.AssignedDj.Email))
                         {
-                            bool isChecked = Model.CurrentlyAssignedOfficerIds.Contains(officer.Id);
-                            <div class="form-check p-1 border-bottom border-light">
-                                <input class="form-check-input ms-0 me-2" type="checkbox" name="FormInput.SelectedOfficerIds" value="@officer.Id" id="of_@officer.Id" @(isChecked ? "checked" : "") />
-                                <label class="form-check-label small fw-bold text-dark pt-0" for="of_@officer.Id">@($"{officer.FullName}")</label>
+                            <div class="mt-2 small">
+                                <span class="text-muted">Active Contact:</span> 
+                                <a href="mailto:@Model.TargetDance.AssignedDj.Email" class="fw-medium text-decoration-none"><i class="bi bi-envelope-at me-1"></i>@Model.TargetDance.AssignedDj.Email</a>
                             </div>
                         }
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- RIGHT COLUMN: DYNAMIC LESSON MANAGEMENT PANEL AREA -->
-        <div class="col-md-7">
-            <div class="card shadow-sm border-0 h-100 d-flex flex-column">
-                <div class="card-header bg-secondary text-white p-3 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 text-uppercase tracking-wider fw-bold small"><i class="bi bi-journal-bookmark-fill me-2"></i>Event Pre-Dance Lessons</h6>
-                    <button type="button" class="btn btn-sm btn-light fw-bold" x-on:click="addLesson()">
-                        <i class="bi bi-plus-circle-fill text-success me-1"></i>Add Lesson Slot
+
+            <!-- ACCORDION ITEM 2: HOSTS AND VOLUNTEERS DIRECTORIES -->
+            <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+                <h2 class="accordion-header" id="headingStaff">
+                    <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStaff" aria-expanded="false" aria-controls="collapseStaff">
+                        <i class="bi bi-person-lines-fill me-2 text-info"></i>Staff & Helper Registries
                     </button>
-                </div>
-
-                <div class="card-body p-3 flex-grow-1">
-                    <!-- Template Loop Slot running via Alpine array controls -->
-                    <template x-for="(lesson, index) in lessons" :key="index">
-                        <div class="bg-light border rounded p-3 mb-3 position-relative shadow-sm">
-                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-sm text-danger" style="font-size:0.75rem;" x-on:click="removeLesson(index)"></button>
-
-                            <div class="row g-2">
-                                <div class="col-sm-6">
-                                    <label class="form-label small fw-bold text-muted mb-0">Lesson Topic / Type</label>
-                                    <!-- FIXED: Changed x-model to lesson.type to read the camelCase JSON payload -->
-                                    <input type="text"
-                                           :name="'FormInput.Lessons['+index+'].Type'"
-                                           x-model="lesson.type"
-                                           class="form-control form-control-sm"
-                                           placeholder="e.g., East Coast Swing (Intro)"
-                                           required />
+                </h2>
+                <div id="collapseStaff" class="accordion-collapse collapse" aria-labelledby="headingStaff" data-bs-parent="#danceMatrixAccordion">
+                    <div class="accordion-body bg-white p-4">
+                        <div class="row g-4">
+                            <!-- Dance Hosts Checklist -->
+                            <div class="col-md-6">
+                                <label class="fw-bold small mb-2 text-muted d-block"><i class="bi bi-person-badge-fill me-1 text-primary"></i>Dance Hosts Directory</label>
+                                <div class="border bg-white rounded p-3" style="max-height: 220px; overflow-y: auto;">
+                                    @foreach (var host in Model.RegistryHosts)
+                                    {
+                                        bool isChecked = Model.CurrentlyAssignedHostIds.Contains(host.Id);
+                                        <div class="form-check p-2 border-bottom border-light d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <input class="form-check-input ms-0 me-2" type="checkbox" name="FormInput.SelectedHostIds" value="@host.Id" id="h_@host.Id" @(isChecked ? "checked" : "") />
+                                                <label class="form-check-label small fw-semibold text-dark" for="h_@host.Id">@host.Name</label>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(host.Email))
+                                            {
+                                                <a href="mailto:@host.Email" class="small text-muted text-decoration-none" title="Email Host"><i class="bi bi-envelope me-1"></i>Link</a>
+                                            }
+                                        </div>
+                                    }
                                 </div>
+                            </div>
 
-                                <div class="col-sm-6">
-                                    <label class="form-label small fw-bold text-muted mb-0">Instructor Name</label>
-                                    <!-- FIXED: Changed x-model to lesson.instructorId -->
-                                    <select :name="'FormInput.Lessons['+index+'].InstructorId'"
-                                            x-model="lesson.instructorId"
-                                            class="form-select form-select-sm"
-                                            required>
-                                        <option value="">-- Choose Instructor --</option>
-                                        @foreach (var inst in Model.RegistryInstructors)
-                                        {
-                                            <option value="@inst.Id">@inst.Name</option>
-                                        }
-                                    </select>
-                                </div>
-
-                                <div class="col-sm-6">
-                                    <label class="form-label small fw-bold text-muted mb-0">Start Time</label>
-                                    <!-- FIXED: Changed x-model to lesson.startTime -->
-                                    <input type="time"
-                                           :name="'FormInput.Lessons['+index+'].StartTime'"
-                                           x-model="lesson.startTime"
-                                           class="form-control form-control-sm"
-                                           required />
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label small fw-bold text-muted mb-0">End Time</label>
-                                    <!-- FIXED: Changed x-model to lesson.endTime -->
-                                    <input type="time"
-                                           :name="'FormInput.Lessons['+index+'].EndTime'"
-                                           x-model="lesson.endTime"
-                                           class="form-control form-control-sm"
-                                           required />
+                            <!-- Volunteers Checklist -->
+                            <div class="col-md-6">
+                                <label class="fw-bold small mb-2 text-muted d-block"><i class="bi bi-heart-fill me-1 text-danger"></i>Volunteers Directory</label>
+                                <div class="border bg-white rounded p-3" style="max-height: 220px; overflow-y: auto;">
+                                    @foreach (var vol in Model.RegistryVolunteers)
+                                    {
+                                        bool isChecked = Model.CurrentlyAssignedVolunteerIds.Contains(vol.Id);
+                                        <div class="form-check p-2 border-bottom border-light d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <input class="form-check-input ms-0 me-2" type="checkbox" name="FormInput.SelectedVolunteerIds" value="@vol.Id" id="v_@vol.Id" @(isChecked ? "checked" : "") />
+                                                <label class="form-check-label small fw-semibold text-dark" for="v_@vol.Id">@vol.Name</label>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(vol.Email))
+                                            {
+                                                <a href="mailto:@vol.Email" class="small text-muted text-decoration-none" title="Email Volunteer"><i class="bi bi-envelope me-1"></i>Link</a>
+                                            }
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </div>
-                    </template>
-
-                    <div x-show="lessons.length === 0" class="text-center text-muted p-5 my-auto">
-                        <i class="bi bi-journals fs-3 d-block mb-2 text-opacity-50"></i>
-                        No instructional lessons configured for this social dance yet.
                     </div>
                 </div>
+            </div>
 
-                <div class="card-footer bg-light p-3 d-flex justify-content-between mt-auto">
-                    <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
-                    <button type="submit" id="masterSubmitBtn" class="btn btn-dark px-4">
-                        <i class="bi bi-cloud-arrow-up-fill me-1"></i>Commit Master Roster Update
+            
+        
+                    <!-- ACCORDION ITEM 3: ATTENDING DUTY OFFICERS LISTS -->
+            <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+                <h2 class="accordion-header" id="headingOfficers">
+                    <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOfficers" aria-expanded="false" aria-controls="collapseOfficers">
+                        <i class="bi bi-shield-lock-fill me-2 text-secondary"></i>Attending Duty Officers
                     </button>
+                </h2>
+                <div id="collapseOfficers" class="accordion-collapse collapse" aria-labelledby="headingOfficers" data-bs-parent="#danceMatrixAccordion">
+                    <div class="accordion-body bg-white p-4">
+                        <p class="text-muted small mb-3">Check or uncheck the boxes below to manage officer assignments for this dance event. Toggling statuses automatically coordinates layout updates and triggers automated email notices.</p>
+                        <div class="border rounded bg-white p-3" style="max-height: 240px; overflow-y: auto;">
+                            <div class="row row-cols-1 row-cols-md-2 g-2">
+                                @foreach (var officer in Model.AllActiveOfficers)
+                                {
+                                    bool isChecked = Model.CurrentlyAssignedOfficerIds.Contains(officer.Id);
+                                    <div class="col">
+                                        <div class="form-check p-2 border rounded bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <input class="form-check-input ms-1 me-2 fs-5" type="checkbox" name="FormInput.SelectedOfficerIds" value="@officer.Id" id="of_@officer.Id" @(isChecked ? "checked" : "") />
+                                                <label class="form-check-label small fw-bold text-dark pt-0" for="of_@officer.Id">
+                                                    @($"{officer.FullName}")
+                                                    <span class="text-muted font-monospace small">(@(officer.OfficerRole ?? "Staff"))</span>
+                                                </label>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(officer.Email))
+                                            {
+                                                <a href="mailto:@officer.Email" class="btn btn-sm btn-link text-primary p-0 text-decoration-none" title="Email Officer: @officer.Email">
+                                                    <i class="bi bi-envelope-at fs-5"></i>
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+        
+                    <!-- ACCORDION ITEM 4: EVENT PRE-DANCE LESSONS MATRIX -->
+            <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+                <h2 class="accordion-header" id="headingLessons">
+                    <button class="accordion-button collapsed bg-secondary text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLessons" aria-expanded="false" aria-controls="collapseLessons">
+                        <i class="bi bi-journal-bookmark-fill me-2 text-warning"></i>Event Pre-Dance Lessons Matrix
+                    </button>
+                </h2>
+                <div id="collapseLessons" class="accordion-collapse collapse" aria-labelledby="headingLessons" data-bs-parent="#danceMatrixAccordion">
+                    <div class="accordion-body bg-white p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <span class="text-muted small">Configure specific structural lesson slots, topics, and assign live registry instructors to this schedule.</span>
+                            <button type="button" class="btn btn-sm btn-dark fw-bold px-3" x-on:click="addLesson()">
+                                <i class="bi bi-plus-circle-fill text-success me-1"></i>Add Lesson Slot
+                            </button>
+                        </div>
+
+                        <!-- Responsive matrix grid rendering dynamic side-by-side loop items -->
+                        <div class="row row-cols-1 row-cols-md-2 g-3">
+                            <template x-for="(lesson, index) in lessons" :key="index">
+                                <div class="col">
+                                    <div class="bg-light border rounded p-3 position-relative shadow-sm h-100">
+                                        <!-- Top corner close button with index array splice triggers -->
+                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-sm text-danger" style="font-size:0.75rem;" x-on:click="removeLesson(index)" aria-label="Remove Lesson"></button>
+
+                                        <div class="row g-2">
+                                            <div class="col-sm-6">
+                                                <label class="form-label small fw-bold text-muted mb-0">Lesson Topic / Type</label>
+                                                <input type="text" :name="'FormInput.Lessons['+index+'].Type'" x-model="lesson.Type" class="form-control form-control-sm border-light-subtle" placeholder="e.g., East Coast Swing (Intro)" required />
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label class="form-label small fw-bold text-muted mb-0">Assigned Master Instructor</label>
+                                                <select :name="'FormInput.Lessons['+index+'].InstructorId'" x-model="lesson.InstructorId" class="form-select form-select-sm border-light-subtle" required>
+                                                    <option value="">-- Choose Instructor --</option>
+                                                    @foreach (var inst in Model.RegistryInstructors)
+                                                    {
+                                                        <option value="@inst.Id">@inst.Name @(!string.IsNullOrEmpty(inst.Email) ? $"({inst.Email})" : "")</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label class="form-label small fw-bold text-muted mb-0">Start Time</label>
+                                                <input type="time" :name="'FormInput.Lessons['+index+'].StartTime'" x-model="lesson.StartTime" class="form-control form-control-sm border-light-subtle" required />
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label class="form-label small fw-bold text-muted mb-0">End Time</label>
+                                                <input type="time" :name="'FormInput.Lessons['+index+'].EndTime'" x-model="lesson.EndTime" class="form-control form-control-sm border-light-subtle" required />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Fallback visual slot block when the dynamic array count registers zero -->
+                        <div x-show="lessons.length === 0" class="text-center text-muted p-5">
+                            <i class="bi bi-journals fs-3 d-block mb-2 opacity-50"></i>
+                            No instructional lessons configured for this social dance yet. Click "Add Lesson Slot" above to begin.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+        
+               <!-- FOOTER SAVE AND CANCEL BUTTON CARDS -->
+        <div class="card bg-light border-0 p-3 d-flex flex-row justify-content-between align-items-center rounded shadow-sm mt-2">
+            <a asp-page="./Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left-circle me-1"></i>Cancel & Return
+            </a>
+            <button type="submit" id="masterSubmitBtn" class="btn btn-dark px-4 btn-lg shadow-sm">
+                <i class="bi bi-cloud-arrow-up-fill me-1"></i>Commit Master Configuration Update
+            </button>
         </div>
+
     </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // Form intercept double-click thread execution freeze lock protection
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('masterForm');
             const submitBtn = document.getElementById('masterSubmitBtn');
 
             if (form && submitBtn) {
-                form.addEventListener('submit', function(e) {
-                    // Check if jQuery validation has flagged any client-side input errors first
+                form.addEventListener('submit', function() {
+                    // Check if client-side validation has flagged formatting errors first
                     if (window.jQuery && !jQuery(form).valid()) {
-                        return;
+                        return; 
                     }
 
-                    // Delay disabling the button by 1 millisecond.
-                    // This allows the browser to package the CSRF token and data payload perfectly first!
+                    // 1-millisecond dispatch timeout delay preserves CSRF anti-forgery token serialization parameters
                     setTimeout(function() {
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Email Notifiers & DB Queries...';
@@ -224,4 +309,5 @@
         });
     </script>
 }
+
 

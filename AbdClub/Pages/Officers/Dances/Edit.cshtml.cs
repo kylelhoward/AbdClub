@@ -68,7 +68,8 @@ public class EditModel : PageModel
 
         CurrentlyAssignedVolunteerIds = TargetDance.AssignedVolunteers.Select(v => v.Id).ToHashSet();
         FormInput.SelectedVolunteerIds = CurrentlyAssignedVolunteerIds.ToList();
-
+        FormInput.Title = TargetDance.Title;
+        FormInput.Description = TargetDance.Description;
         // REFACTORED INITIALIZATION MAP: Selects InstructorId integer indices
         FormInput.Lessons = TargetDance.Lessons.Select(l => new LessonInputItem
         {
@@ -96,6 +97,8 @@ public class EditModel : PageModel
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (dance == null) return NotFound();
+        dance.Title = FormInput.Title.Trim();
+        dance.Description = FormInput.Description?.Trim();
 
         if (!ModelState.IsValid)
         {
@@ -103,7 +106,6 @@ public class EditModel : PageModel
             TargetDance = dance;
             return Page();
         }
-
         dance.AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null;
 
         // Many-to-Many updates

@@ -20,10 +20,6 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        // 1. Resolve browsing member text identity from context claims
-        var memberIdClaim = User.FindFirst("MemberId")?.Value;
-        if (string.IsNullOrEmpty(memberIdClaim)) return Forbid();
-
         // 2. Fetch future schedules including lessons, DJs, and plain-text Volunteer rows
         ActiveSchedule = await _context.Events
             .OfType<Dance>()
