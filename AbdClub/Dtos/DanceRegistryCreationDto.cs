@@ -1,3 +1,5 @@
+using AbdClub.Pages.Officers.Dances;
+
 namespace AbdClub.Dtos;
 
 public class DanceRegistryCreationDto
@@ -15,4 +17,6 @@ public class DanceRegistryCreationDto
     public List<int> SelectedInstructorIds { get; set; } = new();
     public List<int> SelectedVolunteerIds { get; set; } = new();
     public List<int> SelectedOfficerIds { get; set; } = new();
+        public List<LessonCreationItem> Lessons { get; set; } = new();
+
 }

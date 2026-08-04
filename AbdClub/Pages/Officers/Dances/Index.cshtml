@@ -12,6 +12,14 @@
         </button>
     </div>
 
+    @if (Model.UpdateFeedback != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i>@Model.UpdateFeedback
+            <button type="button" class="btn-close" data-bs-alert data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
@@ -76,7 +84,23 @@
 <!-- REFACTORED CREATION INPUT MODAL PANEL WITH ALL PROPERTIES -->
 <div class="modal fade" id="createDanceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <form method="post" asp-page-handler="CreateDance" class="modal-content shadow-lg border-0">
+
+        <!--
+            CRITICAL FIX: Outer single quotes protect inner JSON formatting keys.
+            We initialize an empty array since a brand new dance starts with zero lessons.
+        -->
+        <form method="post" asp-page-handler="CreateDance" class="modal-content shadow-lg border-0"
+              x-data='{
+            lessons: [],
+            addLesson() {
+            this.lessons.push({ instructorid: 0, type: "", startTime: "19:00:00", endTime: "20:00:00" });
+            },
+            removeLesson(index) {
+            this.lessons.splice(index, 1);
+            }
+            }'>
+
+        
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Schedule Registry Dance Event</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -121,7 +145,7 @@
                     <div class="col-md-12">
                         <label class="form-label fw-bold small text-muted mb-1">Public Coordination Contact Email</label>
                         <input asp-for="NewDance.ContactEmail" type="email" class="form-control" placeholder="management@abdclub.com" />
-                        <span asp-validation-for="NewDance.ContactEmail" class="text-danger small"></span>
+                        <span asp-validation-for="NewDance.ContactEmail" class="text-danger small">Contact Email required</span>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label fw-bold small text-muted mb-1">Public Description / Calendar Announcements</label>
@@ -144,10 +168,11 @@
                     </select>
                 </div>
 
-                <!-- Section 5: Triple-Column Roster Grid System -->
+                <!-- Section 5: REFACTORED Two-Column Helper Grid System (Removed Static Instructor Box) -->
                 <div class="row g-3 mb-4">
+
                     <!-- Hosts Column -->
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
                             <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-person-badge-fill text-primary me-1"></i>Dance Hosts</label>
                             <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
@@ -169,31 +194,8 @@
                         </div>
                     </div>
 
-                    <!-- Instructors Column -->
-                    <div class="col-md-4">
-                        <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
-                            <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-mortarboard-fill text-success me-1"></i>Instructors</label>
-                            <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
-                                @if (Model.RegistryInstructors.Any())
-                                {
-                                    foreach (var instructor in Model.RegistryInstructors)
-                                    {
-                                        <div class="form-check mb-1">
-                                            <input class="form-check-input" type="checkbox" name="NewDance.SelectedInstructorIds" value="@instructor.Id" id="i_@instructor.Id" />
-                                            <label class="form-check-label small fw-semibold text-dark" for="i_@instructor.Id">@instructor.Name</label>
-                                        </div>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="text-muted small italic p-1 d-block">Registry empty</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Volunteers Column -->
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
                             <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-heart-fill text-danger me-1"></i>Volunteers</label>
                             <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
@@ -215,8 +217,9 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Section 6: Many-to-Many Attending Club Officers Checklist -->
-                <div class="mb-2">
+                <div class="mb-4">
                     <div class="p-3 border rounded bg-light shadow-sm border-light-subtle">
                         <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-shield-lock-fill text-secondary me-1"></i>Assign Duty Roster Officers</label>
                         <div class="bg-white border rounded p-2" style="max-height: 130px; overflow-y: auto;">
@@ -225,13 +228,11 @@
                                 @foreach (var officer in Model.AvailableOfficers)
                                 {
                                     <div class="form-check mb-1">
-                                        <input 
-                                            class="form-check-input" 
-                                            type="checkbox"
+                                        <input class="form-check-input"
+                                               type="checkbox"
                                                name="NewDance.SelectedOfficerIds"
                                                value="@officer.Id" id="o_@officer.Id" />
-                                        <label 
-                                            class="form-check-label small fw-semibold text-dark" 
+                                        <label class="form-check-label small fw-semibold text-dark"
                                                for="o_@officer.Id">@officer.FullName</label>
                                     </div>
                                 }
@@ -243,6 +244,84 @@
                         </div>
                     </div>
                 </div>
+
+                <!--  DYNAMIC LESSON MANAGEMENT PANEL AREA -->
+                <div class="mb-4">
+                    <div class="card shadow-sm border-0 h-100 d-flex flex-column">
+                        <div class="card-header bg-secondary text-white p-3 d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-uppercase tracking-wider fw-bold small"><i class="bi bi-journal-bookmark-fill me-2"></i>Event Pre-Dance Lessons</h6>
+                            <button type="button" class="btn btn-sm btn-light fw-bold" x-on:click="addLesson()">
+                                <i class="bi bi-plus-circle-fill text-success me-1"></i>Add Lesson Slot
+                            </button>
+                        </div>
+
+                        <div class="card-body p-3 flex-grow-1">
+                            <!-- Template Loop Slot running via Alpine array controls -->
+                            <template x-for="(lesson, index) in lessons" :key="index">
+                                <div class="bg-light border rounded p-3 mb-3 position-relative shadow-sm">
+                                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-sm text-danger" style="font-size:0.75rem;" x-on:click="removeLesson(index)"></button>
+
+                                    <div class="row g-2">
+                                        <div class="col-sm-6">
+                                            <label class="form-label small fw-bold text-muted mb-0">Lesson Topic / Type</label>
+                                            <!-- FIXED: x-model tracks .type -->
+                                            <input type="text" :name="'NewDance.Lessons['+index+'].Type'" x-model="lesson.type" class="form-control form-control-sm" placeholder="e.g., East Coast Swing (Intro)" required />
+                                        </div>
+
+                                        <div class="col-sm-6">
+                                            <label class="form-label small fw-bold text-muted mb-0">Instructor Name</label>
+                                            <!-- FIXED: x-model tracks .instructorId -->
+                                            <select :name="'NewDance.Lessons['+index+'].InstructorId'"
+                                                    x-model="lesson.instructorId"
+                                                    class="form-select form-select-sm"
+                                                    required>
+                                                <option value="">-- Choose Instructor --</option>
+                                                @foreach (var inst in Model.RegistryInstructors)
+                                                {
+                                                    <option value="@inst.Id">@inst.Name</option>
+                                                }
+                                            </select>
+                                        </div>
+
+                                        <div class="col-sm-6">
+                                            <label class="form-label small fw-bold text-muted mb-0">Start Time</label>
+                                            <!-- FIXED: x-model tracks .startTime -->
+                                            <input type="time"
+                                                   :name="'NewDance.Lessons['+index+'].StartTime'"
+                                                   x-model="lesson.startTime"
+                                                   class="form-control form-control-sm"
+                                                   required />
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="form-label small fw-bold text-muted mb-0">End Time</label>
+                                            <!-- FIXED: x-model tracks .endTime -->
+                                            <input type="time"
+                                                   :name="'NewDance.Lessons['+index+'].EndTime'"
+                                                   x-model="lesson.endTime"
+                                                   class="form-control form-control-sm"
+                                                   required />
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="lessons.length === 0" class="text-center text-muted p-5 my-auto">
+                                <i class="bi bi-journals fs-3 d-block mb-2 text-opacity-50"></i>
+                                No instructional lessons configured for this social dance yet.
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-light p-3 d-flex justify-content-between mt-auto">
+                            <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" id="masterSubmitBtn" class="btn btn-dark px-4">
+                                <i class="bi bi-cloud-arrow-up-fill me-1"></i>Commit Master Roster Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+ 
+
+
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>

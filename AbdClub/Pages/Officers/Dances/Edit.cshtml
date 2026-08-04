@@ -27,17 +27,18 @@
     }
 
     <!-- Setup structural JSON serialization configurations so Alpine can read existing records natively -->
-    <form method="post" id="masterForm" class="row g-4"
+    <form method="post" asp-page-handler="UpdateRoster" id="masterForm"
+        class="row g-4"
           x-data='{
         lessons: @Html.Raw(Json.Serialize(Model.FormInput.Lessons ?? new List<LessonInputItem>())),
         addLesson() {
-        this.lessons.push({ instructorid: 0, type: "", starttime: "19:00", endtime: "20:00" });
+        this.lessons.push({ instructorid: 0, type: "", startTime: "19:00:00", endTime: "20:00:00" });
         },
         removeLesson(index) {
         this.lessons.splice(index, 1);
         }
-        }'
-          action="/Officers/Dances/Edit/2?handler=UpdateRoster">
+        }'>
+
               <div asp-validation-summary="ModelOnly" class="text-danger small col-12"></div>
 
         <!-- LEFT COLUMN: DJ AND LOOKUP REGISTRY SELECTIONS -->
@@ -75,21 +76,6 @@
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="FormInput.SelectedHostIds" value="@host.Id" id="h_@host.Id" @(isChecked ? "checked" : "") />
                                     <label class="form-check-label small" for="h_@host.Id">@host.Name</label>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- Instructors Selection -->
-                    <div>
-                        <label class="fw-bold small mb-1 text-muted d-block"><i class="bi bi-mortarboard-fill me-1 text-success"></i>Instructors</label>
-                        <div class="border bg-white rounded p-2" style="max-height: 110px; overflow-y: auto;">
-                            @foreach (var instructor in Model.RegistryInstructors)
-                            {
-                                bool isChecked = Model.CurrentlyAssignedInstructorIds.Contains(instructor.Id);
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="FormInput.SelectedInstructorIds" value="@instructor.Id" id="i_@instructor.Id" @(isChecked ? "checked" : "") />
-                                    <label class="form-check-label small" for="i_@instructor.Id">@instructor.Name</label>
                                 </div>
                             }
                         </div>
@@ -150,14 +136,22 @@
                             <div class="row g-2">
                                 <div class="col-sm-6">
                                     <label class="form-label small fw-bold text-muted mb-0">Lesson Topic / Type</label>
-                                    <!-- FIXED: x-model tracks .type -->
-                                    <input type="text" :name="'FormInput.Lessons['+index+'].Type'" x-model="lesson.type" class="form-control form-control-sm" placeholder="e.g., East Coast Swing (Intro)" required />
+                                    <!-- FIXED: Changed x-model to lesson.type to read the camelCase JSON payload -->
+                                    <input type="text"
+                                           :name="'FormInput.Lessons['+index+'].Type'"
+                                           x-model="lesson.type"
+                                           class="form-control form-control-sm"
+                                           placeholder="e.g., East Coast Swing (Intro)"
+                                           required />
                                 </div>
 
                                 <div class="col-sm-6">
                                     <label class="form-label small fw-bold text-muted mb-0">Instructor Name</label>
-                                    <!-- FIXED: x-model tracks .instructorId -->
-                                    <select :name="'FormInput.Lessons['+index+'].InstructorId'" x-model="lesson.instructorId" class="form-select form-select-sm" required>
+                                    <!-- FIXED: Changed x-model to lesson.instructorId -->
+                                    <select :name="'FormInput.Lessons['+index+'].InstructorId'"
+                                            x-model="lesson.instructorId"
+                                            class="form-select form-select-sm"
+                                            required>
                                         <option value="">-- Choose Instructor --</option>
                                         @foreach (var inst in Model.RegistryInstructors)
                                         {
@@ -168,17 +162,26 @@
 
                                 <div class="col-sm-6">
                                     <label class="form-label small fw-bold text-muted mb-0">Start Time</label>
-                                    <!-- FIXED: x-model tracks .startTime -->
-                                    <input type="time" :name="'FormInput.Lessons['+index+'].StartTime'" x-model="lesson.startTime" class="form-control form-control-sm" required />
+                                    <!-- FIXED: Changed x-model to lesson.startTime -->
+                                    <input type="time"
+                                           :name="'FormInput.Lessons['+index+'].StartTime'"
+                                           x-model="lesson.startTime"
+                                           class="form-control form-control-sm"
+                                           required />
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form-label small fw-bold text-muted mb-0">End Time</label>
-                                    <!-- FIXED: x-model tracks .endTime -->
-                                    <input type="time" :name="'FormInput.Lessons['+index+'].EndTime'" x-model="lesson.endTime" class="form-control form-control-sm" required />
+                                    <!-- FIXED: Changed x-model to lesson.endTime -->
+                                    <input type="time"
+                                           :name="'FormInput.Lessons['+index+'].EndTime'"
+                                           x-model="lesson.endTime"
+                                           class="form-control form-control-sm"
+                                           required />
                                 </div>
                             </div>
                         </div>
                     </template>
+
                     <div x-show="lessons.length === 0" class="text-center text-muted p-5 my-auto">
                         <i class="bi bi-journals fs-3 d-block mb-2 text-opacity-50"></i>
                         No instructional lessons configured for this social dance yet.
@@ -197,17 +200,28 @@
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('masterForm');
             const submitBtn = document.getElementById('masterSubmitBtn');
 
             if (form && submitBtn) {
-                form.addEventListener('submit', function() {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Email Notifiers & DB Queries...';
+                form.addEventListener('submit', function(e) {
+                    // Check if jQuery validation has flagged any client-side input errors first
+                    if (window.jQuery && !jQuery(form).valid()) {
+                        return;
+                    }
+
+                    // Delay disabling the button by 1 millisecond.
+                    // This allows the browser to package the CSRF token and data payload perfectly first!
+                    setTimeout(function() {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Email Notifiers & DB Queries...';
+                    }, 1);
                 });
             }
         });
     </script>
 }
+

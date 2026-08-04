@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
-
+using Microsoft.Extensions.Configuration;
 namespace AbdClub.Pages.Officers.Dances;
 
 public class IndexModel : PageModel
@@ -14,15 +14,24 @@ public class IndexModel : PageModel
     private readonly AbdContext _context;
     private readonly ILogger<AttendingOfficersModel> _logger;
     private readonly IEmailService _emailService;
-    public IndexModel(AbdContext context, ILogger<AttendingOfficersModel> logger, IEmailService emailService)
+    private readonly IConfiguration _config; // Inject configuration layer
+    public IndexModel(
+        AbdContext context,
+        ILogger<AttendingOfficersModel> logger,
+        IEmailService emailService,
+        IConfiguration config)
     {
         _context = context;
         _logger = logger;
         QuestPDF.Settings.License = LicenseType.Community;
         QuestPDF.Settings.License = LicenseType.Community;
         _emailService = emailService;
+        _config = config;
+
 
     }
+    [TempData]
+    public string? UpdateFeedback { get; set; }
     public List<Dance> UpcomingDances { get; set; } = new();
     public List<Member> AvailableOfficers { get; set; } = new();
     // Master data selection properties
@@ -38,7 +47,21 @@ public class IndexModel : PageModel
     {
         bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
         if (!isAuthorized) return Forbid();
+        // HYDRATE FORM CONFIGURATION DEFAULTS FROM APPSETTINGS.JSON
+        NewDance.Location = _config["DanceDefaults:Location"] ?? "Go Dance";
+        NewDance.ContactEmail = _config["DanceDefaults:ContactEmail"] ?? "management@abdclub.com";
+        NewDance.Date = DateOnly.FromDateTime(DateTime.Today); // Sensible operational default parameter
 
+        // Parse time elements out safely into type-safe TimeOnly objects
+        if (TimeOnly.TryParse(_config["DanceDefaults:StartTime"], out var startTime))
+            NewDance.StartTime = startTime;
+        else
+            NewDance.StartTime = new TimeOnly(19, 0); // Hard fallback safety
+
+        if (TimeOnly.TryParse(_config["DanceDefaults:EndTime"], out var endTime))
+            NewDance.EndTime = endTime;
+        else
+            NewDance.EndTime = new TimeOnly(22, 0);
         // Load your lookup registries
         RegistryDjs = await _context.MasterDjs.OrderBy(d => d.Name).ToListAsync();
         RegistryHosts = await _context.MasterHosts.OrderBy(h => h.Name).ToListAsync();
@@ -83,15 +106,27 @@ public class IndexModel : PageModel
 
         _context.Events.Add(dance);
         await _context.SaveChangesAsync();
+        // REFACTORED PERSISTENCE METHOD: Saves InstructorId references cleanly
+        _context.RemoveRange(dance.Lessons);
+        dance.Lessons.Clear();
 
+        if (NewDance.Lessons != null && NewDance.Lessons.Any())
+        {
+            foreach (var item in NewDance.Lessons.Where(l => l.InstructorId > 0))
+            {
+                dance.Lessons.Add(new Lesson
+                {
+                    DanceId = dance.Id,
+                    InstructorId = item.InstructorId,
+                    Type = item.Type.Trim(),
+                    StartTime = item.StartTime,
+                    EndTime = item.EndTime
+                });
+            }
+        }
+         await _context.SaveChangesAsync();
+
+        UpdateFeedback = "Success: Event saved.";
         return RedirectToPage();
     }
-}
-
-public class LessonCreationItem
-{
-    public string Instructor { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public TimeOnly StartTime { get; set; } = new TimeOnly(19, 0);
-    public TimeOnly EndTime { get; set; } = new TimeOnly(20, 0);
 }

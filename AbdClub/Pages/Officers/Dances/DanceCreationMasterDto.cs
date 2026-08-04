@@ -1,6 +1,4 @@
-using AbdClub.Pages.Officers.Dances;
-
-namespace AbdClub.Dtos;
+namespace AbdClub.Pages.Officers.Dances;
 
 // Master DTO payload pattern structures
 public class DanceCreationMasterDto
