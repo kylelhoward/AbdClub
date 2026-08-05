@@ -46,6 +46,7 @@ public class MagicLinkModel : PageModel
             new("ExpiryDate",     member.ExpiryDate.HasValue
                                   ? member.ExpiryDate.Value.ToString("O")
                                   : ""),
+            new(ClaimTypes.Role, "Member")
         };
 
         if (member.OfficerRole != null)

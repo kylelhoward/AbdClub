@@ -20,16 +20,16 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        // 2. Fetch future schedules including lessons, DJs, and plain-text Volunteer rows
+        // Verify your backend EF Core collection query loop contains these explicit Includes:
         ActiveSchedule = await _context.Events
             .OfType<Dance>()
+            .Include(d => d.AssignedDj) // Crucial to prevent DJ errors
             .Include(d => d.Lessons)
-            .Include(d => d.AssignedDj)
-            .Include(d => d.AssignedVolunteers) // Fetches your updated Volunteer entity list
+                .ThenInclude(l => l.Instructor) // Crucial to prevent instructor name errors
+            .Include(d => d.AssignedVolunteers)
             .Where(d => d.Date >= DateOnly.FromDateTime(DateTime.Today))
             .OrderBy(d => d.Date)
             .ToListAsync();
-
         return Page();
     }
 

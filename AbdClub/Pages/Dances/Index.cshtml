@@ -41,94 +41,117 @@
                     <p class="lead fs-6 mb-4">@dance.Description</p>
 
                     <div class="row g-4">
-                        <!-- COLUMN A: LESSON SCHEDULE DETAILS -->
+                        <!-- COLUMN A: LESSON SCHEDULE DETAILS & DJ -->
                         <div class="col-md-6">
-                            <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3"><i class="bi bi-book-half me-2"></i>Pre-Dance Lessons</h6>
+                            <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3">
+                                <i class="bi bi-book-half me-2"></i>Pre-Dance Lessons
+                            </h6>
                             @if (dance.Lessons.Any())
                             {
-                                <div class="list-group shadow-sm">
+                                <div class="list-group shadow-sm mb-3">
                                     @foreach (var lesson in dance.Lessons.OrderBy(l => l.StartTime))
                                     {
                                         <div class="list-group-item bg-white">
-                                            <div class="d-flex w-100 justify-content-between">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
                                                 <h6 class="mb-1 text-primary fw-semibold">@lesson.Type</h6>
-                                                <small class="text-muted">@lesson.StartTime.ToString("h:mm tt")</small>
+                                                <small class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-20">
+                                                    @lesson.StartTime.ToString("h:mm tt") - @lesson.EndTime.ToString("h:mm tt")
+                                                </small>
                                             </div>
-                                            @* <small class="text-secondary d-block">Level: @lesson.Level</small> *@
+                                            <!-- Dynamically prints the instructor's name via your master registry link -->
+                                            <small class="text-muted d-block mt-1">
+                                                <i class="bi bi-person-fill me-1"></i>Instructor: @(lesson.Instructor != null ? lesson.Instructor.Name : "TBD")
+                                            </small>
                                         </div>
                                     }
                                 </div>
                             }
                             else
                             {
-                                <p class="text-muted small bg-white p-3 rounded border">No instructional lessons configured for this date.</p>
+                                <p class="text-muted small bg-white p-3 rounded border mb-3">No instructional lessons configured for this date.</p>
                             }
+
+                            <!-- EXPOSED MASTER DJ TIER REGISTRY SLOT -->
+                            <div class="card border-0 shadow-sm bg-white p-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0 bg-dark text-white rounded p-2 px-3 me-3">
+                                        <i class="bi bi-disc-fill fs-5 text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-uppercase tracking-wider text-muted fw-bold d-block" style="font-size: 0.7rem;">Tonight's DJ Assignment</small>
+                                        <span class="fw-bold text-dark">@(dance.AssignedDj != null ? dance.AssignedDj.Name : "No DJ Scheduled / Vacant")</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                         @* TODO *@
-                        <!-- COLUMN B: REFACTORED VOLUNTEER SHIFT INTERFACE (MASTER REGISTRY ARCHITECTURE) -->
-                 @*        <div class="col-md-6">
-                            <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3">
-                                <i class="bi bi-people-fill me-2"></i>Volunteer Coordination
-                            </h6>
-                            <div class="bg-white p-3 rounded border shadow-sm">
+                        <!-- COLUMN B: DYNAMIC VOLUNTEER SHIFT INTERFACE (HIDDEN FOR NON-MEMBERS) -->
+                        <div class="col-md-6">
+                            @if (User.Identity != null && User.Identity.IsAuthenticated && User.HasClaim(c => c.Type == "MemberId"))
+                            {
+                                <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3">
+                                    <i class="bi bi-people-fill me-2"></i>Volunteer Coordination
+                                </h6>
+                                <div class="bg-white p-3 rounded border shadow-sm">
 
-                                @{
-                                    // Define standard staffing job configuration values to track against
-                                    var coreDuties = new[] { "Front Desk Check-in", "Setup Team", "Clean Up Crew" };
+                                    @{
+                                        // Define standard staffing job configuration values to track against
+                                        var coreDuties = new[] { "Front Desk Check-in", "Setup Team", "Clean Up Crew" };
 
-                                    // Extract browsing member email out of context claim tokens once for speed performance
-                                    var contextUserEmail = User.FindFirst("Email")?.Value?.Trim().ToLowerInvariant() ?? string.Empty;
-                                }
+                                        // Extract browsing member email out of context claim tokens once for speed performance
+                                        var contextUserEmail = User.FindFirst("Email")?.Value?.Trim().ToLowerInvariant() ?? string.Empty;
+                                    }
 
-                                <div class="vstack gap-3">
-                                    @foreach (var duty in coreDuties)
-                                    {
-                                        // Inspect your new collection array looking at the Notes text field where we save the active duty role assignment
-                                        var filledSlot = dance.AssignedVolunteers
-                                            .FirstOrDefault(v => v.Notes != null && v.Notes.Contains(duty));
+                                    <div class="vstack gap-3">
+                                        @foreach (var duty in coreDuties)
+                                        {
+                                            // Inspect your collection array looking at the Notes text field where we save the active duty role assignment
+                                            var filledSlot = dance.AssignedVolunteers
+                                                .FirstOrDefault(v => v.Notes != null && v.Notes.Contains(duty));
 
-                                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
-                                            <div>
-                                                <span class="d-block fw-semibold text-dark">@duty</span>
-                                                @if (filledSlot != null)
+                                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                                                <div>
+                                                    <span class="d-block fw-semibold text-dark">@duty</span>
+                                                    @if (filledSlot != null)
+                                                    {
+                                                        <small class="text-success fw-medium">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>Filled: @filledSlot.Name
+                                                        </small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-danger"><i class="bi bi-dash-circle me-1"></i>Slot Open</small>
+                                                    }
+                                                </div>
+
+                                                @if (filledSlot == null)
                                                 {
-                                                    <small class="text-success fw-medium">
-                                                        <i class="bi bi-check-circle-fill me-1"></i>Filled: @filledSlot.Name
-                                                    </small>
+                                                    <!-- Safe HTTP POST form pipeline routing down the updated registration handler -->
+                                                    <form method="post" asp-page-handler="Volunteer">
+                                                        <input type="hidden" name="danceId" value="@dance.Id" />
+                                                        <input type="hidden" name="dutyType" value="@duty" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary px-3">Claim Shift</button>
+                                                    </form>
+                                                }
+                                                else if (filledSlot.Email?.Trim().ToLowerInvariant() == contextUserEmail)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success p-2">Your Assignment</span>
                                                 }
                                                 else
                                                 {
-                                                    <small class="text-danger"><i class="bi bi-dash-circle me-1"></i>Slot Open</small>
+                                                    <!-- Renders a generic locked tag element if another registry contact holds the assignment slot position -->
+                                                    <span class="badge bg-light text-muted border p-2">Assigned</span>
                                                 }
                                             </div>
+                                        }
+                                    </div>
 
-                                            @if (filledSlot == null)
-                                            {
-                                                <!-- Safe HTTP POST form pipeline routing down the updated registration handler -->
-                                                <form method="post" asp-page-handler="Volunteer">
-                                                    <input type="hidden" name="danceId" value="@dance.Id" />
-                                                    <input type="hidden" name="dutyType" value="@duty" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary px-3">Claim Shift</button>
-                                                </form>
-                                            }
-                                            else if (filledSlot.Email?.Trim().ToLowerInvariant() == contextUserEmail)
-                                            {
-
-                                                <span class="badge bg-success-subtle text-success border border-success p-2">Your Assignment</span>
-                                            }
-                                            else
-                                            {
-                                                <!-- Renders a generic locked tag element if another registry contact holds the assignment slot position -->
-                                                <span class="badge bg-light text-muted border p-2">Assigned</span>
-                                            }
-                                        </div>
-                                    }
                                 </div>
-
-                            </div>
+                            }
                         </div>
- *@
+
+                        
+
                     </div>
 
                 </div>

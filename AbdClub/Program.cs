@@ -77,7 +77,9 @@ builder.Services.AddAuthentication(options =>
         new("ExpiryDate",  member.ExpiryDate.HasValue
                            ? member.ExpiryDate.Value.ToString("O")
                            : ""),
-    };
+         // 🌟 NEW ROLE CLAIM: Adds a standardized Member role token to every registered login principal
+        new(System.Security.Claims.ClaimTypes.Role, "Member")
+        };
 
         if (member.OfficerRole != null)
             claimsToAdd.Add(new("OfficerRole", member.OfficerRole));
