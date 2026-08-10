@@ -187,7 +187,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.MapGet("/test-email", async (IEmailService emailService, AbdContext db) =>
+app.MapGet("/Dev/test-email", async (IEmailService emailService, AbdContext db) =>
 {
     var member = await db.Members
     .SingleOrDefaultAsync(m => m.Email == "kylelhoward@gmail.com");
@@ -197,7 +197,7 @@ app.MapGet("/test-email", async (IEmailService emailService, AbdContext db) =>
     return $"Test email sent to {member.Email}";
 });
 
-app.MapGet("/debug-claims", (HttpContext ctx) =>
+app.MapGet("/Dev/debug-claims", (HttpContext ctx) =>
 {
     var claims = ctx.User.Claims
         .Select(c => new { c.Type, c.Value })

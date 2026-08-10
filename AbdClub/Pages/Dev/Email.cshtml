@@ -1,4 +1,4 @@
-﻿@page "/Dev"
+﻿@page "/Dev/Email"
 @model AbdClub.Pages.Dev.IndexModel
 
 @{
@@ -9,7 +9,5 @@
 <p>Welcome, @User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value</p>
 
 <ul>
-    <li><a href="/Dev/Seed">Seed</a></li>
-    <li><a href="/Dev/Email">Send Email Notifications</a></li>
-    <li><a href="/Dev/debug-claims">Debu Claims</a></li>
+    <li><a href="/Dev/test-email">Send Test Email</a></li>
 </ul>

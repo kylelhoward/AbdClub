@@ -67,7 +67,55 @@
 
     <!-- DYNAMIC LIST CONTAINER TIERS -->
     <!-- Tab 1: DJs -->
-    <div x-show="activeTab === 'Djs'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Djs){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="DJ" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+    <div x-show="activeTab === 'Djs'" class="card shadow-sm border-0">
+        <div class="card-body p-0"><div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Internal Notes</th>
+                        <th class="pe-3 text-end">Actions</th>
+                    </tr>
+               </thead>
+               <tbody>
+                   @foreach(var item in Model.Djs)
+                   {
+                       <tr>
+                           <td class="ps-3 fw-bold">@item.Name</td>
+                           <td>@item.Email</td>
+                           <td>@item.Phone</td>
+                           <td class="text-muted small">@item.Notes</td>
+                           <td class="pe-3 text-end">
+                               <div class="btn-group gap-1">
+                                   <button 
+                                       type="button" 
+                                       class="btn btn-sm btn-outline-dark" 
+                                       x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')">
+                                       <i class="bi bi-pencil"></i>
+                                   </button>
+                                   <form 
+                                       method="post" 
+                                       asp-page-handler="DeleteProfile"
+                                       asp-route-id="@item.Id"
+                                       asp-route-type="DJ" 
+                                       onsubmit="return confirm('Purge record?');">
+                                       <button 
+                                           type="submit" 
+                                           class="btn btn-sm btn-outline-danger">
+                                           <i class="bi bi-trash3"></i>
+                                       </button>
+                                   </form>
+                                       </div>
+                                       </td>
+                                       </tr>
+                                       }
+               </tbody>
+           </table>
+       </div>
+   </div>
+</div>
 
     <!-- Tab 2: Hosts -->
     <div x-show="activeTab === 'Hosts'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Hosts){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Host', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Host" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>

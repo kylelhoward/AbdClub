@@ -11,111 +11,322 @@
     <div style="color:green; font-weight:bold;">@Model.Message</div>
 }
 
-<form method="post">
-    <div>
-        <label>Full name</label><br />
-        <input type="text" name="fullName" required />
-    </div>
-    <div>
-        <label>Email</label><br />
-        <input type="email" name="email" required />
-    </div>
-    <div>
-        <label>Phone (optional)</label><br />
-        <input type="tel" name="phone" />
-    </div>
-    <div>
-        <label>Expiry date</label><br />
-        <input type="date" name="expiryDate"
-               value="@DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd")" required />
-    </div>
-    <div>
-        <label>Role</label><br />
-        <select name="memberType">
-            <option value="member">Regular Member</option>
-            <option value="officer">Officer</option>
-        </select>
-    </div>
-    <div>
-        <label>Officer Role (if officer)</label><br />
-        <input type="text" name="officerRole" placeholder="President, Treasurer..." />
-    </div>
-    <br />
-    <button type="submit">Add Member</button>
-</form>
+<div class="container mt-4" style="max-width: 1000px;">
 
-<hr />
-<h3>Simulate a payment (no Stripe CLI needed)</h3>
-<form method="post" asp-page-handler="SimulatePayment">
-    <input type="text"  name="fullName" placeholder="Full name" required />
-    <input type="email" name="email"    placeholder="Gmail address" required />
-    <input type="tel"   name="phone"    placeholder="Phone (optional)" />
-    <button type="submit">Simulate $50 payment</button>
-</form>
+    <div class="mb-4">
+        <h2><i class="bi bi-terminal-matrix text-dark me-2"></i>Developer Sandbox Central Control</h2>
+        <p class="text-muted">Simulate administrative overrides, execute rapid mock database queries, and seed data loops without requiring continuous external endpoint handshakes.</p>
+    </div>
 
-<hr />
-<h3>Quick seed — add all test members at once</h3>
-<form method="post" asp-page-handler="SeedMembers">
-    <button type="submit" style="background:orange; padding:10px 20px;">
-        Seed 10 test members
-    </button>
-</form>
+    <!-- MASTER SANDBOX ACCORDION MATRIX -->
+    <div class="accordion shadow-sm" id="devCentralAccordion">
 
-<hr />
-<h3>Current Members (@Model.MemberCount total)</h3>
-<table border="1" cellpadding="6">
-    <tr>
-        <th>Id</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Expiry</th>
-        <th>Status</th>
-        <th>Officer</th>
-    </tr>
-    @foreach (var m in Model.Members)
-    {
-        var status = m.ExpiryDate < DateTime.UtcNow ? "Expired" :
-                     m.ExpiryDate <= DateTime.UtcNow.AddDays(7) ? "Expires in 7 days" :
-                     m.ExpiryDate <= DateTime.UtcNow.AddDays(30) ? "Expires in 30 days" :
-                     m.ExpiryDate <= DateTime.UtcNow.AddDays(60) ? "Expires in 60 days" :
-                     "Active";
-        var color = status == "Expired" ? "red" :
-                    status.StartsWith("Expires") ? "orange" : "green";
-        <tr>
-            <td>@m.Id</td>
-            <td>@m.FullName</td>
-            <td>@m.Email</td>
-            <td>@m.ExpiryDate?.ToString("yyyy-MM-dd")</td>
-            <td style="color:@color; font-weight:bold;">@status</td>
-            <td>@(m.IsOfficer ? m.OfficerRole : "—")</td>
-        </tr>
-    }
-</table>
+        <!-- SECTION 1: MANUAL MEMBER OVERRIDE INSERTER -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingManualAdd">
+                <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManualAdd" aria-expanded="true" aria-controls="collapseManualAdd">
+                    <i class="bi bi-person-plus-fill me-2 text-warning"></i>Manual Member Profile Insertion (Bypass Stripe)
+                </button>
+            </h2>
+            <div id="collapseManualAdd" class="accordion-collapse collapse show" aria-labelledby="headingManualAdd" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
+                    <form method="post" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Full Display Name</label>
+                            <input type="text" name="fullName" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Email Address</label>
+                            <input type="email" name="email" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Phone (Optional)</label>
+                            <input type="tel" name="phone" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Initial Expiry Date</label>
+                            <input type="date" name="expiryDate" class="form-control form-control-sm" value="@DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">System Permissions Role</label>
+                            <select name="memberType" class="form-select form-select-sm">
+                                <option value="member">Regular Member</option>
+                                <option value="officer">Officer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted mb-1">Officer Role Assignment</label>
+                            <input type="text" name="officerRole" class="form-control form-control-sm" placeholder="President, Tech Sergeant Chen..." />
+                        </div>
+                        <div class="col-12 text-end mt-3">
+                            <button type="submit" class="btn btn-sm btn-dark px-4"><i class="bi bi-database-fill-add me-1"></i>Insert Record to DB</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: CHECKOUT WEBHOOK SIMULATOR -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingSimulatePay">
+                <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSimulatePay" aria-expanded="false" aria-controls="collapseSimulatePay">
+                    <i class="bi bi-credit-card-2-front-fill me-2 text-info"></i>Simulate Membership Renewal Checkout ($50 API Mock)
+                </button>
+            </h2>
+            <div id="collapseSimulatePay" class="accordion-collapse collapse" aria-labelledby="headingSimulatePay" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
+                    <p class="text-muted small mb-3">Fires an internal process request directly targeting your `StripeService.cs` pipeline backend handler. Emulates a valid webhook response context without launching terminal proxy pipelines.</p>
+                    <form method="post" asp-page-handler="SimulatePayment" class="row g-2 align-items-end">
+                        <div class="col-sm-4">
+                            <input type="text" name="fullName" class="form-control form-control-sm" placeholder="Full name" required />
+                        </div>
+                        <div class="col-sm-4">
+                            <input type="email" name="email" class="form-control form-control-sm" placeholder="Gmail address" required />
+                        </div>
+                        <div class="col-sm-2">
+                            <input type="tel" name="phone" class="form-control form-control-sm" placeholder="Phone (optional)" />
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="submit" class="btn btn-sm btn-primary w-100 text-nowrap"><i class="bi bi-lightning-charge-fill me-1"></i>Mock Webhook</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
 
-<hr />
-<h3>Quick seed — add all test news letter subscribers at once</h3>
-<form method="post" asp-page-handler="NewsLetterSubscribers">
-    <button type="submit" style="background:orange; padding:10px 20px;">
-        Seed 10 test subscribers
-    </button>
-</form>
+        <!-- SECTION 3: ROSTER SEEDER & DATA TABLES -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingMembersTable">
+                <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMembersTable" aria-expanded="false" aria-controls="collapseMembersTable">
+                    <i class="bi bi-people-fill me-2 text-success"></i>Roster Directories Database Explorer (@Model.MemberCount Total)
+                </button>
+            </h2>
+            <div id="collapseMembersTable" class="accordion-collapse collapse" aria-labelledby="headingMembersTable" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
 
-<hr />
-<h3>Current Subscribers (@Model.SubCount total)</h3>
-<table border="1" cellpadding="6">
-    <tr>
-        <th>Id</th>
-        <th>Name</th>
-        <th>Email</th>
-    </tr>
-    @foreach (var m in Model.Subs)
-    {
-        <tr>
-            <td>@m.Id</td>
-            <td>@m.FirstName</td>
-            <td>@m.Email</td>
-            <td>@m.SubscribedAt.ToString("yyyy-MM-dd")</td>
-        </tr>
-    }
-</table>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Live state inspection loop reading directly from your active table spaces.</span>
+                        <form method="post" asp-page-handler="SeedMembers">
+                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-bold">
+                                <i class="bi bi-magic me-1"></i>Seed 10 Mock Fellowship Members
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive border rounded shadow-sm">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th class="ps-3" style="width: 60px;">Id</th>
+                                    <th>Full Name</th>
+                                    <th>Email Address</th>
+                                    <th>Expiration</th>
+                                    <th style="width: 140px;">Status Token</th>
+                                    <th>Officer Matrix Assignments</th>
+                                </tr>
+                            </thead>
+                            <tbody class="small">
+                                @if (Model.Members != null && Model.Members.Any())
+                                {
+                                    foreach (var m in Model.Members)
+                                    {
+                                        var status = m.ExpiryDate < DateTime.UtcNow ? "Expired" :
+                                                     m.ExpiryDate <= DateTime.UtcNow.AddDays(7) ? "Expires in 7 days" :
+                                                     m.ExpiryDate <= DateTime.UtcNow.AddDays(30) ? "Expires in 30 days" :
+                                                     m.ExpiryDate <= DateTime.UtcNow.AddDays(60) ? "Expires in 60 days" :
+                                                     "Active";
+
+                                        var badgeColor = status == "Expired" ? "bg-danger" :
+                                                                                                 status.StartsWith("Expires") ? "bg-warning text-dark" : "bg-success";
+                                        <tr>
+                                            <td class="ps-3 text-muted font-monospace fw-bold">@m.Id</td>
+                                            <td class="fw-bold">@m.FullName</td>
+                                            <td>
+                                                <a href="mailto:@m.Email" class="text-decoration-none"><i class="bi bi-envelope-at me-1"></i>@m.Email</a>
+                                            </td>
+                                            <td>@m.ExpiryDate?.ToString("yyyy-MM-dd")</td>
+                                            <td>
+                                                <span class="badge @badgeColor shadow-sm d-inline-block text-center" style="width: 120px;">@status</span>
+                                            </td>
+                                            <td>
+                                                @if (m.IsOfficer)
+                                                {
+                                                    <span class="text-primary fw-medium"><i class="bi bi-shield-check me-1"></i>@(m.OfficerRole ?? "Staff Officer")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted opacity-50">—</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center p-4 text-muted italic"><i class="bi bi-database-exclamation me-1"></i>Member table space holds empty metrics ledger blocks.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+                <!-- SECTION 4: BROADCAST NEWSLETTER SUBSCRIBER REGISTERS -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingNewsLetter">
+                <button class="accordion-button collapsed bg-secondary text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNewsLetter" aria-expanded="false" aria-controls="collapseNewsLetter">
+                    <i class="bi bi-envelope-paper-fill me-2 text-warning"></i>Broadcast NewsLetter Subscriber Registers (@Model.SubCount Total)
+                </button>
+            </h2>
+            <div id="collapseNewsLetter" class="accordion-collapse collapse" aria-labelledby="headingNewsLetter" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <span class="text-muted small">Manage subscriber arrays and seed test targets utilized inside active batch mailing loops.</span>
+                        <form method="post" asp-page-handler="NewsLetterSubscribers">
+                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm">
+                                <i class="bi bi-envelope-plus-fill me-1"></i>Seed 10 Mock Middle-earth Subscribers
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive border rounded shadow-sm">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th class="ps-3" style="width: 60px;">Id</th>
+                                    <th>First Display Name</th>
+                                    <th>Email Registration</th>
+                                    <th class="pe-3" style="width: 160px;">Subscribed Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody class="small">
+                                @if (Model.Subs != null && Model.Subs.Any())
+                                {
+                                    foreach (var s in Model.Subs)
+                                    {
+                                        <tr>
+                                            <td class="ps-3 text-muted font-monospace fw-bold">@s.Id</td>
+                                            <td class="fw-bold text-dark">@s.FirstName</td>
+                                            <td>
+                                                <a href="mailto:@s.Email" class="text-decoration-none fw-medium"><i class="bi bi-envelope-at me-1"></i>@s.Email</a>
+                                            </td>
+                                            <td class="text-muted pe-3">@s.SubscribedAt.ToString("yyyy-MM-dd")</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center p-5 text-muted italic">
+                                            <i class="bi bi-database-exclamation fs-3 d-block mb-2 opacity-50"></i>
+                                            Newsletter registry holds blank metrics. Click the seeding utility tool layout button above to populate indices.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+                <!-- SECTION 5: REGISTRY DIRECTORIES MOCK DATA SEEDER -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingSeedRegistry">
+                <button class="accordion-button collapsed bg-secondary text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeedRegistry" aria-expanded="false" aria-controls="collapseSeedRegistry">
+                    <i class="bi bi-person-rolodex me-2 text-warning"></i>Global Staff & Helper Registry Seeder
+                </button>
+            </h2>
+            <div id="collapseSeedRegistry" class="accordion-collapse collapse" aria-labelledby="headingSeedRegistry" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                        <span class="text-muted small">Bulk-populate your permanent lookup databases with pre-formatted test profiles (DJs, Hosts, Instructors, and Volunteers) at once.</span>
+                        <form method="post" asp-page-handler="SeedStaffRegistries">
+                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm">
+                                <i class="bi bi-database-fill-gear me-1"></i>Seed 12 Staff Registry Profiles
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- SUB-TABLE GRID COMPONENT SPLIT -->
+                    <div class="row g-3">
+                        <!-- DJs Overview -->
+                        <div class="col-md-6">
+                            <div class="border rounded bg-light p-3 shadow-sm h-100">
+                                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-disc me-1 text-primary"></i>DJs (@Model.Djs?.Count)</h6>
+                                <div class="bg-white rounded border overflow-auto" style="max-height: 120px;">
+                                    <ul class="list-group list-group-flush small">
+                                        @if(Model.Djs != null && Model.Djs.Any()){
+                                            foreach(var item in Model.Djs){
+                                                <li class="list-group-item d-flex justify-content-between py-1"><strong>@item.Name</strong><span class="text-muted text-xs">@item.Email</span></li>
+                                            }
+                                        }else{<li class="list-group-item text-muted italic text-center py-2">Empty</li>}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hosts Overview -->
+                        <div class="col-md-6">
+                            <div class="border rounded bg-light p-3 shadow-sm h-100">
+                                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-person-badge me-1 text-info"></i>Dance Hosts (@Model.Hosts?.Count)</h6>
+                                <div class="bg-white rounded border overflow-auto" style="max-height: 120px;">
+                                    <ul class="list-group list-group-flush small">
+                                        @if(Model.Hosts != null && Model.Hosts.Any()){
+                                            foreach(var item in Model.Hosts){
+                                                <li class="list-group-item d-flex justify-content-between py-1"><strong>@item.Name</strong><span class="text-muted text-xs">@item.Email</span></li>
+                                            }
+                                        }else{<li class="list-group-item text-muted italic text-center py-2">Empty</li>}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Instructors Overview -->
+                        <div class="col-md-6">
+                            <div class="border rounded bg-light p-3 shadow-sm h-100">
+                                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-mortarboard me-1 text-success"></i>Instructors (@Model.Instructors?.Count)</h6>
+                                <div class="bg-white rounded border overflow-auto" style="max-height: 120px;">
+                                    <ul class="list-group list-group-flush small">
+                                        @if(Model.Instructors != null && Model.Instructors.Any()){
+                                            foreach(var item in Model.Instructors){
+                                                <li class="list-group-item d-flex justify-content-between py-1"><strong>@item.Name</strong><span class="text-muted text-xs">@item.Email</span></li>
+                                            }
+                                        }else{<li class="list-group-item text-muted italic text-center py-2">Empty</li>}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Volunteers Overview -->
+                        <div class="col-md-6">
+                            <div class="border rounded bg-light p-3 shadow-sm h-100">
+                                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-heart me-1 text-danger"></i>Volunteers (@Model.Volunteers?.Count)</h6>
+                                <div class="bg-white rounded border overflow-auto" style="max-height: 120px;">
+                                    <ul class="list-group list-group-flush small">
+                                        @if(Model.Volunteers != null && Model.Volunteers.Any()){
+                                            foreach(var item in Model.Volunteers){
+                                                <li class="list-group-item d-flex justify-content-between py-1"><strong>@item.Name</strong><span class="text-muted text-xs">@item.Email</span></li>
+                                            }
+                                        }else{<li class="list-group-item text-muted italic text-center py-2">Empty</li>}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+@* -------------------------------------------------------------- *@
+    </div>
+</div>

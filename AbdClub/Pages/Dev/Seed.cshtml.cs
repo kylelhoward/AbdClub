@@ -16,9 +16,20 @@ public class SeedModel : PageModel
     public List<NewsletterSubscriber> Subs { get; set; } = new();
     public int SubCount { get; set; }
 
+    public List<MasterDJ> Djs { get; set; } = new();
+    public List<MasterHost> Hosts { get; set; } = new();
+    public List<MasterInstructor> Instructors { get; set; } = new();
+    public List<MasterVolunteer> Volunteers { get; set; } = new();
+    public int DjsCount { get; set; }
+    public int HostCount { get; set; }
+    public int InstCount { get; set; }
+    public int VolCount { get; set; }
+
     public void OnGet()
     {
         LoadMembers();
+        LoadNewsLetterSubscribers();
+        LoadRegristryPersons();
     }
 
     public async Task<IActionResult> OnPostAsync(
@@ -120,7 +131,7 @@ public class SeedModel : PageModel
         MemberCount = Members.Count;
     }
 
-      // One-click seed of 10 realistic test members
+    // One-click seed of 10 realistic test members
     public async Task<IActionResult> OnPostNewsLetterSubscribersAsync()
     {
         if (!IsDev()) return NotFound();
@@ -129,9 +140,16 @@ public class SeedModel : PageModel
         var testSubs = new List<NewsletterSubscriber>
         {
             // Active members
-            new() { FirstName= "Galadriel",   Email = "galadriel.sub.test@gmail.com", SubscribedAt = today },
-            new() { FirstName= "Frodo",   Email = "frodo.sub.test@gmail.com", SubscribedAt = today },
-            new() { FirstName= "SamGamgee",   Email = "samGamgee.sub.test@gmail.com", SubscribedAt = today },
+           new() { FirstName = "Galadriel", Email = "galadriel.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Frodo", Email = "frodo.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "SamGamgee", Email = "samGamgee.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Aragorn", Email = "aragorn.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Legolas", Email = "legolas.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Gimli", Email = "gimli.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Gandalf", Email = "gandalf.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Boromir", Email = "boromir.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Merry", Email = "merry.sub.test@gmail.com", SubscribedAt = today },
+new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt = today },
 
                     };
 
@@ -210,4 +228,70 @@ public class SeedModel : PageModel
     private bool IsDev() => HttpContext.RequestServices
         .GetRequiredService<IWebHostEnvironment>()
         .IsDevelopment();
+
+
+
+
+    // (Make sure to populate these lists using a basic await _db.MasterDjs.ToListAsync() inside your OnGetAsync method)
+
+    // 2. Paste this Handler into Pages/Dev/Index.cshtml.cs
+    public async Task<IActionResult> OnPostSeedStaffRegistriesAsync()
+    {
+        // Safety authorization block match
+        bool isAuthorized = User.IsInRole("TechAdmin");
+        if (!isAuthorized) return Forbid();
+
+        // Clear existing mock entries first to avoid unique key index duplication crashes
+        _db.MasterDjs.RemoveRange(_db.MasterDjs);
+        _db.MasterHosts.RemoveRange(_db.MasterHosts);
+        _db.MasterInstructors.RemoveRange(_db.MasterInstructors);
+        _db.MasterVolunteers.RemoveRange(_db.MasterVolunteers);
+        await _db.SaveChangesAsync();
+
+        
+
+        // SEED DJs
+        _db.MasterDjs.AddRange(new List<MasterDJ> {
+        new() { Name = "DJ Swing Kid", Email = "swingkid.test@gmail.com", Phone = "555-0101", Notes = "Lindy Hop specialist." },
+        new() { Name = "DJ Shuffle Cat", Email = "shufflecat.test@gmail.com", Phone = "555-0102", Notes = "West Coast modern tracking." },
+        new() { Name = "DJ Retro Spin", Email = "retrospin.test@gmail.com", Phone = "555-0103", Notes = "Old school jazz vinyl sets." }
+    });
+
+        // SEED HOSTS
+        _db.MasterHosts.AddRange(new List<MasterHost> {
+        new() { Name = "Aragorn Ranger", Email = "aragorn.host.test@gmail.com", Phone = "555-0201", Notes = "Experienced floor manager." },
+        new() { Name = "Boromir Gondor", Email = "boromir.host.test@gmail.com", Phone = "555-0202", Notes = "Front gate monitor security." },
+        new() { Name = "Faramir Ithilien", Email = "faramir.host.test@gmail.com", Phone = "555-0203", Notes = "Greeter team leader." }
+    });
+
+        // SEED INSTRUCTORS
+        _db.MasterInstructors.AddRange(new List<MasterInstructor> {
+        new() { Name = "Galadriel Lorien", Email = "galadriel.instructor.test@gmail.com", Phone = "555-0301", Notes = "Advanced Ballroom Waltz tech." },
+        new() { Name = "Elrond Rivendell", Email = "elrond.instructor.test@gmail.com", Phone = "555-0302", Notes = "Salsa & Bachata sequence flow." },
+        new() { Name = "Celeborn Caras", Email = "celeborn.instructor.test@gmail.com", Phone = "555-0303", Notes = "Foxtrot & Tango introduction tracks." }
+    });
+
+        // SEED VOLUNTEERS
+        _db.MasterVolunteers.AddRange(new List<MasterVolunteer> {
+        new() { Name = "Frodo Baggins", Email = "frodo.vol.test@gmail.com", Phone = "555-0401", Notes = "Front Desk check-in backup operations." },
+        new() { Name = "Samwise Gamgee", Email = "samwise.vol.test@gmail.com", Phone = "555-0402", Notes = "Setup / Teardown equipment team." },
+        new() { Name = "Peregrin Took", Email = "pippin.vol.test@gmail.com", Phone = "555-0403", Notes = "Refreshment tables and hydration manager." }
+    });
+
+        await _db.SaveChangesAsync();
+        LoadRegristryPersons();
+        return RedirectToPage();
+    }
+    private void LoadRegristryPersons()
+    {
+        Djs = [.. _db.MasterDjs.OrderBy(m => m.Name)];
+        DjsCount = Djs.Count;
+        Hosts = [.. _db.MasterHosts.OrderBy(m => m.Name)];
+        HostCount = Hosts.Count;
+        Instructors = [.. _db.MasterInstructors.OrderBy(m => m.Name)];
+        InstCount = Instructors.Count;
+        Volunteers = [.. _db.MasterVolunteers.OrderBy(m => m.Name)];
+        VolCount = Volunteers.Count;
+    }
+
 }
