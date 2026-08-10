@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace AbdClub.Pages.Officers.Members;
 
 
-[Authorize(Roles = "Officer")]
-public class EditMemberModel : PageModel
+[Authorize(Policy = "isAdmin")]
+public class EditMemberModel(AbdContext db,IAuthorizationService authorizationService) : PageModel
 {
-    private readonly AbdContext _db;
-    public EditMemberModel(AbdContext db) => _db = db;
+    private readonly IAuthorizationService _authorizationService=authorizationService;
+    private readonly AbdContext _db = db;
 
     [BindProperty]
     public Member Member { get; set; } = default!;
@@ -21,6 +21,13 @@ public class EditMemberModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
+         // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+    var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
+    
+    if (!authResult.Succeeded) 
+    {
+        return Forbid(); // Blocks lower-level officers automatically
+    }
         Member = await _db.Members.FindAsync(id);
         if (Member == null)
         {
@@ -37,6 +44,13 @@ public class EditMemberModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+         // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+    var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
+    
+    if (!authResult.Succeeded) 
+    {
+        return Forbid(); // Blocks lower-level officers automatically
+    }
         if (!ModelState.IsValid)
             return Page();
 
@@ -54,6 +68,8 @@ public class EditMemberModel : PageModel
             ? System.DateTime.SpecifyKind(Member.ExpiryDate.Value, System.DateTimeKind.Utc)
             : (DateTime?)null;
         memberInDb.IsOfficer = Member.IsOfficer;
+        memberInDb.IsAdmin = Member.IsAdmin;
+        memberInDb.IsTechAdmin = Member.IsTechAdmin;
         memberInDb.OfficerRole = Member.OfficerRole;
         memberInDb.Phone = Member.Phone;
 

@@ -68,10 +68,7 @@
                             <tr>
                                 <th class="ps-3">Officer Name</th>
                                 <th>Assigned Role</th>
-                                @if (Model.IsTechSergeantChen)
-                                {
                                     <th class="pe-3 text-end" style="width: 100px;">Action</th>
-                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -91,8 +88,6 @@
                                             <!-- Accesses whatever property field handles assignment role values -->
                                             <span class="badge bg-secondary">@(string.IsNullOrEmpty(officer.OfficerRole) ? "Staff Officer" : officer.OfficerRole)</span>
                                         </td>
-                                        @if (Model.IsTechSergeantChen)
-                                        {
                                             <td class="pe-3 text-end">
                                                 <form method="post" asp-page-handler="RemoveOfficerOverride"
                                                       asp-route-id="@Model.TargetDance.Id"
@@ -103,14 +98,13 @@
                                                     </button>
                                                 </form>
                                             </td>
-                                        }
                                     </tr>
                                 }
                             }
                             else
                             {
                                 <tr>
-                                    <td colspan="@(Model.IsTechSergeantChen ? 3 : 2)" class="text-center p-5 text-muted">
+                                    <td colspan="2" class="text-center p-5 text-muted">
                                         <i class="bi bi-shield-slash fs-2 d-block mb-2 text-secondary"></i>
                                         No officers have checked into this assignment roster yet.
                                     </td>
@@ -124,8 +118,6 @@
 
         <!-- CONDITIONAL ADMINISTRATIVE WORKSPACE (TECH SERGEANT CHEN ONLY) -->
         <div class="col-lg-5">
-            @if (Model.IsTechSergeantChen)
-            {
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-danger text-white p-3">
                         <h5 class="mb-0 small fw-bold text-uppercase"><i class="bi bi-shield-lock-fill me-2"></i>Executive Administrative Actions</h5>
@@ -149,14 +141,6 @@
                         </button>
                     </form>
                 </div>
-            }
-            else
-            {
-                <div class="p-4 rounded border bg-light text-center">
-                    <i class="bi bi-info-circle text-muted fs-3 d-block mb-2"></i>
-                    <p class="small text-muted mb-0">Administrative overrides and multi-officer roster editing are restricted to <strong>Tech Sergeant Chen</strong>.</p>
-                </div>
-            }
         </div>
     </div>
 </div>

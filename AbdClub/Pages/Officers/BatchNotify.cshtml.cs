@@ -5,22 +5,23 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using AbdClub.Models;
 using AbdClub.Dtos;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AbdClub.Pages.Officers;
 
-public class BatchNotifyModel : PageModel
+[Authorize(Policy = "isAdmin")]
+public class BatchNotifyModel(
+    AbdContext context,
+    IEmailService emailService,
+    IAuthorizationService authorizationService,
+    ILogger<BatchNotifyModel> logger) : PageModel
 {
-    private readonly AbdContext _context;
-    private readonly IEmailService _emailService;
-    private readonly ILogger<BatchNotifyModel> _logger;
+    private readonly IAuthorizationService _authorizationService=authorizationService;
+    private readonly AbdContext _context = context;
+    private readonly IEmailService _emailService = emailService;
+    private readonly ILogger<BatchNotifyModel> _logger = logger;
     public List<BroadcastAuditLog> PastAnnouncements { get; set; } = new();
-    public BatchNotifyModel(AbdContext context, IEmailService emailService, ILogger<BatchNotifyModel> logger)
-    {
-        _context = context;
-        _emailService = emailService;
-        _logger = logger;
-    }
-public int MembersCount { get; set; }
+    public int MembersCount { get; set; }
     public int OfficersCount { get; set; }
     public int EveryoneCount { get; set; }
 
@@ -31,10 +32,13 @@ public int MembersCount { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
-        bool isAuthorizedOfficer = User.IsInRole("Officer") &&
-                                  User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorizedOfficer) return Forbid();
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
 
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
         await LoadAudienceCountsAndLedgerAsync();
         return Page();
     }
@@ -61,10 +65,13 @@ public int MembersCount { get; set; }
     }
     public async Task<IActionResult> OnPostSendBroadcastAsync()
     {
-        bool isAuthorizedOfficer = User.IsInRole("Officer") && 
-                                  User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorizedOfficer) return Forbid();
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
 
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
         if (!ModelState.IsValid)
         {
             await RefreshPageDataAsync();
@@ -179,13 +186,14 @@ public int MembersCount { get; set; }
 
 
       // NEW PREVIEW HANDLER PIPELINE (Invoked via AJAX)
-    public IActionResult OnPostPreviewLayout([FromBody] PreviewRequestDto request)
+    public async Task<IActionResult> OnPostPreviewLayoutAsync([FromBody] PreviewRequestDto request)
     {
         // Enforce role-based access identity gate
-        bool isAuthorizedOfficer = User.IsInRole("Officer") &&
-                                  User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorizedOfficer) return Forbid();
-
+        AuthorizationResult authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
         if (string.IsNullOrEmpty(request.MessageBody))
         {
             return Content("<p class='text-danger'>Message body content is empty. Type a note before previewing.</p>", "text/html");

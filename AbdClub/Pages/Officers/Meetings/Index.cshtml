@@ -1,5 +1,6 @@
 @page
-@model AbdClub.Pages.Officers.MeetingNotePages.IndexModel
+@model AbdClub.Pages.Officers.Meetings.IndexModel
+          @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 
 @{
     ViewData["Title"] = "Index";
@@ -55,11 +56,23 @@
             <td>
                 @Html.DisplayFor(model => item.UploadedBy)
             </td>
-            <td>
-                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
+           <td>
+    <!-- 🌟 ADMIN GUARDED: Edit link -->
+    @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+    {
+        <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a><text> | </text>
+    }
+
+    <!-- Accessible to all levels -->
+    <a asp-page="./Details" asp-route-id="@item.Id">Details</a>
+
+    <!-- 🌟 ADMIN GUARDED: Delete link -->
+    @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+    {
+        <text> | </text><a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+    }
+</td>
+
         </tr>
 }
     </tbody>

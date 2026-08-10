@@ -10,6 +10,8 @@ public class Member
     public DateTime JoinDate { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public bool IsOfficer { get; set; } = false;
+    public bool IsAdmin { get; set; } = false;
+    public bool IsTechAdmin { get; set; } = false;
     public string? OfficerRole { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

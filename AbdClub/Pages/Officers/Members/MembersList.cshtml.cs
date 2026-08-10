@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AbdClub.Pages.Officers.Members;
 
-[Authorize(Roles = "Officer")]
-public class MembersListModel : PageModel
+[Authorize(Policy = "isOfficer")]
+public class MembersListModel(AbdContext db, IAuthorizationService authorizationService) : PageModel
 {
-    private readonly AbdContext _db;
-    public MembersListModel(AbdContext db) => _db = db;
+    private readonly AbdContext _db = db;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     public List<Member> Members { get; set; } = new();
     public string Filter { get; set; } = "all";

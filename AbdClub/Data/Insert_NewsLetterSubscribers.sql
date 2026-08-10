@@ -1,12 +1,10 @@
-INSERT INTO "Members" (
-    "FullName",
+INSERT INTO "NewsletterSubscribers" (
     "Email",
-    "Phone",
+    "FirstName",
+    "SubscribedAt",
     "JoinDate",
     "ExpiryDate",
     "IsOfficer",
-    "IsAdmin",
-    "IsTechAdmin",
     "OfficerRole",
     "IsActive",
     "CreatedAt"
@@ -16,8 +14,6 @@ INSERT INTO "Members" (
     NULL,
     NOW(),
     NOW() + INTERVAL '1 year',
-    TRUE,
-    False,
     TRUE,
     'Admin',             -- or whatever your role is
     TRUE,

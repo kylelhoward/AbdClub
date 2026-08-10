@@ -58,7 +58,10 @@
                 </div>
 
                 <div class="card bg-light p-3 mb-4">
-                    <div class="form-check form-switch mb-2">
+                  <div class="container">
+                        <div class="row">
+                        <div class="col">
+                            <div class="form-check form-switch mb-2">
                         <input asp-for="Member.IsActive" type="checkbox"
                                class="form-check-input" role="switch" checked />
                         <label asp-for="Member.IsActive" class="form-check-label fw-bold">
@@ -66,8 +69,10 @@
                         </label>
                     </div>
                     <div class="form-check form-switch mb-2">
-                        <input asp-for="Member.IsOfficer" type="checkbox"
-                               class="form-check-input" role="switch"
+                        <input asp-for="Member.IsOfficer" 
+                                type="checkbox"
+                               class="form-check-input" 
+                               role="switch"
                                id="isOfficerToggle" />
                         <label asp-for="Member.IsOfficer" class="form-check-label fw-bold">
                             Is Officer
@@ -81,6 +86,32 @@
                         <input asp-for="Member.OfficerRole" class="form-control"
                                placeholder="e.g. President, Treasurer, Secretary" />
                     </div>
+                </div>
+
+                        <div class="col">
+                            <div class="form-check form-switch mb-2">
+                        <input asp-for="Member.IsAdmin" type="checkbox"
+                               class="form-check-input" role="switch" />
+                        <label asp-for="Member.IsAdmin" class="form-check-label fw-bold">
+                            Is Admin 
+                        </label>
+                    </div>
+                            <div class="form-check form-switch mb-2">
+                        <input asp-for="Member.IsTechAdmin" type="checkbox"
+                               class="form-check-input" role="switch"/>
+                        <label asp-for="Member.IsTechAdmin" class="form-check-label fw-bold">
+                            Is Tech Admin 
+                        </label>
+                    </div>
+
+                </div>
+
+
+
+                </div>
+                </div>
+
+
                 </div>
 
                 <div class="mb-3">

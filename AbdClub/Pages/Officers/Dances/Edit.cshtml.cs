@@ -1,25 +1,24 @@
 using AbdClub.Data;
 using AbdClub.Models;
 using AbdClub.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore; // 🌟 CRITICAL MISSING IMPORT LINE
+using System.ComponentModel.DataAnnotations;
 
 namespace AbdClub.Pages.Officers.Dances;
 
-public class EditModel : PageModel
+public class EditModel(
+    AbdContext context,
+    IAuthorizationService authorizationService ,
+    IEmailService emailService,
+    ILogger<EditModel> logger) : PageModel
 {
-    private readonly AbdContext _context;
-    private readonly IEmailService _emailService;
-    private readonly ILogger<EditModel> _logger;
-
-    public EditModel(AbdContext context, IEmailService emailService, ILogger<EditModel> logger)
-    {
-        _context = context;
-        _emailService = emailService;
-        _logger = logger;
-    }
+    private readonly AbdContext _context = context;
+    private readonly IEmailService _emailService = emailService;
+    private readonly ILogger<EditModel> _logger = logger;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     public Dance TargetDance { get; set; } = null!;
     public List<Member> AllActiveOfficers { get; set; } = new();
@@ -41,8 +40,11 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         TargetDance = await _context.Events.OfType<Dance>()
             .Include(d => d.AttendingOfficers)
@@ -85,8 +87,11 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostUpdateRosterAsync(int id)
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         var dance = await _context.Events.OfType<Dance>()
             .Include(d => d.AttendingOfficers)

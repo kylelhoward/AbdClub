@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -11,110 +13,158 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">AbdClub</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
-                @if (Env.IsDevelopment())
-                {
-                    <span class="navbar-text text-warning ms-auto">Development Mode!</span>
-                }
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-page="/Index">Home</a>
-                        </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Dances/Index">Dances</a>
-                            </li>
-                        @* {{!-- My Membership — only when logged in --}} *@
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Members/Dashboard">My Membership</a>
-                            </li>
-                        }
+       <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+     <div class="container">
+         <a class="navbar-brand" asp-area="" asp-page="/Index">AbdClub</a>
+         <button class="navbar-toggler"
+                 type="button"
+                 data-bs-toggle="collapse"
+                 data-bs-target=".navbar-collapse"
+                 aria-controls="navbarSupportedContent"
+                 aria-expanded="false"
+                 aria-label="Toggle navigation">
+             <span class="navbar-toggler-icon"></span>
+         </button>
+         @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+         @if (Env.IsDevelopment())
+         {
+             <span class="navbar-text text-warning ms-auto">Development Mode!</span>
+         }
+         <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+             <ul class="navbar-nav flex-grow-1">
+                 <li class="nav-item">
+                     <a class="nav-link text-dark" asp-page="/Index">Home</a>
+                 </li>
+                 <li class="nav-item">
+                     <a class="nav-link text-dark" asp-page="/Dances/Index">Dances</a>
+                 </li>
+                 
+                 @* Public/Member Space — visible to any logged-in registered account *@
+                 @if (User.Identity?.IsAuthenticated == true)
+                 {
+                     <li class="nav-item">
+                         <a class="nav-link text-dark" asp-page="/Members/Dashboard">My Membership</a>
+                     </li>
+                 }
 
-                        @* Officers dropdown — only for officers  *@
-                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Officer"))
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-dark" href="#"
-                                   id="officersDropdown" role="button"
-                                   data-bs-toggle="dropdown" aria-expanded="false">
-                                    Officers
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="officersDropdown">
-                                    <li><a class="dropdown-item" asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/Members/MembersList">Members</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/Meetings">Meetings</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/Registry/Index">Registry</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/Dances/Index">Dances</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/FileManager">Club Files</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/BatchNotify">Officer Broadcast Center</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Officers/NewsLetter/Index">Manager NewsLetter Subscribers</a></li>
-                                </ul>
-                            </li>
-                        }
+                 @* 1. REFACTORED TO POLICY: Officers dropdown — visible to anyone matching the "isOfficer" rule *@
+                 @if ((await AuthorizationService.AuthorizeAsync(User,null, "isOfficer")).Succeeded)
+               {
+                     <li class="nav-item dropdown">
+                         <a class="nav-link dropdown-toggle text-dark" href="#"
+                            id="officersDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                             Officers
+                         </a>
+                         <ul class="dropdown-menu" aria-labelledby="officersDropdown">
+                             <li><a class="dropdown-item" asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/Members/MembersList">Members</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/Meetings">Meetings</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/Registry/Index">Registry</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/Dances/Index">Dances</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/FileManager">Club Files</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/BatchNotify">Officer Broadcast Center</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/NewsLetter/Index">Manage NewsLetter Subscribers</a></li>
+                         </ul>
+                     </li>
+                 }
 
-                        
-                        @if (User.Identity?.IsAuthenticated == true &&
-                                                    User.IsInRole("Officer") &&
-                                                    User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen")
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Dev/Index">Dev</a>
-                            </li>
-                        }
-                        @* Login — only when NOT logged in  *@
-                        @if (User.Identity?.IsAuthenticated != true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Auth/Login">Login</a>
-                            </li>
-                        }
+                 @* 2. REFACTORED TO POLICY: Admin dropdown — visible strictly to accounts matching the "isAdmin" rule *@
+                 @if ((await AuthorizationService.AuthorizeAsync(User,null, "isAdmin")).Succeeded)
+                 {
+                     <li class="nav-item dropdown">
+                         <a class="nav-link dropdown-toggle text-dark" href="#"
+                            id="adminDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                             Admin
+                         </a>
+                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                             <li><a class="dropdown-item" asp-page="/Admin/Dashboard">Executive Panel</a></li>
+                             <li><a class="dropdown-item" asp-page="/Admin/AuditLogs">System Audit Ledger</a></li>
+                             <li><a class="dropdown-item" asp-page="/Admin/Financials">Club Revenue Matrix</a></li>
+                             <li><a class="dropdown-item" asp-page="/Admin/EmailLogs">Club Revenue Matrix</a></li>
+                         </ul>
+                     </li>
+                 }
+                 
+                @* 3. REFACTORED TO POLICY: Dev Link — restricted strictly to accounts matching the "isTechAdmin" rule *@
+                 @if ((await AuthorizationService.AuthorizeAsync(User,null, "isTechAdmin")).Succeeded)
+                 {
+                     <li class="nav-item">
+                         <a class="nav-link text-dark fw-bold text-danger" asp-page="/Dev/Index">Dev Zone</a>
+                     </li>
+                 }
+                 
+                 @* Login — only when NOT logged in  *@
+                 @if (User.Identity?.IsAuthenticated != true)
+                 {
+                     <li class="nav-item">
+                         <a class="nav-link text-dark" asp-page="/Auth/Login">Login</a>
+                     </li>
+                 }
 
-                        @* Join — only when NOT logged in  *@
-                        @if (User.Identity?.IsAuthenticated != true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Membership">Join</a>
-                            </li>
-                        }
-                    </ul>
+                 @* Join — only when NOT logged in  *@
+                 @if (User.Identity?.IsAuthenticated != true)
+                 {
+                     <li class="nav-item">
+                         <a class="nav-link text-dark" asp-page="/Membership">Join</a>
+                     </li>
+                 }
+             </ul>
 
+             @{
+                 var displayName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
+                                      ?? User.Identity?.Name
+                                      ?? "Member";
+                 var bg = "";
+             }
+             
+             @if (User.Identity?.IsAuthenticated == true)
+             {
+                 @* Clean status badging container on the right side *@
+                 <div class="d-flex align-items-center me-3">
+                     @if (User.IsInRole("TechAdmin"))
+                     {
+                         <span class="badge bg-danger me-2">TechAdmin</span>
+                     }
+                     else if (User.IsInRole("Admin"))
+                     {
+                         <span class="badge bg-warning text-dark me-2">Admin</span>
+                     }
+                     else if (User.IsInRole("Officer"))
+                     {
+                         <span class="badge bg-primary me-2">Officer</span>
+                     }
+                     else
+                     {
+                         <span class="badge bg-secondary me-2">Member</span>
+                     }
+                 </div>
 
-                    @{
-                        var displayName = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value
-                                         ?? User.Identity?.Name
-                                         ?? "Member";
-                    }
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        @if (User.IsInRole("Officer") &&
-                            User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen")
-                        {
-                            <span class="navbar-text ms-auto">Halo, @User.FindFirst("OfficerRole")?.Value!</span>
-                        }
-                        else
-                        {
-                            <span class="navbar-text ms-auto">Hello, @displayName!</span>
-                        }
-                        <!-- Logout button -->
-                        <form method="post" asp-page="/Auth/Logout" class="ms-2 d-inline">
-                            <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                Sign out
-                            </button>
-                        </form>
-                    }
+                 @if (User.IsInRole("Officer"))
+                 {
+                     bg = "text-primary";
+                     var officerTitle = User.FindFirst("OfficerRole")?.Value;
+                     <span class="navbar-text ms-auto @bg">
+                         Hello, @(!string.IsNullOrEmpty(officerTitle) ? officerTitle + " " : "")@displayName!
+                     </span>
+                 }
+                 else
+                 {
+                     <span class="navbar-text ms-auto @bg">Hello, @displayName!</span>
+                 }
+                 
+                 <!-- Logout button -->
+                 <form method="post" asp-page="/Auth/Logout" class="ms-2 d-inline">
+                     <button type="submit" class="btn btn-outline-secondary btn-sm">
+                         Sign out
+                     </button>
+                 </form>
+             }
+         </div>
+     </div>
+ </nav>
 
-                </div>
-            </div>
-        </nav>
     </header>
     <div class="container">
         <main role="main" class="pb-3">

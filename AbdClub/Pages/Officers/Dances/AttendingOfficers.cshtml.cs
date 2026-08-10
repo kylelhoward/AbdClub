@@ -1,6 +1,7 @@
 using AbdClub.Data;
 using AbdClub.Models;
 using AbdClub.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -12,14 +13,19 @@ namespace AbdClub.Pages.Officers.Dances;
 
 public class AttendingOfficersModel : PageModel
 {
+    private readonly IAuthorizationService _authorizationService;
     private readonly AbdContext _context;
     private readonly ILogger<AttendingOfficersModel> _logger;
     private readonly IEmailService _emailService;
-    public AttendingOfficersModel(AbdContext context, ILogger<AttendingOfficersModel> logger, IEmailService emailService)
+    public AttendingOfficersModel(
+        AbdContext context,
+        IAuthorizationService authorizationService,
+        ILogger<AttendingOfficersModel> logger,
+        IEmailService emailService)
     {
         _context = context;
         _logger = logger;
-        QuestPDF.Settings.License = LicenseType.Community;
+        _authorizationService = authorizationService;
         QuestPDF.Settings.License = LicenseType.Community;
         _emailService = emailService;
 
@@ -28,8 +34,12 @@ public class AttendingOfficersModel : PageModel
 
     public async Task<IActionResult> OnGetExportPdfAsync(int id)
     {
-        bool isOfficer = User.IsInRole("Officer");
-        if (!isOfficer) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         // Fetch dance with complete related tracking contexts
         var dance = await _context.Events.OfType<Dance>()
@@ -186,7 +196,6 @@ public class AttendingOfficersModel : PageModel
     public Dance TargetDance { get; set; } = null!;
     public List<Member> ActiveOfficersList { get; set; } = new();
     public bool AmIAttending { get; set; }
-    public bool IsTechSergeantChen { get; set; }
     public int CurrentMemberId { get; set; }
 
     [TempData]
@@ -195,10 +204,12 @@ public class AttendingOfficersModel : PageModel
     //  Load context details
     public async Task<IActionResult> OnGetAsync(int id)
     {
-        bool isOfficer = User.IsInRole("Officer");
-        if (!isOfficer) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
 
-        IsTechSergeantChen = User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         var idClaim = User.FindFirst("MemberId")?.Value;
         if (!int.TryParse(idClaim, out int memberId)) return Forbid();
@@ -214,7 +225,7 @@ public class AttendingOfficersModel : PageModel
         // Check if the currently browsing officer is checked in
         AmIAttending = TargetDance.AttendingOfficers.Any(o => o.Id == CurrentMemberId);
 
-        // Fetch all system officers for Tech Sergeant Chen's dropdown selection tool
+        // Fetch all system officers for Admin's dropdown selection tool
         ActiveOfficersList = await _context.Members
             .Where(m => m.IsActive && m.IsOfficer)
             .OrderBy(m => m.FullName)
@@ -266,8 +277,12 @@ public class AttendingOfficersModel : PageModel
     //  Hook: Administrative Override Force Add
     public async Task<IActionResult> OnPostAddOfficerOverrideAsync(int id, int selectOfficerId)
     {
-        bool isChen = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isChen) return Forbid();
+        // Enforce role-based access identity gate
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         var dance = await _context.Events.OfType<Dance>().Include(d => d.AttendingOfficers).FirstOrDefaultAsync(d => d.Id == id);
         if (dance == null) return NotFound();
@@ -291,7 +306,7 @@ public class AttendingOfficersModel : PageModel
         StatusNotice = $"Success: Checked {targetOfficer.FullName} into the event roster.";
 
         // TRIGGER NOTIFICATION DISPATCH
-        string actionText = "<span style='color:#198754; font-weight:bold;'>ASSIGNED TO DUTY</span> via Administrative Override by Tech Sergeant Chen.";
+        string actionText = "<span style='color:#198754; font-weight:bold;'>ASSIGNED TO DUTY</span> via Administrative Override by Admin.";
         await _emailService.SendOfficerDutyNotificationAsync(
             targetOfficer.Email,
             $"{targetOfficer.FullName}",
@@ -306,8 +321,11 @@ public class AttendingOfficersModel : PageModel
     //  Hook: Administrative Override Force Remove
     public async Task<IActionResult> OnPostRemoveOfficerOverrideAsync(int id, int dropOfficerId)
     {
-        bool isChen = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isChen) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         var dance = await _context.Events.OfType<Dance>().Include(d => d.AttendingOfficers).FirstOrDefaultAsync(d => d.Id == id);
         if (dance == null) return NotFound();
@@ -320,7 +338,7 @@ public class AttendingOfficersModel : PageModel
             StatusNotice = $"Success: Removed {targetOfficer.FullName} from the attendance grid.";
 
             // TRIGGER NOTIFICATION DISPATCH
-            string actionText = "<span style='color:#dc3545; font-weight:bold;'>REMOVED FROM DUTY</span> via Administrative Override by Tech Sergeant Chen.";
+            string actionText = "<span style='color:#dc3545; font-weight:bold;'>REMOVED FROM DUTY</span> via Administrative Override by Admin.";
             await _emailService.SendOfficerDutyNotificationAsync(
                 targetOfficer.Email,
                 $"{targetOfficer.FullName}",

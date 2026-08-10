@@ -10,19 +10,47 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AbdContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// --- Authorization policies ---
+// --- Authorization Policies ---
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("OfficerOnly", policy =>
-        policy.RequireClaim("IsOfficer", "true"));
+    // isTechAdmin: Must have the "TechAdmin" role tag stamped on their badge
+    options.AddPolicy("isTechAdmin", policy =>
+        policy.RequireRole("TechAdmin"));
+
+    // isAdmin: Can be either a TechAdmin or a standard Admin
+    options.AddPolicy("isAdmin", policy =>
+        policy.RequireRole("TechAdmin", "Admin"));
+
+    // isOfficer: Satisfied if they hold any of the three management tiers
+    options.AddPolicy("isOfficer", policy =>
+        policy.RequireRole("TechAdmin", "Admin", "Officer"));
 });
 
-// --- Razor Pages ---
+// --- Razor Pages Folder System Conventions ---
 builder.Services.AddRazorPages(options =>
 {
+    // Open to all registered accounts who passed the email whitelist gate
     options.Conventions.AuthorizeFolder("/Members");
-    options.Conventions.AuthorizeFolder("/Officers", "OfficerOnly");
+
+    // Tier 1: Visible to Officers, Admins, and TechAdmins
+    options.Conventions.AuthorizeFolder("/Officers", "isOfficer");
+
+    // Tier 2: Visible to Admins and TechAdmins (Blocks standard Officers)
+    options.Conventions.AuthorizeFolder("/Admin", "isAdmin");
+
+    // Tier 3: Restricted strictly to TechAdmins (Blocks standard Officers and Admins)
+    options.Conventions.AuthorizeFolder("/Dev", "isTechAdmin");
+    // 🌟 OVERRIDE SPECIFIC PAGES TO THE HIGHER PRIVILEGE ADMIN POLICY:
+options.Conventions.AuthorizePage("/Officers/Dances/Create", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Dances/Edit", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Dances/Delete", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Members/Create", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Members/Edit", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Meetings/Create", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Meetings/Edit", "isAdmin");
+options.Conventions.AuthorizePage("/Officers/Meetings/Delete", "isAdmin");
 });
+
 
 // --- Google Authentication ---
 builder.Services.AddAuthentication(options =>
@@ -74,6 +102,8 @@ builder.Services.AddAuthentication(options =>
     {
         new("MemberId",    member.Id.ToString()),
         new("IsOfficer",   member.IsOfficer.ToString().ToLower()),
+        new("IsAdmin",   member.IsAdmin.ToString().ToLower()),
+        new("IsTechAdmin",   member.IsTechAdmin.ToString().ToLower()),
         new("ExpiryDate",  member.ExpiryDate.HasValue
                            ? member.ExpiryDate.Value.ToString("O")
                            : ""),
@@ -87,6 +117,12 @@ builder.Services.AddAuthentication(options =>
         if (member.IsOfficer)
             claimsToAdd.Add(new(
                 System.Security.Claims.ClaimTypes.Role, "Officer"));
+        if (member.IsAdmin)
+            claimsToAdd.Add(new(
+                System.Security.Claims.ClaimTypes.Role, "Admin"));
+        if (member.IsTechAdmin)
+            claimsToAdd.Add(new(
+                System.Security.Claims.ClaimTypes.Role, "TechAdmin"));
 
         // Add to BOTH identities to be safe
         foreach (var identity in context.Principal!.Identities)

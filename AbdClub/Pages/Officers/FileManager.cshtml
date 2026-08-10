@@ -1,16 +1,18 @@
 ﻿@page
 @using AbdClub.Enums
 @model AbdClub.Pages.Officers.FileManagerModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService 
+@* 🌟 FIXED: Explicitly injected the service with its correct PascalCase variable name *@
 @{
     ViewData["Title"] = "Club File Manager";
 
-    // Extract current user details for UI comparison
-    var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    // FIXED: Changed from NameIdentifier to your custom MemberId claim to match your integer parsing rules
+    var userIdClaim = User.FindFirst("MemberId")?.Value;
     int.TryParse(userIdClaim, out int currentUserId);
 
-    // Evaluate the Officer condition for the frontend view
-    bool canDeleteAsOfficer = User.IsInRole("Officer") &&
-                              User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+    // FIXED: Evaluated using the freshly injected, capitalized AuthorizationService instance
+    var authResult = await AuthorizationService.AuthorizeAsync(User, null, "isAdmin");
+    bool canDeleteAsOfficer = authResult.Succeeded;
 }
 
 <h3>Upload Club File</h3>

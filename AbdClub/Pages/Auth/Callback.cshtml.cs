@@ -55,6 +55,8 @@ public class CallbackModel : PageModel
             new Claim(ClaimTypes.Email, member.Email ?? string.Empty),
             new Claim("MemberId", member.Id.ToString()),
             new Claim("IsOfficer", member.IsOfficer.ToString().ToLower()),
+            new Claim("IsAdmin", member.IsAdmin.ToString().ToLower()),
+            new Claim("IsTechAdmin", member.IsTechAdmin.ToString().ToLower()),
             new Claim(
                 "ExpiryDate",
                 member.ExpiryDate.HasValue ? member.ExpiryDate.Value.ToString("O") : string.Empty)
@@ -65,6 +67,10 @@ public class CallbackModel : PageModel
 
         if (member.IsOfficer)
             claims.Add(new Claim(ClaimTypes.Role, "Officer"));
+        if (member.IsAdmin)
+            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+        if (member.IsTechAdmin)
+            claims.Add(new Claim(ClaimTypes.Role, "TechAdmin"));
 
         var identity = new ClaimsIdentity(claims, "Cookies");
         await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(identity));

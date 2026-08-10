@@ -1,6 +1,7 @@
 using AbdClub.Data;
 using AbdClub.Models;
 using AbdClub.Models.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -8,16 +9,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AbdClub.Pages.Officers.Registry;
 
-public class IndexModel : PageModel
+[Authorize(Policy = "isOfficer")]
+public class IndexModel(
+    AbdContext context,
+    ILogger<IndexModel> logger,
+    IAuthorizationService authorizationService) : PageModel
 {
-    private readonly AbdContext _context;
-    private readonly ILogger<IndexModel> _logger;
-
-    public IndexModel(AbdContext context, ILogger<IndexModel> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    private readonly AbdContext _context = context;
+    private readonly ILogger<IndexModel> _logger = logger;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     // Registry lists bound to the UI tabs
     public List<MasterDJ> Djs { get; set; } = new();
@@ -33,8 +33,13 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         // Query all permanent data tiers concurrently
         Djs = await _context.MasterDjs.OrderBy(x => x.Name).ToListAsync();
@@ -49,8 +54,13 @@ public class IndexModel : PageModel
     // Open Pages/Officers/Registry/Index.cshtml.cs and update this block:
     public async Task<IActionResult> OnPostSaveProfileAsync()
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         if (!ModelState.IsValid)
         {
@@ -74,9 +84,13 @@ public class IndexModel : PageModel
     // UNIFIED DELETE HANDLER
     public async Task<IActionResult> OnPostDeleteProfileAsync(int id, string type)
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
 
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
         switch (type)
         {
             case "DJ": await ProcessDeleteAsync<MasterDJ>(id); break;

@@ -1,5 +1,7 @@
 @page
 @model AbdClub.Pages.Officers.Members.MembersListModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+
 @{
     ViewData["Title"] = "Manage Members";
 }
@@ -76,13 +78,12 @@
                 <thead class="table-light">
                     <tr>
                         <th scope="col">Name</th>
-                        <th scope="col">Contact</th>
                         <th scope="col">Joined</th>
                         <th scope="col">Expires</th>
                         <th scope="col">Role</th>
                         <th scope="col" class="text-center">Status</th>
-                        <th scope="col" class="text-end">Actions</th>
                         <th scope="col">Source</th>
+                        <th scope="col" class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,22 +93,30 @@
                         var expiry = member.ExpiryDate;
                         var isExpired = expiry.HasValue && expiry.Value < now;
                         var isExpiringSoon = expiry.HasValue && !isExpired && expiry.Value < now.AddDays(30);
+
                         <tr class="@(isExpired ? "table-danger" : "")">
-                            <td>
-                                <div class="fw-semibold">@member.FullName</div>
-                                <div class="text-muted small">@member.Email</div>
-                            </td>
-                            <td>
-                                @if (!string.IsNullOrWhiteSpace(member.Phone))
+                           <td>
+                               <div class="d-flex align-items-center flex-wrap gap-2">
+                                   <div class="fw-semibold">@member.FullName</div>
+        
+        
+                                @if (member.IsTechAdmin)
                                 {
-                                    <div><a href="tel:@member.Phone" class="text-decoration-none">@member.Phone</a></div>
+                                    <span class="badge bg-danger d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1 rounded" style="font-size: 0.7rem;"> <i class="bi bi-cpu-fill text-warning"></i> TechAdmin </span>
                                 }
-                                else
+                                else if (member.IsAdmin)
                                 {
-                                    <div class="text-muted">—</div>
+                                    <span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1 rounded" style="font-size: 0.7rem;"> <i class="bi bi-shield-lock-fill"></i> Admin </span>
                                 }
+                                else if (member.IsOfficer)
+                                {
+                                    <span class="badge bg-primary d-inline-flex align-items-center gap-1 shadow-sm px-2 py-1 rounded" style="font-size: 0.7rem;"> <i class="bi bi-award-fill"></i> Officer </span>
+                                }
+                                </div>
+                                <div class="text-muted small"><a href="mailto:@member.Email">@member.Email</a></div>
                             </td>
-                            <td>
+
+                          <td>
                                 <span class="small text-muted">@member.JoinDate.ToString("MMM d, yyyy")</span>
                             </td>
                             <td>
@@ -164,7 +173,10 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group" role="group" aria-label="Actions for @member.FullName">
-                                    <a class="btn btn-sm btn-outline-primary" href="/Officers/Members/EditMember/@member.Id">Edit</a>
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary" href="/Officers/Members/EditMember/@member.Id">Edit</a>
+                                    }
                                     <a class="btn btn-sm btn-outline-secondary" href="/Officers/Members/ViewMember/@member.Id">View</a>
                                 </div>
                             </td>

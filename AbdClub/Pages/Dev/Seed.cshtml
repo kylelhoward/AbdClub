@@ -55,7 +55,7 @@
 
 <hr />
 <h3>Quick seed — add all test members at once</h3>
-<form method="post" asp-page-handler="SeedAll">
+<form method="post" asp-page-handler="SeedMembers">
     <button type="submit" style="background:orange; padding:10px 20px;">
         Seed 10 test members
     </button>
@@ -88,6 +88,34 @@
             <td>@m.ExpiryDate?.ToString("yyyy-MM-dd")</td>
             <td style="color:@color; font-weight:bold;">@status</td>
             <td>@(m.IsOfficer ? m.OfficerRole : "—")</td>
+        </tr>
+    }
+</table>
+
+
+<hr />
+<h3>Quick seed — add all test news letter subscribers at once</h3>
+<form method="post" asp-page-handler="NewsLetterSubscribers">
+    <button type="submit" style="background:orange; padding:10px 20px;">
+        Seed 10 test subscribers
+    </button>
+</form>
+
+<hr />
+<h3>Current Subscribers (@Model.SubCount total)</h3>
+<table border="1" cellpadding="6">
+    <tr>
+        <th>Id</th>
+        <th>Name</th>
+        <th>Email</th>
+    </tr>
+    @foreach (var m in Model.Subs)
+    {
+        <tr>
+            <td>@m.Id</td>
+            <td>@m.FirstName</td>
+            <td>@m.Email</td>
+            <td>@m.SubscribedAt.ToString("yyyy-MM-dd")</td>
         </tr>
     }
 </table>

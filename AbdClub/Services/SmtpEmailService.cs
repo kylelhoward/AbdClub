@@ -94,9 +94,9 @@ public class SmtpEmailService : IEmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(
-                "Failed to send magic link to {Email}: {Exception}",
-                member.Email, ex.Message);
+            // Temporary debug upgrade: prints out the complete stack trace and inner error details
+            _logger.LogError(ex, "Failed to send magic link to {Email}", member.Email);
+            throw;
         }
     }
 
@@ -179,6 +179,7 @@ public class SmtpEmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError("Failed to send membership reminder to {Email}: {Exception}", member.Email, ex.Message);
+            throw;
         }
     }
 

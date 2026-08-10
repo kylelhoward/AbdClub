@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using AbdClub.Models;
 using AbdClub.Data;
+using Microsoft.AspNetCore.Authorization;
 
-namespace AbdClub.Pages.Officers.MeetingNotePages;
+namespace AbdClub.Pages.Officers.Meetings;
 
+[Authorize(Policy = "isAdmin")]
 public class DeleteModel : PageModel
 {
     private readonly AbdContext _context;

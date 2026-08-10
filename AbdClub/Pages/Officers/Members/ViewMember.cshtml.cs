@@ -6,8 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AbdClub.Pages.Officers.Members;
 
-[Authorize(Roles = "Officer")]
-
+[Authorize(Policy = "isOfficer")]
 public class DetailsModel : PageModel
 {
     private readonly AbdContext _db;

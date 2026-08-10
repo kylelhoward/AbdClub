@@ -7,10 +7,13 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
 namespace AbdClub.Pages.Officers.Dances;
 
 public class IndexModel : PageModel
 {
+    private readonly IAuthorizationService _authorizationService;
+
     private readonly AbdContext _context;
     private readonly ILogger<AttendingOfficersModel> _logger;
     private readonly IEmailService _emailService;
@@ -19,6 +22,7 @@ public class IndexModel : PageModel
         AbdContext context,
         ILogger<AttendingOfficersModel> logger,
         IEmailService emailService,
+        IAuthorizationService authorizationService,
         IConfiguration config)
     {
         _context = context;
@@ -26,6 +30,7 @@ public class IndexModel : PageModel
         QuestPDF.Settings.License = LicenseType.Community;
         QuestPDF.Settings.License = LicenseType.Community;
         _emailService = emailService;
+        _authorizationService = authorizationService;
         _config = config;
 
 
@@ -45,8 +50,12 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
+
         // HYDRATE FORM CONFIGURATION DEFAULTS FROM APPSETTINGS.JSON
         NewDance.Location = _config["DanceDefaults:Location"] ?? "Go Dance";
         NewDance.ContactEmail = _config["DanceDefaults:ContactEmail"] ?? "management@abdclub.com";
@@ -72,10 +81,14 @@ public class IndexModel : PageModel
         UpcomingDances = await _context.Events.OfType<Dance>().Include(d => d.AssignedDj).OrderBy(d => d.Date).ToListAsync();
         return Page();
     }
+
     public async Task<IActionResult> OnPostCreateDanceAsync()
     {
-        bool isAuthorized = User.IsInRole("Officer") && User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
-        if (!isAuthorized) return Forbid();
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         if (!ModelState.IsValid) return Page();
 
@@ -124,7 +137,7 @@ public class IndexModel : PageModel
                 });
             }
         }
-         await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
         UpdateFeedback = "Success: Event saved.";
         return RedirectToPage();

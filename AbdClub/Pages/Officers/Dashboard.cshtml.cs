@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AbdClub.Pages.Officers;
 
-[Authorize(Roles = "Officer")]
+[Authorize(Policy = "isOfficer")]
 public class DashboardModel : PageModel
 {
     public void OnGet() { }

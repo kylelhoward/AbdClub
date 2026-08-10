@@ -13,6 +13,8 @@ public class SeedModel : PageModel
     public string Message { get; set; } = string.Empty;
     public List<Member> Members { get; set; } = new();
     public int MemberCount { get; set; }
+    public List<NewsletterSubscriber> Subs { get; set; } = new();
+    public int SubCount { get; set; }
 
     public void OnGet()
     {
@@ -52,7 +54,7 @@ public class SeedModel : PageModel
     }
 
     // One-click seed of 10 realistic test members
-    public async Task<IActionResult> OnPostSeedAllAsync()
+    public async Task<IActionResult> OnPostSeedMembersAsync()
     {
         if (!IsDev()) return NotFound();
 
@@ -116,6 +118,47 @@ public class SeedModel : PageModel
             .OrderBy(m => m.ExpiryDate)
             .ToList();
         MemberCount = Members.Count;
+    }
+
+      // One-click seed of 10 realistic test members
+    public async Task<IActionResult> OnPostNewsLetterSubscribersAsync()
+    {
+        if (!IsDev()) return NotFound();
+
+        var today = DateTime.UtcNow;
+        var testSubs = new List<NewsletterSubscriber>
+        {
+            // Active members
+            new() { FirstName= "Galadriel",   Email = "galadriel.sub.test@gmail.com", SubscribedAt = today },
+            new() { FirstName= "Frodo",   Email = "frodo.sub.test@gmail.com", SubscribedAt = today },
+            new() { FirstName= "SamGamgee",   Email = "samGamgee.sub.test@gmail.com", SubscribedAt = today },
+
+                    };
+
+        // Skip any emails already in the database
+        var existingEmails = _db.NewsletterSubscribers
+            .Select(m => m.Email)
+            .ToHashSet();
+
+        var toAdd = testSubs
+            .Where(m => !existingEmails.Contains(m.Email))
+            .ToList();
+
+        _db.NewsletterSubscribers.AddRange(toAdd);
+        await _db.SaveChangesAsync();
+
+        Message = $"Seeded {toAdd.Count} test news letter subscribers " +
+                  $"({testSubs.Count - toAdd.Count} skipped — already exist).";
+        LoadNewsLetterSubscribers();
+        return Page();
+    }
+
+    private void LoadNewsLetterSubscribers()
+    {
+        Subs = _db.NewsletterSubscribers
+            .OrderBy(m => m.SubscribedAt)
+            .ToList();
+        SubCount = Subs.Count;
     }
 
     // In SeedModel — simulate a Stripe payment for testing

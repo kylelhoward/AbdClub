@@ -6,6 +6,6 @@ Add-Migration AddDanceEventModels
 
 Update-Database
 
-dotnet ef migrations add AddUnsubscribeTokenii
+dotnet ef migrations add AddTechAdminAdminRoles
 dotnet ef database update
 dotnet tool update --global dotnet-ef

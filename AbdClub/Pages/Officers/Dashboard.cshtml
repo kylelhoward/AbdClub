@@ -1,5 +1,14 @@
 ﻿@page
 @model AbdClub.Pages.Officers.DashboardModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService 
+@* 🌟 FIXED: Explicitly injected the service with its correct PascalCase variable name *@
+@{
+    ViewData["Title"] = "Club File Manager";
+
+    // FIXED: Evaluated using the freshly injected, capitalized AuthorizationService instance
+    var authResult = await AuthorizationService.AuthorizeAsync(User, null, "isAdmin");
+    bool canDeleteAsOfficer = authResult.Succeeded;
+}
 @{
     ViewData["Title"] = "Officer Dashboard";
 }
@@ -9,10 +18,13 @@
 
 <ul>
     <li><a href="/Officers/Members/MembersList">Manage Members</a></li>
-    <li><a href="/Officers/MeetingNotePages">Manage Meetings</a></li>
+    <li><a href="/Officers/Meetings">Manage Meetings</a></li>
     <li><a href="/Officers/Dances/Index">Manage Dances</a></li>
     <li><a href="/Officers/Registry/Index">Manage Registry</a></li>
     <li><a href="/Officers/FileManager">Club Files</a></li>
-    <li><a href="/Officers/BatchNotify">Officer Broadcast Center</a></li>
+    @if (authResult.Succeeded)
+    {
+        <li><a href="/Officers/BatchNotify">Officer Broadcast Center</a></li>
+    }
     <li><a href="/Officers/NewsLetter/Index">Manager NewsLetter Subscribers</a></li>
 </ul>

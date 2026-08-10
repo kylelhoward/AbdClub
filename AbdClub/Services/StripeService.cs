@@ -123,13 +123,12 @@ public class StripeService : IStripeService
             return;
         }
 
+        // Cleanly normalize the incoming variable beforehand
+        var cleanEmail = email.Trim().ToLower();
+
         // Check for existing member (renewal case)
         Member? existing = await _db.Members
-            .FirstOrDefaultAsync(
-                m => m.Email.Equals(email.Trim(),
-                StringComparison.OrdinalIgnoreCase
-                )
-            );
+            .FirstOrDefaultAsync(m => m.Email != null && m.Email.ToLower() == cleanEmail);
 
         if (existing != null)
         {

@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace AbdClub.Pages.Officers.Members;
 
-[Authorize(Roles = "Officer")]
+[Authorize(Policy = "isAdmin")]
 public class AddMemberModel : PageModel
 {
     private readonly AbdContext _db;
-
+    private readonly IAuthorizationService _authorizationService; 
     public AddMemberModel(AbdContext db) => _db = db;
 
     [BindProperty]
@@ -27,6 +27,13 @@ public class AddMemberModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(bool recordPayment = false)
     {
+         // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+    var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
+    
+    if (!authResult.Succeeded) 
+    {
+        return Forbid(); // Blocks lower-level officers automatically
+    }
         // Remove navigation property validation errors
         ModelState.Remove("Member.Payments");
         ModelState.Remove("Member.EmailLogs");

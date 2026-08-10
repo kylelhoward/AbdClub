@@ -1,26 +1,32 @@
 using AbdClub.Data;
 using AbdClub.Enums;
 using AbdClub.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages.Officers
 {
+    [Authorize(Policy = "isAdmin")]
     public class FileManagerModel : PageModel
     {
         private readonly AbdContext _context;
         private readonly string _storageFolder;
-
+        private readonly IAuthorizationService _authorizationService;
         // Define allowed extensions in a whitelist
-        private readonly string[] _allowedExtensions = { ".pdf", ".docx", ".txt", ".xls", ".xlsx", ".pptx", ".html", ".csv" };
+        private readonly string[] _allowedExtensions = 
+            { ".pdf", ".docx", ".txt", ".xls", ".xlsx", ".pptx", ".html", ".csv" };
 
-        public FileManagerModel(AbdContext context, IWebHostEnvironment environment)
+        public FileManagerModel(AbdContext context,
+            IWebHostEnvironment environment,
+            IAuthorizationService authorizationService)
         {
             _context = context;
             _storageFolder = Path.Combine(environment.ContentRootPath, "UploadedFiles");
-
+            _authorizationService = authorizationService;
             if (!Directory.Exists(_storageFolder)) Directory.CreateDirectory(_storageFolder);
+            _authorizationService = authorizationService;
         }
 
         [BindProperty]
@@ -126,6 +132,9 @@ namespace AbdClub.Pages.Officers
         // 3. Purging Deletion Feature
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
+            // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+            var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
+
             var dbFile = await _context.ClubFiles.FindAsync(id);
             if (dbFile == null) return NotFound();
 
@@ -135,8 +144,8 @@ namespace AbdClub.Pages.Officers
             int.TryParse(currentUserIdClaim, out int currentMemberId);
 
             // 2. Evaluate your specific executive role condition
-            bool isAuthorizedOfficer = User.IsInRole("Officer") &&
-                                       User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+            bool isAuthorizedOfficer =
+            authResult.Succeeded;
 
             // 3. Evaluate if the current user is the owner who uploaded the file
             bool isFileOwner = dbFile.UploadedByMemberId == currentMemberId;

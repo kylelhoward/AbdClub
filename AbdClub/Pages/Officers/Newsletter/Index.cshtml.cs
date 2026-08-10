@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using AbdClub.Data;
 using AbdClub.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AbdClub.Pages.Officers.Newsletter;
 
+[Authorize(Policy = "isOfficer")]
 public class IndexModel : PageModel
 {
+    private readonly IAuthorizationService _authorizationService;
     private readonly AbdContext _context;
     private readonly ILogger<IndexModel> _logger;
 
@@ -27,13 +30,12 @@ public class IndexModel : PageModel
     // 1. Initial Load: Fetch Lists & Metadata Statistics
     public async Task<IActionResult> OnGetAsync()
     {
-        // Explicit Security Identity Check Gate
-        IsAuthorizedOfficer = User.IsInRole("Officer") &&
-                              User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isOfficer");
 
-        if (!IsAuthorizedOfficer)
+        if (!authResult.Succeeded)
         {
-            return Forbid();
+            return Forbid(); // Blocks lower-level officers automatically
         }
 
         await LoadDashboardDataAsync();
@@ -41,13 +43,16 @@ public class IndexModel : PageModel
     }
 
     // 2. Action Handler: Administrative Unsubscribe execution
+    [Authorize(Policy = "isAdmin")]
     public async Task<IActionResult> OnPostUnsubscribeAsync(int id)
     {
-        // Server-Side Defense in Depth Verification
-        bool isAuthorized = User.IsInRole("Officer") &&
-                            User.FindFirst("OfficerRole")?.Value == "Tech Sergeant Chen";
+        // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
+        var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
 
-        if (!isAuthorized) return Forbid();
+        if (!authResult.Succeeded)
+        {
+            return Forbid(); // Blocks lower-level officers automatically
+        }
 
         var subscriber = await _context.NewsletterSubscribers.FindAsync(id);
         if (subscriber == null)
@@ -60,7 +65,7 @@ public class IndexModel : PageModel
         _context.NewsletterSubscribers.Remove(subscriber);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Officer 'Tech Sergeant Chen' manually unsubscribed {Email} (ID: {Id}).", subscriber.Email, id);
+        _logger.LogInformation("Officer 'Admin' manually unsubscribed {Email} (ID: {Id}).", subscriber.Email, id);
 
         StatusMessage = $"Successfully unsubscribed {subscriber.FirstName} ({subscriber.Email}) from the public newsletter list.";
         return RedirectToPage();

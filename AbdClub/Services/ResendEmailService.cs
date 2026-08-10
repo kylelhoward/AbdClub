@@ -21,7 +21,7 @@ public class ResendEmailService : IEmailService
         _resendClient = resendClient;
     }
 
-    private string GetFromEmail() => _config["Email:FromEmail"]!;
+    private string GetFromEmail() => _config["Email:FromAddress"]!;
     private string GetFromName() => _config["Email:FromName"]!;
     private string GetFromAddress() => $"{GetFromName()} <{GetFromEmail()}>";
 
