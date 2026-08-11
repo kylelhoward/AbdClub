@@ -1,5 +1,6 @@
 ﻿@page
 @model AbdClub.Pages.Officers.Newsletter.IndexModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService 
 @{
     ViewData["Title"] = "Manage Newsletter Subscribers";
 }
@@ -44,7 +45,7 @@
                             <th>First Name</th>
                             <th>Email Address</th>
                             <th>Subscribed Date</th>
-                            <th class="pe-3 text-end" style="width: 150px;">Management Actions</th>
+                            <th class="pe-3 text-end"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,16 +58,19 @@
                                     <td class="fw-bold">@sub.FirstName</td>
                                     <td><a href="mailto:@sub.Email" class="text-decoration-none">@sub.Email</a></td>
                                     <td class="text-muted small">@sub.SubscribedAt.ToLocalTime().ToString("g")</td>
-                                    <td class="pe-3 text-end">
-                                        <!-- Triggering our modal setup while baking context targets directly into custom data fields -->
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger admin-unsub-btn"
-                                                data-id="@sub.Id"
-                                                data-email="@sub.Email"
-                                                data-name="@sub.FirstName">
-                                            <i class="bi bi-person-dash-fill me-1"></i>Unsubscribe
-                                        </button>
-                                    </td>
+                                   @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                                    {
+                                        <td class="pe-3 text-end">
+                                            <!-- Triggering our modal setup while baking context targets directly into custom data fields -->
+                                            <button type="button"
+                                            class="btn btn-sm btn-outline-danger admin-unsub-btn"
+                                            data-id="@sub.Id"
+                                            data-email="@sub.Email"
+                                            data-name="@sub.FirstName">
+                                                <i class="bi bi-person-dash-fill me-1"></i>Unsubscribe
+                                            </button>
+                                        </td>
+                                    }
                                 </tr>
                             }
                         }

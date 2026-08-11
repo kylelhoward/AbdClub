@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages.Officers
 {
-    [Authorize(Policy = "isAdmin")]
+    [Authorize(Policy = "isOfficer")]
     public class FileManagerModel : PageModel
     {
         private readonly AbdContext _context;

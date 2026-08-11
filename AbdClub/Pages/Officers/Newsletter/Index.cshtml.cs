@@ -8,17 +8,11 @@ using Microsoft.AspNetCore.Authorization;
 namespace AbdClub.Pages.Officers.Newsletter;
 
 [Authorize(Policy = "isOfficer")]
-public class IndexModel : PageModel
+public class IndexModel(AbdContext context, ILogger<IndexModel> logger,IAuthorizationService authorizationService) : PageModel
 {
-    private readonly IAuthorizationService _authorizationService;
-    private readonly AbdContext _context;
-    private readonly ILogger<IndexModel> _logger;
-
-    public IndexModel(AbdContext context, ILogger<IndexModel> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
+    private readonly IAuthorizationService _authorizationService = authorizationService;
+    private readonly AbdContext _context = context;
+    private readonly ILogger<IndexModel> _logger = logger;
 
     public List<NewsletterSubscriber> Subscribers { get; set; } = new();
     public int TotalSubscribersCount { get; set; }

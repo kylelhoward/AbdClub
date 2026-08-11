@@ -7,7 +7,7 @@ using AbdClub.Models;
 using AbdClub.Dtos;
 using Microsoft.AspNetCore.Authorization;
 
-namespace AbdClub.Pages.Officers;
+namespace AbdClub.Pages.Admin;
 
 [Authorize(Policy = "isAdmin")]
 public class BatchNotifyModel(

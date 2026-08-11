@@ -1,5 +1,7 @@
 ﻿@page
 @model AbdClub.Pages.Officers.Registry.IndexModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService 
+
 @using System.Text.Encodings.Web
 @{
     ViewData["Title"] = "Global Club Registries Manager";
@@ -16,8 +18,10 @@
         mEmail: '',
         mPhone: '',
         mNotes: '',
+        isReadOnly: false, // 🌟 NEW STATE: Tracks read-only mode boundaries
 
         openCreateModal(type) {
+            this.isReadOnly = false; // Forces full write/edit privileges
             this.mRecordId = 0;
             this.mType = type;
             this.mName = '';
@@ -26,7 +30,8 @@
             this.mNotes = '';
             new bootstrap.Modal(document.getElementById('masterRegistryModal')).show();
         },
-        openEditModal(id, type, name, email, phone, notes) {
+        openEditModal(id, type, name, email, phone, notes, readOnlyMode = false) {
+            this.isReadOnly = readOnlyMode; // Dynamic binding based on user assignment policies
             this.mRecordId = id;
             this.mType = type;
             this.mName = name;
@@ -36,6 +41,7 @@
             new bootstrap.Modal(document.getElementById('masterRegistryModal')).show();
         }
      }">
+
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -87,84 +93,265 @@
                            <td>@item.Email</td>
                            <td>@item.Phone</td>
                            <td class="text-muted small">@item.Notes</td>
+                          
                            <td class="pe-3 text-end">
                                <div class="btn-group gap-1">
-                                   <button 
-                                       type="button" 
-                                       class="btn btn-sm btn-outline-dark" 
-                                       x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')">
-                                       <i class="bi bi-pencil"></i>
-                                   </button>
-                                   <form 
-                                       method="post" 
-                                       asp-page-handler="DeleteProfile"
-                                       asp-route-id="@item.Id"
-                                       asp-route-type="DJ" 
-                                       onsubmit="return confirm('Purge record?');">
-                                       <button 
-                                           type="submit" 
-                                           class="btn btn-sm btn-outline-danger">
-                                           <i class="bi bi-trash3"></i>
-                                       </button>
-                                   </form>
-                                       </div>
-                                       </td>
-                                       </tr>
-                                       }
-               </tbody>
+
+                              @if (!(await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                              {
+                                 <button type="button" class="btn btn-sm btn-outline-secondary"
+                                     x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', true)">
+                                     <i class="bi bi-eye-fill me-1"></i> View Details
+                                </button>
+                              }
+
+                                <!-- 2. EXECUTIVE ADMINS ONLY: Privileged management controls suite -->
+                            @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                            {
+                            <!-- Standard Edit button sets readOnlyMode parameter default = false -->
+                            <button type="button" class="btn btn-sm btn-outline-dark" 
+                                x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', false)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="DJ" onsubmit="return confirm('Purge record?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                            }
+
+                            </div>
+                        </td>
+
+                    </tr>
+                }
+           </tbody>
            </table>
        </div>
    </div>
 </div>
 
     <!-- Tab 2: Hosts -->
-    <div x-show="activeTab === 'Hosts'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Hosts){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Host', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Host" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+    <div x-show="activeTab === 'Hosts'" class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Internal Notes</th>
+                            <th class="pe-3 text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var item in Model.Hosts)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-bold">@item.Name</td>
+                                    <td>@item.Email</td>
+                                    <td>@item.Phone</td>
+                                    <td class="text-muted small">@item.Notes</td>
+                                     <td class="pe-3 text-end">
+                               <div class="btn-group gap-1">
+
+                              @if (!(await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                              {
+                                 <button type="button" class="btn btn-sm btn-outline-secondary"
+                                     x-on:click="openEditModal(@item.Id, 'Host', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', true)">
+                                     <i class="bi bi-eye-fill me-1"></i> View Details
+                                </button>
+                              }
+
+                                <!-- 2. EXECUTIVE ADMINS ONLY: Privileged management controls suite -->
+                            @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                            {
+                            <!-- Standard Edit button sets readOnlyMode parameter default = false -->
+                            <button type="button" class="btn btn-sm btn-outline-dark" 
+                                x-on:click="openEditModal(@item.Id, 'Host', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', false)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Host" onsubmit="return confirm('Purge record?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                            }
+
+                            </div>
+                        </td>
+                                  </tr>
+                             }
+                        </tbody></table></div></div></div>
 
     <!-- Tab 3: Instructors -->
-    <div x-show="activeTab === 'Instructors'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Instructors){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Instructor', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Instructor" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+    <div x-show="activeTab === 'Instructors'" class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Internal Notes</th>
+                            <th class="pe-3 text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>@foreach(var item in Model.Instructors)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-bold">@item.Name</td>
+                                    <td>@item.Email</td>
+                                    <td>@item.Phone</td>
+                                    <td class="text-muted small">@item.Notes</td>
+                                           <td class="pe-3 text-end">
+                               <div class="btn-group gap-1">
+
+                              @if (!(await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                              {
+                                 <button type="button" class="btn btn-sm btn-outline-secondary"
+                                     x-on:click="openEditModal(@item.Id, 'Instructor', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', true)">
+                                     <i class="bi bi-eye-fill me-1"></i> View Details
+                                </button>
+                              }
+
+                                <!-- 2. EXECUTIVE ADMINS ONLY: Privileged management controls suite -->
+                            @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                            {
+                            <!-- Standard Edit button sets readOnlyMode parameter default = false -->
+                            <button type="button" class="btn btn-sm btn-outline-dark" 
+                                x-on:click="openEditModal(@item.Id, 'Instructor', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', false)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Instructor" onsubmit="return confirm('Purge record?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                            }
+
+                            </div>
+                        </td>
+                                                
+                                            
+                                            
+                                            </tr>}</tbody></table></div></div></div>
 
     <!-- Tab 4: Volunteers -->
-    <div x-show="activeTab === 'Volunteers'" class="card shadow-sm border-0"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th class="ps-3">Name</th><th>Email</th><th>Phone</th><th>Internal Notes</th><th class="pe-3 text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model.Volunteers){<tr><td class="ps-3 fw-bold">@item.Name</td><td>@item.Email</td><td>@item.Phone</td><td class="text-muted small">@item.Notes</td><td class="pe-3 text-end"><div class="btn-group gap-1"><button type="button" class="btn btn-sm btn-outline-dark" x-on:click="openEditModal(@item.Id, 'Volunteer', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")')"><i class="bi bi-pencil"></i></button><form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Volunteer" onsubmit="return confirm('Purge record?');"><button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3"></i></button></form></div></td></tr>}</tbody></table></div></div></div>
+    <div x-show="activeTab === 'Volunteers'" class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Internal Notes</th>
+                            <th class="pe-3 text-end">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>@foreach(var item in Model.Volunteers)
+                            {
+                                <tr>
+                                    <td class="ps-3 fw-bold">@item.Name</td>
+                                    <td>@item.Email</td>
+                                    <td>@item.Phone</td>
+                                    <td class="text-muted small">@item.Notes</td>
+                                   <td class="pe-3 text-end">
+                               <div class="btn-group gap-1">
 
-<!-- UNIFIED REGISTRY SINGLE EDIT/CREATE POPUP MODAL -->
-<div class="modal fade" id="masterRegistryModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="post" asp-page-handler="SaveProfile" id="registryForm" class="modal-content shadow-lg border-0">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-person-gear me-2"></i>Manage <span x-text="mType" class="text-warning"></span> Profile Directory
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <!-- Standard hidden inputs routing form data securely back to your backend input model binder properties -->
-                <input type="hidden" asp-for="FormInput.RecordId" :value="mRecordId" />
-                <input type="hidden" asp-for="FormInput.TargetType" :value="mType" />
+                              @if (!(await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                              {
+                                 <button type="button" class="btn btn-sm btn-outline-secondary"
+                                     x-on:click="openEditModal(@item.Id, 'Volunteers', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', true)">
+                                     <i class="bi bi-eye-fill me-1"></i> View Details
+                                </button>
+                              }
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Full Display Name</label>
-                    <input asp-for="FormInput.Name" x-model="mName" class="form-control" required />
+                                <!-- 2. EXECUTIVE ADMINS ONLY: Privileged management controls suite -->
+                            @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+                            {
+                            <!-- Standard Edit button sets readOnlyMode parameter default = false -->
+                            <button type="button" class="btn btn-sm btn-outline-dark" 
+                                x-on:click="openEditModal(@item.Id, 'Volunteers', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', false)">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="Volunteer" onsubmit="return confirm('Purge record?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </form>
+                            }
+
+                            </div>
+                        </td>
+                                                        
+                                                    
+                                                    
+                                                    </tr>}</tbody></table></div></div></div>
+
+    <!-- UNIFIED REGISTRY EDIT/CREATE/VIEW POPUP MODAL -->
+    <div class="modal fade" id="masterRegistryModal" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <!-- 
+                INTERCEPT HANDLER: Prevents form postback executions completely 
+                if the user is evaluating profiles in full read-only mode.
+            -->
+            <form method="post" asp-page-handler="SaveProfile" id="registryForm" 
+                  x-on:submit="if (isReadOnly) { $event.preventDefault(); return false; }" 
+                  class="modal-content shadow-lg border-0">
+                
+                <div class="modal-header text-white" :class="isReadOnly ? 'bg-secondary' : 'bg-dark'">
+                    <h5 class="modal-title">
+                        <i class="bi me-2" :class="isReadOnly ? 'bi-eye-fill text-light' : 'bi-person-gear text-warning'"></i>
+                        <!-- Dynamic Header Title text changes based on modal mode status -->
+                        <span x-text="isReadOnly ? 'View ' + mType + ' Profile Matrix' : 'Manage ' + mType + ' Profile Directory'"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Email Address</label>
-                    <input asp-for="FormInput.Email" type="email" x-model="mEmail" class="form-control" placeholder="Optional contact address..." />
+                <div class="modal-body p-4">
+                    <input type="hidden" asp-for="FormInput.RecordId" :value="mRecordId" />
+                    <input type="hidden" asp-for="FormInput.TargetType" :value="mType" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted mb-1">Full Display Name</label>
+                        <!-- x-bind:readonly maps a programmatic lock whenever isReadOnly evaluates true -->
+                        <input asp-for="FormInput.Name" x-model="mName" class="form-control" :readonly="isReadOnly" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted mb-1">Email Address</label>
+                        <input asp-for="FormInput.Email" type="email" x-model="mEmail" class="form-control" :readonly="isReadOnly" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted mb-1">Phone Number</label>
+                        <input asp-for="FormInput.Phone" x-model="mPhone" class="form-control" :readonly="isReadOnly" placeholder="e.g., 555-1234" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted mb-1">Internal Reference Notes</label>
+                        <textarea asp-for="FormInput.Notes" x-model="mNotes" class="form-control" rows="3" :readonly="isReadOnly" placeholder="No extra admin schedule notes cataloged..."></textarea>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Phone Number</label>
-                    <input asp-for="FormInput.Phone" x-model="mPhone" class="form-control" placeholder="e.g., 555-1234" />
+                
+                <!-- FOOTER STATE MUTATIONS -->
+                <div class="modal-footer bg-light p-3">
+                    <!-- Standard Close Actions visible to all permission tiers -->
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" x-text="isReadOnly ? 'Close View' : 'Discard'"></button>
+                    
+                    <!-- Write Save buttons hide completely from view if the record context is read-only -->
+                    <button type="submit" id="saveSubmitBtn" class="btn btn-primary px-4" x-show="!isReadOnly">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i>Save Directory Row
+                    </button>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Internal Reference Notes</label>
-                    <textarea asp-for="FormInput.Notes" x-model="mNotes" class="form-control" rows="3" placeholder="Add specific scheduling notes, skill rankings, or availability limits..."></textarea>
-                </div>
-            </div>
-            <div class="modal-footer bg-light p-3">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Discard</button>
-                <button type="submit" id="saveSubmitBtn" class="btn btn-primary px-4">Save Directory Row</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
+
+
+
+
 </div>
 
 @section Scripts {
