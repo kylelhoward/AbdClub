@@ -15,6 +15,7 @@ public class AbdContext : DbContext
     public DbSet<Event> Events { get; set; } = null!;
     public DbSet<Dance> Dances { get; set; } = null!;
     public DbSet<Lesson> Lessons { get; set; } = null!;
+    public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<NewsletterSubscriber> NewsletterSubscribers { get; set; } = null!;
     public DbSet<BroadcastAuditLog> BroadcastAuditLogs { get; set; }
     public DbSet<MagicLink> MagicLinks { get; set; } = null!;
@@ -22,15 +23,26 @@ public class AbdContext : DbContext
     public DbSet<MasterHost> MasterHosts { get; set; }
     public DbSet<MasterInstructor> MasterInstructors { get; set; }
     public DbSet<MasterVolunteer> MasterVolunteers { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // TPH discriminator for Event hierarchy
+       
+      
+        // Pre-existing TPH Hierarchical configurations
         modelBuilder.Entity<Event>()
             .HasDiscriminator<string>("EventType")
             .HasValue<Event>("Event")
             .HasValue<Dance>("Dance");
+
+        // 🌟 ATTACH RELATIONAL LOCATION RULE TO THE BASE ENTITY:
+        // This tells EF Core that any entry inside the Events table maps to a Location primary key
+        modelBuilder.Entity<Event>()
+            .HasOne(e => e.Location)
+            .WithMany(l => l.Events)
+            .HasForeignKey(e => e.LocationId)
+            .OnDelete(DeleteBehavior.Restrict); // Prevent dropping a venue that has active matches
+
 
         // One-to-Many: MasterInstructor -> Lessons (An instructor can teach multiple lessons over time)
         modelBuilder.Entity<Lesson>()

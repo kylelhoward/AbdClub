@@ -1,0 +1,81 @@
+@page
+@model AbdClub.Pages.Officers.Locations.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+ @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+                <div>
+                    <strong>Deletion Aborted:</strong> @Model.ErrorMessage
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Location[0].VenueName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Location[0].Address)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Location[0].Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Location[0].GoogleMapsUrl)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Location[0].PhotoUrl)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Location[0].Events)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.Location) {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.VenueName)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Address)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Description)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.GoogleMapsUrl)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.PhotoUrl)
+            </td>
+            <td>
+               @* Example inside your Locations Index table or detail cards *@
+<span class="badge bg-secondary">@item.Events?.Count Scheduled Events</span>
+
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

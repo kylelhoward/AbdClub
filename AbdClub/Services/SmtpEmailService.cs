@@ -15,7 +15,11 @@ public class SmtpEmailService : IEmailService
     private readonly AbdContext _db;
     private readonly IWebHostEnvironment _env; // Inject environment to resolve web root paths
 
-    public SmtpEmailService(IConfiguration config, ILogger<SmtpEmailService> logger, AbdContext db, IWebHostEnvironment env)
+    public SmtpEmailService(
+        IConfiguration config,
+        ILogger<SmtpEmailService> logger,
+        AbdContext db,
+        IWebHostEnvironment env)
     {
         _config = config;
         _logger = logger;
@@ -40,13 +44,20 @@ public class SmtpEmailService : IEmailService
         };
     }
 
-
-
-    private MailMessage BuildMessage(string toEmail, string toName, string subject, string body, bool isHtml = false)
+    private MailMessage BuildMessage(
+        string toEmail,
+        string toName,
+        string subject,
+        string body,
+        bool isHtml = false)
     {
         var fromAddress = _config["Email:FromAddress"]!;
         var fromName = _config["Email:FromName"]!;
-
+        // Defensive fallback safety net to prevent system drops if configuration parameters are ever vacant
+        if (string.IsNullOrWhiteSpace(fromAddress))
+        {
+            throw new InvalidOperationException("Email server configuration error: 'Email:FromEmail' parameter is unassigned or null in settings.");
+        }
         var message = new MailMessage
         {
             From = new MailAddress(fromAddress, fromName),
@@ -61,6 +72,11 @@ public class SmtpEmailService : IEmailService
 
     public async Task SendMagicLinkEmailAsync(Member member, string magicUrl)
     {
+        // 1. Log the initiation event with structured variables
+        _logger.LogInformation(
+            "Initiating outbound Magic Link communication dispatch request. Recipient: {RecipientEmail}",
+            member.Email);
+
         var subject = "Your Austin Ballroom Dancers login link";
 
         var body = $@"
@@ -87,15 +103,28 @@ public class SmtpEmailService : IEmailService
             using var message = BuildMessage(
                 member.Email, member.FullName, subject, body, isHtml: true);
 
+            // 2. Execute the third-party network API transaction call
             await smtp.SendMailAsync(message);
 
+            // 3. Log a clear, successful operation footprint
             _logger.LogInformation(
-                "Magic link email sent via SMTP to {Email}", member.Email);
+                "Communication successfully accepted by remote SMTP relay server. Message type: MagicLink, Destination: {RecipientEmail}",
+                member.Email);
+        }
+        catch (SmtpException ex)
+        {
+            // 4. CRITICAL LOG: Catches explicit network configuration glitches (Bad credentials, port blocking)
+            _logger.LogError(ex,
+                "Relay Handshake Exception: Zoho SMTP gateway rejected outbound authentication headers for recipient {RecipientEmail}.",
+                member.Email);
+            throw; // Bubble up to let the controller gracefully alert the user
         }
         catch (Exception ex)
         {
-            // Temporary debug upgrade: prints out the complete stack trace and inner error details
-            _logger.LogError(ex, "Failed to send magic link to {Email}", member.Email);
+            // 5. Catch any unhandled thread system drops or parsing anomalies
+            _logger.LogError(ex,
+                "Mailing Operational Error: An unexpected failure occurred while processing message envelopes targeting {RecipientEmail}.",
+                member.Email);
             throw;
         }
     }
@@ -585,4 +614,5 @@ public class SmtpEmailService : IEmailService
     {
         throw new NotImplementedException();
     }
+
 }

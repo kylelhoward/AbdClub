@@ -2,18 +2,19 @@ using AbdClub.Data;
 using AbdClub.Dtos;
 using AbdClub.Models;
 using AbdClub.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Infrastructure;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Authorization;
+using QuestPDF.Infrastructure;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 namespace AbdClub.Pages.Officers.Dances;
 
 public class IndexModel : PageModel
 {
     private readonly IAuthorizationService _authorizationService;
-
+    public List<Location> AvailableLocations { get; set; } = new();
     private readonly AbdContext _context;
     private readonly ILogger<AttendingOfficersModel> _logger;
     private readonly IEmailService _emailService;
@@ -57,9 +58,11 @@ public class IndexModel : PageModel
         }
 
         // HYDRATE FORM CONFIGURATION DEFAULTS FROM APPSETTINGS.JSON
-        NewDance.Location = _config["DanceDefaults:Location"] ?? "Go Dance";
+        //NewDance.Location = _config["DanceDefaults:Location"] ?? "Go Dance";
         NewDance.ContactEmail = _config["DanceDefaults:ContactEmail"] ?? "management@abdclub.com";
         NewDance.Date = DateOnly.FromDateTime(DateTime.Today); // Sensible operational default parameter
+        // Hydrate your new venue dropdown collection array
+    AvailableLocations = await _context.Locations.OrderBy(l => l.VenueName).ToListAsync();
 
         // Parse time elements out safely into type-safe TimeOnly objects
         if (TimeOnly.TryParse(_config["DanceDefaults:StartTime"], out var startTime))
@@ -95,12 +98,13 @@ public class IndexModel : PageModel
         var dance = new Dance
         {
             Title = NewDance.Title,
-            Location = NewDance.Location,
             Description = NewDance.Description,
             ContactEmail = NewDance.ContactEmail,
             Date = NewDance.Date,
             StartTime = NewDance.StartTime,
             EndTime = NewDance.EndTime,
+             // 🌟 MAP THE STRATEGIC FOREIGN KEY LINK DIRECTLY
+        LocationId = NewDance.SelectedLocationId,
             AssignedDjId = NewDance.SelectedDjId > 0 ? NewDance.SelectedDjId : null
         };
 

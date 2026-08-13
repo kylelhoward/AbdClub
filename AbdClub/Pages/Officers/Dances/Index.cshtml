@@ -107,19 +107,28 @@
             </div>
             <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
 
-                <!-- Section 1: Core Event Text Fields -->
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
-                        <input asp-for="NewDance.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
-                        <span asp-validation-for="NewDance.Title" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold small text-muted mb-1">Location / Venue Room</label>
-                        <input asp-for="NewDance.Location" class="form-control" placeholder="e.g., Main Hall Ballroom" required />
-                        <span asp-validation-for="NewDance.Location" class="text-danger small"></span>
-                    </div>
-                </div>
+                <!-- Section 1: Core Event Fields -->
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
+        <input asp-for="NewDance.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
+        <span asp-validation-for="NewDance.Title" class="text-danger small"></span>
+    </div>
+    
+    <!-- 🌟 REFACTORED DROPDOWN: Replaces the raw location text box -->
+    <div class="col-md-6">
+        <label class="form-label fw-bold small text-muted mb-1">Location / Venue Room</label>
+        <select asp-for="NewDance.SelectedLocationId" class="form-select bg-light fw-medium" required>
+            <option value="">-- Choose Registered Club Venue --</option>
+            @foreach (var loc in Model.AvailableLocations)
+            {
+                <option value="@loc.Id">@loc.VenueName (@loc.Address)</option>
+            }
+        </select>
+        <span asp-validation-for="NewDance.SelectedLocationId" class="text-danger small"></span>
+    </div>
+</div>
+
 
                 <!-- Section 2: Date and Time Operations Configurations -->
                 <div class="row g-3 mb-3">

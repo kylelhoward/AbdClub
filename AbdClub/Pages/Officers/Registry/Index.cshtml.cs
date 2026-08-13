@@ -139,11 +139,17 @@ public class IndexModel(
         var record = await _context.Set<T>().FindAsync(id);
         if (record != null)
         {
+            // 🌟 STRUCTURAL LOG: Captures actor, record ID, and exact entity class type
+            _logger.LogWarning(
+                "Administrative Overrides: Row record {RecordId} was permanently purged from directory model mapping ({RegistryType}) by User: {AdminEmail}",
+                id, typeof(T).Name, User.Identity?.Name ?? "Unknown Actor");
+
             _context.Set<T>().Remove(record);
             await _context.SaveChangesAsync();
             StatusNotice = $"Success: Record purged cleanly from system registers.";
         }
     }
+
 }
 
 public class RegistryFormInput

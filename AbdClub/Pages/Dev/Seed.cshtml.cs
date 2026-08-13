@@ -2,6 +2,7 @@ using AbdClub.Data;
 using AbdClub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages.Dev;
 
@@ -15,6 +16,8 @@ public class SeedModel : PageModel
     public int MemberCount { get; set; }
     public List<NewsletterSubscriber> Subs { get; set; } = new();
     public int SubCount { get; set; }
+    public List<Location> LocationsList { get; set; } = new();
+    public List<Dance> DancesList { get; set; } = new();
 
     public List<MasterDJ> Djs { get; set; } = new();
     public List<MasterHost> Hosts { get; set; } = new();
@@ -25,11 +28,13 @@ public class SeedModel : PageModel
     public int InstCount { get; set; }
     public int VolCount { get; set; }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        LoadMembers();
-        LoadNewsLetterSubscribers();
-        LoadRegristryPersons();
+        await LoadMembersAsync();
+        await LoadNewsLetterSubscribersAsync();
+        await LoadRegistryPersonsAsync();
+        await LoadLocationListAsync();
+        await LoadLocationListAsync();
     }
 
     public async Task<IActionResult> OnPostAsync(
@@ -42,7 +47,7 @@ public class SeedModel : PageModel
         if (existing != null)
         {
             Message = $"Member with email {email} already exists.";
-            LoadMembers();
+            await LoadMembersAsync();
             return Page();
         }
 
@@ -60,7 +65,7 @@ public class SeedModel : PageModel
 
         await _db.SaveChangesAsync();
         Message = $"Added: {fullName} ({email}) — expires {expiryDate:yyyy-MM-dd}";
-        LoadMembers();
+        await LoadMembersAsync();
         return Page();
     }
 
@@ -119,15 +124,15 @@ public class SeedModel : PageModel
 
         Message = $"Seeded {toAdd.Count} test members " +
                   $"({testMembers.Count - toAdd.Count} skipped — already exist).";
-        LoadMembers();
+        await LoadMembersAsync();
         return Page();
     }
 
-    private void LoadMembers()
+    private async Task LoadMembersAsync()
     {
-        Members = _db.Members
+        Members = await _db.Members
             .OrderBy(m => m.ExpiryDate)
-            .ToList();
+            .ToListAsync();
         MemberCount = Members.Count;
     }
 
@@ -167,18 +172,27 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
 
         Message = $"Seeded {toAdd.Count} test news letter subscribers " +
                   $"({testSubs.Count - toAdd.Count} skipped — already exist).";
-        LoadNewsLetterSubscribers();
+        await LoadNewsLetterSubscribersAsync();
         return Page();
     }
 
-    private void LoadNewsLetterSubscribers()
+    private async Task LoadNewsLetterSubscribersAsync()
     {
-        Subs = _db.NewsletterSubscribers
+        Subs = await _db.NewsletterSubscribers
             .OrderBy(m => m.SubscribedAt)
-            .ToList();
+            .ToListAsync();
         SubCount = Subs.Count;
     }
-
+    private async Task LoadLocationListAsync()
+    {
+        // Hydrate Locations for the new Sandbox accordion panes
+        LocationsList = await _db.Locations.OrderBy(l => l.VenueName).ToListAsync();
+    }
+    private async Task LoadDanceListAsync()
+    {
+        // Hydrate Dances for the new Sandbox accordion panes
+        DancesList = await _db.Events.OfType<Dance>().Include(d => d.Location).OrderBy(d => d.Date).ToListAsync();
+    }
     // In SeedModel — simulate a Stripe payment for testing
     public async Task<IActionResult> OnPostSimulatePaymentAsync(
         string fullName, string email, string? phone)
@@ -191,7 +205,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         if (existing != null)
         {
             Message = $"{email} is already a member.";
-            LoadMembers();
+            await LoadMembersAsync();
             return Page();
         }
 
@@ -221,7 +235,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
 
         await _db.SaveChangesAsync();
         Message = $"Simulated payment — member {fullName} ({email}) created.";
-        LoadMembers();
+        await LoadMembersAsync();
         return Page();
     }
 
@@ -248,7 +262,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         _db.MasterVolunteers.RemoveRange(_db.MasterVolunteers);
         await _db.SaveChangesAsync();
 
-        
+
 
         // SEED DJs
         _db.MasterDjs.AddRange(new List<MasterDJ> {
@@ -279,19 +293,112 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
     });
 
         await _db.SaveChangesAsync();
-        LoadRegristryPersons();
+        await LoadRegistryPersonsAsync();
         return RedirectToPage();
     }
-    private void LoadRegristryPersons()
+    private async Task LoadRegistryPersonsAsync()
     {
-        Djs = [.. _db.MasterDjs.OrderBy(m => m.Name)];
+        // 🌟 ASYNC TASK MATRIX: Concurrently query each independent table thread non-blockingly
+        Djs = await _db.MasterDjs.OrderBy(m => m.Name).ToListAsync();
         DjsCount = Djs.Count;
-        Hosts = [.. _db.MasterHosts.OrderBy(m => m.Name)];
+
+        Hosts = await _db.MasterHosts.OrderBy(m => m.Name).ToListAsync();
         HostCount = Hosts.Count;
-        Instructors = [.. _db.MasterInstructors.OrderBy(m => m.Name)];
+
+        Instructors = await _db.MasterInstructors.OrderBy(m => m.Name).ToListAsync();
         InstCount = Instructors.Count;
-        Volunteers = [.. _db.MasterVolunteers.OrderBy(m => m.Name)];
+
+        Volunteers = await _db.MasterVolunteers.OrderBy(m => m.Name).ToListAsync();
         VolCount = Volunteers.Count;
     }
+
+
+
+    // 3. Paste the Locations Seeder Handler Method:
+    public async Task<IActionResult> OnPostSeedLocationsAsync()
+    {
+        bool isAuthorized = User.IsInRole("TechAdmin");
+        if (!isAuthorized) return Forbid();
+
+        var testVenues = new List<Location>
+    {
+        new() { VenueName = "Go Dance South", Address = "4477 S Lamar Blvd, Austin, TX 78745", Description = "Main ballroom entrance. Door code: #4242", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/godance.jpg" },
+        new() { VenueName = "Go Dance North", Address = "2525 W Anderson Ln., Austin, TX 78757", Description = "Studio 2 corridor entry setup.", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/fallback.jpg" },
+        new() { VenueName = "Fedora Club Hall", Address = "1200 San Jacinto Blvd, Austin, TX 78701", Description = "Street parking requires city meters. Back door loading ramp rules active.", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/fallback.jpg" }
+    };
+
+        int addedCount = 0;
+        int skippedCount = 0;
+
+        foreach (var loc in testVenues)
+        {
+            if (!await _db.Locations.AnyAsync(l => l.VenueName == loc.VenueName))
+            {
+                _db.Locations.Add(loc);
+                addedCount++;
+            }
+            else
+            {
+                skippedCount++;
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        Message = $"Seeded {addedCount} test venue locations ({skippedCount} skipped — already exist).";
+
+        await LoadLocationListAsync();
+        return Page();
+    }
+
+    // 4. Paste the Relational Dances Seeder Handler Method:
+    public async Task<IActionResult> OnPostSeedDancesAsync()
+    {
+        bool isAuthorized = User.IsInRole("TechAdmin");
+        if (!isAuthorized) return Forbid();
+
+        // Fetch an active location from the database to map our foreign key dependencies
+        var primaryVenue = await _db.Locations.FirstOrDefaultAsync(l => l.VenueName == "Go Dance South");
+        var backupVenue = await _db.Locations.FirstOrDefaultAsync(l => l.VenueName == "Go Dance North")
+                          ?? primaryVenue;
+
+        if (primaryVenue == null)
+        {
+            Message = "Error: Cannot seed dances. No location profiles exist inside database registries. Run Locations seeder first.";
+            await LoadDanceListAsync();
+            return Page();
+        }
+
+        var baseDate = DateOnly.FromDateTime(DateTime.Today);
+        var mockDances = new List<Dance>
+    {
+        new() { Title = "Summer Retro Swing Gala", Description = "Join us for vintage big band sounds and high-energy social dancing!", ContactEmail = "admin@hillcountrywebco.com", Date = baseDate.AddDays(7), StartTime = new TimeOnly(19, 0), EndTime = new TimeOnly(22, 0), LocationId = primaryVenue.Id },
+        new() { Title = "Salsa & Bachata Fusion Night", Description = "Introductory latin training layers followed by continuous club mixes.", ContactEmail = "admin@hillcountrywebco.com", Date = baseDate.AddDays(14), StartTime = new TimeOnly(19, 30), EndTime = new TimeOnly(22, 30), LocationId = backupVenue.Id },
+        new() { Title = "Rockabilly Jive Social", Description = "A high-octane jump blues social session open to all experience ranks.", ContactEmail = "admin@hillcountrywebco.com", Date = baseDate.AddDays(21), StartTime = new TimeOnly(20, 0), EndTime = new TimeOnly(23, 0), LocationId = primaryVenue.Id }
+    };
+
+        int addedCount = 0;
+        int skippedCount = 0;
+
+        foreach (var dance in mockDances)
+        {
+            if (!await _db.Events.OfType<Dance>().AnyAsync(d => d.Title == dance.Title && d.Date == dance.Date))
+            {
+                _db.Events.Add(dance);
+                addedCount++;
+            }
+            else
+            {
+                skippedCount++;
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        Message = $"Seeded {addedCount} upcoming relational dance entries ({skippedCount} skipped — already exist).";
+
+        await LoadDanceListAsync();
+        return Page();
+    }
+
+
 
 }

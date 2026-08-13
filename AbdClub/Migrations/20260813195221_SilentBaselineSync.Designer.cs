@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AbdClub.Migrations
 {
     [DbContext(typeof(AbdContext))]
-    [Migration("20260808195153_AddTechAdminAdminRoles")]
-    partial class AddTechAdminAdminRoles
+    [Migration("20260813195221_SilentBaselineSync")]
+    partial class SilentBaselineSync
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -149,9 +149,8 @@ namespace AbdClub.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("LocationId")
+                        .HasColumnType("integer");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone");
@@ -161,6 +160,8 @@ namespace AbdClub.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
 
                     b.ToTable("Events");
 
@@ -200,6 +201,38 @@ namespace AbdClub.Migrations
                     b.HasIndex("InstructorId");
 
                     b.ToTable("Lessons");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.Location", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("GoogleMapsUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("VenueName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Locations");
                 });
 
             modelBuilder.Entity("AbdClub.Models.MagicLink", b =>
@@ -588,6 +621,17 @@ namespace AbdClub.Migrations
                     b.Navigation("Member");
                 });
 
+            modelBuilder.Entity("AbdClub.Models.Event", b =>
+                {
+                    b.HasOne("AbdClub.Models.Location", "Location")
+                        .WithMany("Events")
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Location");
+                });
+
             modelBuilder.Entity("AbdClub.Models.Lesson", b =>
                 {
                     b.HasOne("AbdClub.Models.Dance", "Dance")
@@ -689,6 +733,11 @@ namespace AbdClub.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("AssignedDj");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.Location", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("AbdClub.Models.Member", b =>

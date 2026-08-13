@@ -327,6 +327,133 @@
             </div>
         </div>
 
+
+                <!-- SECTION 6: LOCATION REGISTRY SEEDER -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingSeedLocs">
+                <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeedLocs" aria-expanded="false" aria-controls="collapseSeedLocs">
+                    <i class="bi bi-geo-alt-fill me-2 text-danger"></i>Mock Venue Locations Seeder
+                </button>
+            </h2>
+            <div id="collapseSeedLocs" class="accordion-collapse collapse" aria-labelledby="headingSeedLocs" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Bulk-populate your physical venue directories table with authentic Austin dance floors.</span>
+                        <form method="post" asp-page-handler="SeedLocations">
+                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm">
+                                <i class="bi bi-pin-map-fill me-1"></i>Seed 3 Dance Venues
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive border rounded shadow-sm">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th class="ps-3" style="width: 60px;">Id</th>
+                                    <th>Venue Name</th>
+                                    <th>Street Address</th>
+                                    <th>Link Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="small">
+                                @if (Model.LocationsList != null && Model.LocationsList.Any())
+                                {
+                                    foreach (var loc in Model.LocationsList)
+                                    {
+                                        <tr>
+                                            <td class="ps-3 text-muted font-monospace fw-bold">@loc.Id</td>
+                                            <td class="fw-bold text-dark">@loc.VenueName</td>
+                                            <td>@loc.Address</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(loc.GoogleMapsUrl))
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success border-opacity-20"><i class="bi bi-link-45deg"></i> URL Present</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-light text-muted border">No URL</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center p-4 text-muted italic">Locations table space empty. Execute the seeder tool layout button above.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 7: DANCE EVENT METRIC SEEDER -->
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingSeedDances">
+                <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeedDances" aria-expanded="false" aria-controls="collapseSeedDances">
+                    <i class="bi bi-calendar-event-fill me-2 text-warning"></i>Dance Calendar Schedules Seeder
+                </button>
+            </h2>
+            <div id="collapseSeedDances" class="accordion-collapse collapse" aria-labelledby="headingSeedDances" data-bs-parent="#devCentralAccordion">
+                <div class="accordion-body bg-white p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Generates upcoming relational dance events mapped seamlessly onto your active seeded location IDs [Query-relevant Context based on Other Google Activities].</span>
+                        <form method="post" asp-page-handler="SeedDances">
+                            <button type="submit" class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm" @(Model.LocationsList?.Any() == false ? "disabled" : "")>
+                                <i class="bi bi-calendar-plus-fill me-1"></i>Seed 3 Upcoming Relational Dances
+                            </button>
+                        </form>
+                    </div>
+
+                    @if (Model.LocationsList?.Any() == false)
+                    {
+                        <div class="alert alert-warning py-2 small shadow-sm mb-3">
+                            <i class="bi bi-info-circle me-1"></i><strong>Prerequisite Action Required:</strong> You must seed your Venue Locations first before the database engine can establish relational dance schedule foreign keys.
+                        </div>
+                    }
+
+                    <div class="table-responsive border rounded shadow-sm">
+                        <table class="table table-hover align-middle mb-0 text-nowrap">
+                            <thead class="table-light small text-uppercase">
+                                <tr>
+                                    <th class="ps-3" style="width: 60px;">Id</th>
+                                    <th>Event Title</th>
+                                    <th>Assigned Venue</th>
+                                    <th>Target Date</th>
+                                    <th>Operating Window</th>
+                                </tr>
+                            </thead>
+                            <tbody class="small">
+                                @if (Model.DancesList != null && Model.DancesList.Any())
+                                {
+                                    foreach (var d in Model.DancesList)
+                                    {
+                                        <tr>
+                                            <td class="ps-3 text-muted font-monospace fw-bold">@d.Id</td>
+                                            <td class="fw-bold text-dark">@d.Title</td>
+                                            <td class="text-primary fw-medium"><i class="bi bi-geo-alt-fill me-1"></i>@(d.Location != null ? d.Location.VenueName : "Unmapped / Broken Link")</td>
+                                            <td>@d.Date.ToString("yyyy-MM-dd")</td>
+                                            <td><span class="badge bg-light text-secondary border">@d.StartTime.ToString("h:mm tt") - @d.EndTime.ToString("h:mm tt")</span></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center p-4 text-muted italic">Dances registry layout holds empty columns. Click seed parameters to load calendar schedules.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 @* -------------------------------------------------------------- *@
     </div>
 </div>
