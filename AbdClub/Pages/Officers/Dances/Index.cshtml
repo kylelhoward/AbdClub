@@ -50,16 +50,16 @@
                                 <td class="pe-3 text-end">
                                     <div class="btn-group gap-1">
                                         <!-- 1. NEW COMPONENT LINK: Navigates straight to your Generic Contact Manager directory -->
-                                        <a class="btn btn-sm btn-outline-info" asp-page="./ManageContacts" asp-route-id="@dance.Id">
+                                        @* <a class="btn btn-sm btn-outline-info" asp-page="./ManageContacts" asp-route-id="@dance.Id">
                                             <i class="bi bi-person-lines-fill me-1"></i> Staff Directory
-                                        </a>
+                                        </a> *@
                                         <!-- Navigation trigger jump to attendance panel management layers -->
                                         <a class="btn btn-sm btn-outline-success" asp-page="./AttendingOfficers" asp-route-id="@dance.Id">
-                                            <i class="bi bi-shield-check"></i> Attendance
+                                            <i class="bi bi-shield-check"></i> Officer Attendance
                                         </a>
-                                        <a class="btn btn-sm btn-outline-primary" asp-page="./Volunteers" asp-route-id="@dance.Id">
+                                       @*  <a class="btn btn-sm btn-outline-primary" asp-page="./Volunteers" asp-route-id="@dance.Id">
                                             <i class="bi bi-people-fill"></i> Volunteers
-                                        </a>
+                                        </a> *@
                                         <a class="btn btn-sm btn-outline-dark" asp-page="./Edit" asp-route-id="@dance.Id">
                                             <i class="bi bi-pencil-square"></i> Edit
                                         </a>

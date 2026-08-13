@@ -81,7 +81,12 @@ public class IndexModel : PageModel
         RegistryVolunteers = await _context.MasterVolunteers.OrderBy(v => v.Name).ToListAsync();
         AvailableOfficers = await _context.Members.Where(m => m.IsActive && m.IsOfficer).OrderBy(m => m.FullName).ToListAsync();
 
-        UpcomingDances = await _context.Events.OfType<Dance>().Include(d => d.AssignedDj).OrderBy(d => d.Date).ToListAsync();
+        UpcomingDances = await _context.Events
+            .OfType<Dance>()
+            .Include(d => d.AssignedDj)
+            .Include(l=>l.Lessons)
+            .OrderBy(d => d.Date)
+            .ToListAsync();
         return Page();
     }
 

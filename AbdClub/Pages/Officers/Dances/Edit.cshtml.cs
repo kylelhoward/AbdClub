@@ -72,6 +72,10 @@ public class EditModel(
         FormInput.SelectedVolunteerIds = CurrentlyAssignedVolunteerIds.ToList();
         FormInput.Title = TargetDance.Title;
         FormInput.Description = TargetDance.Description;
+        FormInput.Date = TargetDance.Date;
+        FormInput.StartTime = TargetDance.StartTime;
+        FormInput.EndTime = TargetDance.EndTime;
+        FormInput.ContactEmail = TargetDance.ContactEmail;
         // REFACTORED INITIALIZATION MAP: Selects InstructorId integer indices
         FormInput.Lessons = TargetDance.Lessons.Select(l => new LessonInputItem
         {
@@ -104,7 +108,11 @@ public class EditModel(
         if (dance == null) return NotFound();
         dance.Title = FormInput.Title.Trim();
         dance.Description = FormInput.Description?.Trim();
-
+        // 🌟 MAP THE SCHEDULE PARAMETER TRANSFORMS CLEANLY
+        dance.Date = FormInput.Date;
+        dance.StartTime = FormInput.StartTime;
+        dance.EndTime = FormInput.EndTime;
+        dance.ContactEmail = FormInput.ContactEmail;
         if (!ModelState.IsValid)
         {
             await LoadMasterRegistriesAsync();

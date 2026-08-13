@@ -51,29 +51,55 @@
         <div class="accordion shadow-sm" id="danceMatrixAccordion">
            
                         <!-- ACCORDION ITEM 0: CORE EVENT TEXT DETAILS -->
-            <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
-                <h2 class="accordion-header" id="headingCoreInfo">
-                    <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoreInfo" aria-expanded="true" aria-controls="collapseCoreInfo">
-                        <i class="bi bi-info-circle-fill me-2 text-warning"></i>Core Event Details
-                    </button>
-                </h2>
-                <div id="collapseCoreInfo" class="accordion-collapse collapse show" aria-labelledby="headingCoreInfo" data-bs-parent="#danceMatrixAccordion">
-                    <div class="accordion-body bg-white p-4">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label fw-bold small text-muted mb-1">Dance Event Title</label>
-                                <input asp-for="FormInput.Title" class="form-control form-control-lg fw-semibold" placeholder="e.g., Summer Retro Swing Gala" required />
-                                <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label fw-bold small text-muted mb-1">Public Calendar Announcement Description</label>
-                                <textarea asp-for="FormInput.Description" class="form-control" rows="3" placeholder="Provide public details about pricing, themes, attire rules..."></textarea>
-                                <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
-                            </div>
-                        </div>
-                    </div>
+
+<div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+    <h2 class="accordion-header" id="headingCoreInfo">
+        <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoreInfo" aria-expanded="true" aria-controls="collapseCoreInfo">
+            <i class="bi bi-info-circle-fill me-2 text-warning"></i>Core Event Details
+        </button>
+    </h2>
+    <div id="collapseCoreInfo" class="accordion-collapse collapse show" aria-labelledby="headingCoreInfo" data-bs-parent="#danceMatrixAccordion">
+        <div class="accordion-body bg-white p-4">
+            <div class="row g-3">
+                <!-- Title and Contact Email Row -->
+                <div class="col-md-8">
+                    <label class="form-label fw-bold small text-muted mb-1">Dance Event Title</label>
+                    <input asp-for="FormInput.Title" class="form-control form-control-lg fw-semibold" placeholder="e.g., Summer Retro Swing Gala" required />
+                    <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted mb-1">Organizer Contact Email</label>
+                    <input asp-for="FormInput.ContactEmail" type="email" class="form-control form-control-lg text-secondary" placeholder="e.g., info@abdclub.org" />
+                    <span asp-validation-for="FormInput.ContactEmail" class="text-danger small"></span>
+                </div>
+
+                <!-- Date and Operational Window Matrices Row -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-calendar3 me-1 text-primary"></i>Target Event Date</label>
+                    <input asp-for="FormInput.Date" type="date" class="form-control" required />
+                    <span asp-validation-for="FormInput.Date" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock me-1 text-success"></i>Doors / Start Time</label>
+                    <input asp-for="FormInput.StartTime" type="time" class="form-control" required />
+                    <span asp-validation-for="FormInput.StartTime" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock-fill me-1 text-danger"></i>Curfew / End Time</label>
+                    <input asp-for="FormInput.EndTime" type="time" class="form-control" required />
+                    <span asp-validation-for="FormInput.EndTime" class="text-danger small"></span>
+                </div>
+
+                <!-- Public Calendar Announcement Description Row -->
+                <div class="col-12">
+                    <label class="form-label fw-bold small text-muted mb-1">Public Calendar Announcement Description</label>
+                    <textarea asp-for="FormInput.Description" class="form-control" rows="3" placeholder="Provide public details about pricing, themes, attire rules..."></textarea>
+                    <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
 
 

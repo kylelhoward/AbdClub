@@ -8,9 +8,22 @@ public class DanceFormUpdateDto
     // NEW METRIC METRIC FIELDS
     [Required(ErrorMessage = "The dance event title cannot be empty.")]
     [StringLength(100, ErrorMessage = "Title must be under 100 characters.")]
+
+    public string? ContactEmail { get; set; }
+
+    [Required(ErrorMessage = "Event title is strictly required.")]
     public string Title { get; set; } = string.Empty;
 
     public string? Description { get; set; }
+
+    [Required(ErrorMessage = "Please establish a scheduled date.")]
+    public DateOnly Date { get; set; }
+
+    [Required(ErrorMessage = "Please establish an operating start time.")]
+    public TimeOnly StartTime { get; set; }
+
+    [Required(ErrorMessage = "Please establish a scheduled wrap-up time.")]
+    public TimeOnly EndTime { get; set; }
 
     // Pre-existing structure mappings
     public int? SelectedDjId { get; set; }
