@@ -19,7 +19,10 @@
 
     <div class="mb-4">
         <h2><i class="bi bi-gear-wide-connected text-dark me-2"></i>Master Event Configuration</h2>
-        <h5 class="text-muted">Dance Id @Model.TargetDance.Id: <span class="text-primary fw-bold">@Model.TargetDance.Title</span> (@Model.TargetDance.Date.ToString("yyyy-MM-dd"))</h5>
+        <h5 class="text-muted">
+            Dance Id @Model.TargetDance.Id: 
+            <span class="text-primary fw-bold">@Model.TargetDance.Title</span> (@Model.TargetDance.Date.ToString("yyyy-MM-dd"))
+        </h5>
     </div>
 
     @if (Model.UpdateFeedback != null)
@@ -50,56 +53,73 @@
         <!-- MASTER STAFFING ACCORDION SYSTEM -->
         <div class="accordion shadow-sm" id="danceMatrixAccordion">
            
-                        <!-- ACCORDION ITEM 0: CORE EVENT TEXT DETAILS -->
+        <!-- ACCORDION ITEM 0: CORE EVENT TEXT DETAILS -->
 
-<div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
-    <h2 class="accordion-header" id="headingCoreInfo">
-        <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoreInfo" aria-expanded="true" aria-controls="collapseCoreInfo">
-            <i class="bi bi-info-circle-fill me-2 text-warning"></i>Core Event Details
-        </button>
-    </h2>
-    <div id="collapseCoreInfo" class="accordion-collapse collapse show" aria-labelledby="headingCoreInfo" data-bs-parent="#danceMatrixAccordion">
-        <div class="accordion-body bg-white p-4">
-            <div class="row g-3">
-                <!-- Title and Contact Email Row -->
-                <div class="col-md-8">
-                    <label class="form-label fw-bold small text-muted mb-1">Dance Event Title</label>
-                    <input asp-for="FormInput.Title" class="form-control form-control-lg fw-semibold" placeholder="e.g., Summer Retro Swing Gala" required />
-                    <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted mb-1">Organizer Contact Email</label>
-                    <input asp-for="FormInput.ContactEmail" type="email" class="form-control form-control-lg text-secondary" placeholder="e.g., info@abdclub.org" />
-                    <span asp-validation-for="FormInput.ContactEmail" class="text-danger small"></span>
-                </div>
+        <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
+            <h2 class="accordion-header" id="headingCoreInfo">
+                <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoreInfo" aria-expanded="true" aria-controls="collapseCoreInfo">
+                    <i class="bi bi-info-circle-fill me-2 text-warning"></i>Core Event Details
+                </button>
+            </h2>
+            <div id="collapseCoreInfo" class="accordion-collapse collapse show" aria-labelledby="headingCoreInfo" data-bs-parent="#danceMatrixAccordion">
+                <div class="accordion-body bg-white p-4">
+                    <div class="row g-3">
+                        
+                        <!-- Row 1: Event Title (Left 8 Columns) -->
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold small text-muted mb-1">Dance Event Title</label>
+                            <input asp-for="FormInput.Title" class="form-control form-control-lg fw-semibold" placeholder="e.g., Summer Retro Swing Gala" required />
+                            <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
+                        </div>
 
-                <!-- Date and Operational Window Matrices Row -->
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-calendar3 me-1 text-primary"></i>Target Event Date</label>
-                    <input asp-for="FormInput.Date" type="date" class="form-control" required />
-                    <span asp-validation-for="FormInput.Date" class="text-danger small"></span>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock me-1 text-success"></i>Doors / Start Time</label>
-                    <input asp-for="FormInput.StartTime" type="time" class="form-control" required />
-                    <span asp-validation-for="FormInput.StartTime" class="text-danger small"></span>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock-fill me-1 text-danger"></i>Curfew / End Time</label>
-                    <input asp-for="FormInput.EndTime" type="time" class="form-control" required />
-                    <span asp-validation-for="FormInput.EndTime" class="text-danger small"></span>
-                </div>
+                        <!-- 🌟 NEW LOCATION DROPDOWN (Right 4 Columns) -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Assigned Venue / Hall</label>
+                            <select asp-for="FormInput.SelectedLocationId" class="form-select form-select-lg bg-light fw-medium text-dark" required>
+                                <option value="">-- Select Venue --</option>
+                                @foreach (var venue in Model.AvailableVenues)
+                                {
+                                    <option value="@venue.Id">@venue.VenueName</option>
+                                }
+                            </select>
+                            <span asp-validation-for="FormInput.SelectedLocationId" class="text-danger small"></span>
+                        </div>
 
-                <!-- Public Calendar Announcement Description Row -->
-                <div class="col-12">
-                    <label class="form-label fw-bold small text-muted mb-1">Public Calendar Announcement Description</label>
-                    <textarea asp-for="FormInput.Description" class="form-control" rows="3" placeholder="Provide public details about pricing, themes, attire rules..."></textarea>
-                    <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
+                        <!-- Row 2: Organizer Contact Email (Added back for completeness) -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted mb-1">Organizer Contact Email</label>
+                            <input asp-for="FormInput.ContactEmail" type="email" class="form-control text-secondary" placeholder="e.g., info@abdclub.org" />
+                            <span asp-validation-for="FormInput.ContactEmail" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Row 3: Date and Operational Window Matrices -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-calendar3 me-1 text-primary"></i>Target Event Date</label>
+                            <input asp-for="FormInput.Date" type="date" class="form-control" required />
+                            <span asp-validation-for="FormInput.Date" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock me-1 text-success"></i>Doors / Start Time</label>
+                            <input asp-for="FormInput.StartTime" type="time" class="form-control" required />
+                            <span asp-validation-for="FormInput.StartTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock-fill me-1 text-danger"></i>Curfew / End Time</label>
+                            <input asp-for="FormInput.EndTime" type="time" class="form-control" required />
+                            <span asp-validation-for="FormInput.EndTime" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Row 4: Public Calendar Announcement Description -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted mb-1">Public Calendar Announcement Description</label>
+                            <textarea asp-for="FormInput.Description" class="form-control" rows="3" placeholder="Provide public details about pricing, themes, attire rules..."></textarea>
+                            <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+
 
 
 

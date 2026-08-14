@@ -20,6 +20,9 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
-        Location = await _context.Locations.ToListAsync();
+        Location = await _context
+            .Locations
+            .Include(e=>e.Events)
+            .ToListAsync();
     }
 }

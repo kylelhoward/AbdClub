@@ -24,6 +24,10 @@ public class DanceFormUpdateDto
 
     [Required(ErrorMessage = "Please establish a scheduled wrap-up time.")]
     public TimeOnly EndTime { get; set; }
+    
+    // 🌟 ADD THIS KEY: Tracks the updated relational venue ID
+    [Required(ErrorMessage = "You must assign an active location to this event.")]
+    public int SelectedLocationId { get; set; }
 
     // Pre-existing structure mappings
     public int? SelectedDjId { get; set; }

@@ -27,7 +27,17 @@
                     <div>
                         <h4 class="mb-1 text-warning">@dance.Title</h4>
                         <div class="small opacity-75">
-                            <i class="bi bi-geo-alt-fill me-1"></i>@dance.Location &nbsp;|&nbsp;
+                             <button type="button" 
+                                            class="btn btn-link text-info p-0 fw-semibold text-decoration-none text-start venue-modal-trigger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#venueDetailModal"
+                                            data-name="@dance.Location.VenueName"
+                                            data-address="@dance.Location.Address"
+                                            data-desc="@(dance.Location.Description ?? "No specialized entrance codes or arrival rules cataloged.")"
+                                            data-map="@(dance.Location.GoogleMapsUrl ?? "")"
+                                            data-photo="@(dance.Location.PhotoUrl ?? "")">
+                                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>@dance.Location.VenueName
+                                    </button>
                             <i class="bi bi-clock-fill me-1"></i>@dance.StartTime.ToString("h:mm tt") - @dance.EndTime.ToString("h:mm tt")
                         </div>
                     </div>
@@ -166,5 +176,7 @@
             <p class="text-muted">Check back later for newly scheduled social dancing events.</p>
         </div>
     }
+      <!-- Render the reusable venue popup partial view shell at the bottom of the root wrapper -->
+    <partial name="_VenueDetailModal" />
 </div>
 

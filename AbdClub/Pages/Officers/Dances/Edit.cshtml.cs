@@ -11,7 +11,7 @@ namespace AbdClub.Pages.Officers.Dances;
 
 public class EditModel(
     AbdContext context,
-    IAuthorizationService authorizationService ,
+    IAuthorizationService authorizationService,
     IEmailService emailService,
     ILogger<EditModel> logger) : PageModel
 {
@@ -26,6 +26,9 @@ public class EditModel(
     public List<MasterHost> RegistryHosts { get; set; } = new();
     public List<MasterInstructor> RegistryInstructors { get; set; } = new();
     public List<MasterVolunteer> RegistryVolunteers { get; set; } = new();
+
+    // Declare the options array collection at the top of your PageModel class:
+    public List<Location> AvailableVenues { get; set; } = new();
 
     public HashSet<int> CurrentlyAssignedOfficerIds { get; set; } = new();
     public HashSet<int> CurrentlyAssignedHostIds { get; set; } = new();
@@ -70,12 +73,16 @@ public class EditModel(
 
         CurrentlyAssignedVolunteerIds = TargetDance.AssignedVolunteers.Select(v => v.Id).ToHashSet();
         FormInput.SelectedVolunteerIds = CurrentlyAssignedVolunteerIds.ToList();
+        // Hydrate the venue choices list
+        AvailableVenues = await _context.Locations.OrderBy(l => l.VenueName).ToListAsync();
+
         FormInput.Title = TargetDance.Title;
         FormInput.Description = TargetDance.Description;
         FormInput.Date = TargetDance.Date;
         FormInput.StartTime = TargetDance.StartTime;
         FormInput.EndTime = TargetDance.EndTime;
         FormInput.ContactEmail = TargetDance.ContactEmail;
+        FormInput.SelectedLocationId = TargetDance.LocationId;
         // REFACTORED INITIALIZATION MAP: Selects InstructorId integer indices
         FormInput.Lessons = TargetDance.Lessons.Select(l => new LessonInputItem
         {
@@ -97,7 +104,7 @@ public class EditModel(
             return Forbid(); // Blocks lower-level officers automatically
         }
 
-        var dance = await _context.Events.OfType<Dance>()
+        var danceToUpdate = await _context.Events.OfType<Dance>()
             .Include(d => d.AttendingOfficers)
             .Include(d => d.AssignedHosts)
             .Include(d => d.AssignedInstructors)
@@ -105,44 +112,48 @@ public class EditModel(
             .Include(d => d.Lessons)
             .FirstOrDefaultAsync(d => d.Id == id);
 
-        if (dance == null) return NotFound();
-        dance.Title = FormInput.Title.Trim();
-        dance.Description = FormInput.Description?.Trim();
+        if (danceToUpdate == null) return NotFound();
+        danceToUpdate.Title = FormInput.Title.Trim();
+        danceToUpdate.Description = FormInput.Description?.Trim();
         // 🌟 MAP THE SCHEDULE PARAMETER TRANSFORMS CLEANLY
-        dance.Date = FormInput.Date;
-        dance.StartTime = FormInput.StartTime;
-        dance.EndTime = FormInput.EndTime;
-        dance.ContactEmail = FormInput.ContactEmail;
+        danceToUpdate.Date = FormInput.Date;
+        danceToUpdate.StartTime = FormInput.StartTime;
+        danceToUpdate.EndTime = FormInput.EndTime;
+        danceToUpdate.ContactEmail = FormInput.ContactEmail;
+
+        // 🌟 MAP THE STRATEGIC FORIEGN KEY SELECTION DIRECTLY
+        danceToUpdate.LocationId = FormInput.SelectedLocationId;
         if (!ModelState.IsValid)
         {
+            AvailableVenues = await _context.Locations.OrderBy(l => l.VenueName).ToListAsync();
             await LoadMasterRegistriesAsync();
-            TargetDance = dance;
+            TargetDance = danceToUpdate;
             return Page();
         }
-        dance.AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null;
+        danceToUpdate.AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null;
 
         // Many-to-Many updates
-        dance.AssignedHosts.Clear();
+        danceToUpdate.AssignedHosts.Clear();
         if (FormInput.SelectedHostIds.Any())
-            dance.AssignedHosts = await _context.MasterHosts.Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
+            danceToUpdate.AssignedHosts = await _context.MasterHosts.Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
 
-        dance.AssignedInstructors.Clear();
+        danceToUpdate.AssignedInstructors.Clear();
         if (FormInput.SelectedInstructorIds.Any())
-            dance.AssignedInstructors = await _context.MasterInstructors.Where(i => FormInput.SelectedInstructorIds.Contains(i.Id)).ToListAsync();
+            danceToUpdate.AssignedInstructors = await _context.MasterInstructors.Where(i => FormInput.SelectedInstructorIds.Contains(i.Id)).ToListAsync();
 
-        dance.AssignedVolunteers.Clear();
+        danceToUpdate.AssignedVolunteers.Clear();
         if (FormInput.SelectedVolunteerIds.Any())
-            dance.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
+            danceToUpdate.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
 
         // REFACTORED PERSISTENCE METHOD: Saves InstructorId references cleanly
-        _context.RemoveRange(dance.Lessons);
-        dance.Lessons.Clear();
+        _context.RemoveRange(danceToUpdate.Lessons);
+        danceToUpdate.Lessons.Clear();
 
         if (FormInput.Lessons != null && FormInput.Lessons.Any())
         {
             foreach (var item in FormInput.Lessons.Where(l => l.InstructorId > 0))
             {
-                dance.Lessons.Add(new Lesson
+                danceToUpdate.Lessons.Add(new Lesson
                 {
                     DanceId = id,
                     InstructorId = item.InstructorId,
@@ -154,13 +165,13 @@ public class EditModel(
         }
 
         // Handle Officer Assignments and Notifications
-        var originalOfficers = dance.AttendingOfficers.ToList();
+        var originalOfficers = danceToUpdate.AttendingOfficers.ToList();
         var originalIds = originalOfficers.Select(o => o.Id).ToHashSet();
         var incomingIds = FormInput.SelectedOfficerIds ?? new List<int>();
 
         var idsToAdd = incomingIds.Where(oid => !originalIds.Contains(oid)).ToList();
         var idsToRemove = originalIds.Where(oid => !incomingIds.Contains(oid)).ToList();
-        string dateString = dance.Date.ToString("MMMM dd, yyyy");
+        string dateString = danceToUpdate.Date.ToString("MMMM dd, yyyy");
 
         if (idsToRemove.Any())
         {
@@ -168,8 +179,8 @@ public class EditModel(
             string dropText = "<span style='color:#dc3545; font-weight:bold;'>REMOVED FROM DUTY</span> via adjustments.";
             foreach (var officer in officersToRemove)
             {
-                dance.AttendingOfficers.Remove(officer);
-                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.FullName}", dance.Title, dateString, dropText);
+                danceToUpdate.AttendingOfficers.Remove(officer);
+                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.FullName}", danceToUpdate.Title, dateString, dropText);
             }
         }
 
@@ -179,8 +190,8 @@ public class EditModel(
             string addText = "<span style='color:#198754; font-weight:bold;'>ASSIGNED TO DUTY</span> via adjustments.";
             foreach (var officer in officersToAdd)
             {
-                dance.AttendingOfficers.Add(officer);
-                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.FullName}", dance.Title, dateString, addText);
+                danceToUpdate.AttendingOfficers.Add(officer);
+                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.FullName}", danceToUpdate.Title, dateString, addText);
             }
         }
 

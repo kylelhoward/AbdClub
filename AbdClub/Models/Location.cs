@@ -15,6 +15,8 @@ public class Location
     public string Address { get; set; } = string.Empty;
 
     public string? Description { get; set; } // Entry notes, gate codes, parking tips
+    [Url(ErrorMessage = "Please provide a valid navigation hyperlink URL address layout.")]
+    [StringLength(1024, ErrorMessage = "Google Maps link cannot exceed 1024 characters.")]
     public string? GoogleMapsUrl { get; set; }
     public string? PhotoUrl { get; set; } // Direct path to static asset or storage bucket
 

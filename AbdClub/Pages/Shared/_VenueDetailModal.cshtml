@@ -1,0 +1,99 @@
+﻿<!-- REUSABLE CENTRALIZED VENUE POPUP MODAL FRAME (PURE JS / NO ALPINE REQUIRED) -->
+<div class="modal fade" id="venueDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg overflow-hidden">
+            
+            <!-- Full-Bleed Venue Image Header Banner -->
+            <div id="venuePhotoWrapper" class="position-relative bg-dark d-none" style="height: 180px;">
+                <img id="modalVenuePhoto" src="/images/venues/fallback.jpg" class="w-100 h-100 object-fit-cover opacity-75" alt="Venue Cover" />
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 shadow" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <!-- Standard Header fallback if no photo exists -->
+            <div id="venueDefaultHeader" class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title"><i class="bi bi-geo-alt-fill me-2 text-warning"></i>Registered Venue Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <!-- Direct Text Targets -->
+                <h4 id="modalVenueName" class="fw-bold text-dark mb-1"></h4>
+                <p class="text-primary small fw-semibold mb-3">
+                    <i class="bi bi-map-fill me-1"></i><span id="modalVenueAddress"></span>
+                </p>
+
+                <hr class="my-3 border-light-subtle" />
+
+                <h6 class="fw-bold text-muted small text-uppercase mb-2"><i class="bi bi-file-text me-1"></i>Arrival & Building Access Entry Rules</h6>
+                <div id="modalVenueDesc" class="bg-light p-3 rounded border border-light-subtle small text-secondary mb-3" style="white-space: pre-line;"></div>
+                
+                <!-- Google Maps Directions Link Button -->
+                <div id="modalVenueMapWrapper" class="mt-2 d-none">
+                    <a id="modalVenueMapUrl" href="#" target="_blank" class="btn btn-dark w-100 text-center shadow-sm py-2">
+                        <i class="bi bi-cursor-fill text-warning me-2"></i>Open Directions inside Google Maps
+                    </a>
+                </div>
+            </div>
+            
+            <div class="modal-footer bg-light p-3 border-0">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Close Window</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 🌟 THE CENTALIZED SCRIPT ANCHOR: Drops automatically into any page that calls this partial -->
+<script>
+    (function() {
+        var initModal = function() {
+            var modalEl = document.getElementById('venueDetailModal');
+            if (!modalEl || modalEl.dataset.wired === "true") return;
+
+            // Mark as wired to prevent duplicate event registration if re-rendered
+            modalEl.dataset.wired = "true";
+
+            modalEl.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                
+                var name = button.getAttribute('data-name');
+                var address = button.getAttribute('data-address');
+                var desc = button.getAttribute('data-desc');
+                var mapUrl = button.getAttribute('data-map');
+                var photoUrl = button.getAttribute('data-photo');
+
+                document.getElementById('modalVenueName').textContent = name;
+                document.getElementById('modalVenueAddress').textContent = address;
+                document.getElementById('modalVenueDesc').textContent = desc;
+
+                var photoWrapper = document.getElementById('venuePhotoWrapper');
+                var defaultHeader = document.getElementById('venueDefaultHeader');
+                var modalPhoto = document.getElementById('modalVenuePhoto');
+
+                if (photoUrl && photoUrl.trim() !== "") {
+                    modalPhoto.src = photoUrl;
+                    photoWrapper.classList.remove('d-none');
+                    defaultHeader.classList.add('d-none');
+                } else {
+                    photoWrapper.classList.add('d-none');
+                    defaultHeader.classList.remove('d-none');
+                }
+
+                var mapWrapper = document.getElementById('modalVenueMapWrapper');
+                var mapAnchor = document.getElementById('modalVenueMapUrl');
+
+                if (mapUrl && mapUrl.trim() !== "") {
+                    mapAnchor.href = mapUrl;
+                    mapWrapper.classList.remove('d-none');
+                } else {
+                    mapWrapper.classList.add('d-none');
+                }
+            });
+        };
+
+        // Initialize immediately if DOM is ready, or hook into the content loader lifecycle threads
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initModal);
+        } else {
+            initModal();
+        }
+    })();
+</script>

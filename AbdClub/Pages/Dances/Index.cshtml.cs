@@ -27,6 +27,7 @@ public class IndexModel : PageModel
             .Include(d => d.Lessons)
                 .ThenInclude(l => l.Instructor) // Crucial to prevent instructor name errors
             .Include(d => d.AssignedVolunteers)
+            .Include(loc=>loc.Location)
             .Where(d => d.Date >= DateOnly.FromDateTime(DateTime.Today))
             .OrderBy(d => d.Date)
             .ToListAsync();

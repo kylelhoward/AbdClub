@@ -85,6 +85,7 @@ public class IndexModel : PageModel
             .OfType<Dance>()
             .Include(d => d.AssignedDj)
             .Include(l=>l.Lessons)
+            .Include(loc=>loc.Location)
             .OrderBy(d => d.Date)
             .ToListAsync();
         return Page();
