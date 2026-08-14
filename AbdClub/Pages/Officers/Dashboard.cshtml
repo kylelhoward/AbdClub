@@ -3,17 +3,22 @@
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService 
 @* 🌟 FIXED: Explicitly injected the service with its correct PascalCase variable name *@
 @{
-    ViewData["Title"] = "Club File Manager";
+    ViewData["Title"] = "Officer Dashboard";
 
     // FIXED: Evaluated using the freshly injected, capitalized AuthorizationService instance
     var authResult = await AuthorizationService.AuthorizeAsync(User, null, "isAdmin");
     bool canDeleteAsOfficer = authResult.Succeeded;
 }
-@{
-    ViewData["Title"] = "Officer Dashboard";
-}
 
-<h1>Officer Dashboard</h1>
+<div class="card border-0 shadow-sm rounded p-4 mb-4 bg-white">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <img src="~/images/club-logo.webp" alt="Club Crest Logo" class="img-fluid rounded-circle" style="max-height: 80px;" />
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Officer Management Node</h3>
+            <p class="text-muted small mb-0">Authorized Officer Terminal Gateway .</p>
+        </div>
+    </div>
+</div>
 <p>Welcome, @User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value</p>
 
 <ul>

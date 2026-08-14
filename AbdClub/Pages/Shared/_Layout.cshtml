@@ -17,7 +17,18 @@
     <header>
        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
      <div class="container">
-         <a class="navbar-brand" asp-area="" asp-page="/Index">AbdClub</a>
+        <!-- 🌟 THE BRANDING LOGO REFACTOR: Replaces plain text with your sharp webp asset -->
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-uppercase tracking-wider" asp-area="" asp-page="/Index">
+            <!-- Inline vector rendering scaling dynamically with navigation line heights -->
+            <img src="~/images/club-logo.webp" 
+                 alt="Austin Ballroom Dancers Logo" 
+                 class="d-inline-block align-top img-fluid shadow-sm rounded-circle border border-light" 
+                 style="height: 42px; width: 42px; object-fit: cover;" />
+            
+            <span class="d-none d-sm-inline-block text-dark font-sans-serif" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                Austin <span class="text-danger">Ballroom</span> Dancers
+            </span>
+        </a>
          <button class="navbar-toggler"
                  type="button"
                  data-bs-toggle="collapse"

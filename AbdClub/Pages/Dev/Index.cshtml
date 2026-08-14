@@ -5,7 +5,16 @@
     ViewData["Title"] = "Developer Dashboard";
 }
 
-<h1>Developer Dashboard</h1>
+<div class="card border-0 shadow-sm rounded p-4 mb-4 bg-white">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <img src="~/images/club-logo.webp" alt="Club Crest Logo" class="img-fluid rounded-circle" style="max-height: 80px;" />
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Dev Management Node</h3>
+            <p class="text-muted small mb-0">Authorized Officer Development Terminal Gateway .</p>
+        </div>
+    </div>
+</div>
+
 <p>Welcome, @User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value</p>
 
 <ul>
