@@ -1,28 +1,33 @@
+using AbdClub.Data;
+using AbdClub.Dtos;
+using AbdClub.Models;
+using AbdClub.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using AbdClub.Data;
-using AbdClub.Models;
-using AbdClub.Services.Interfaces;
-using AbdClub.Dtos;
+using Serilog.Core;
 
 namespace AbdClub.Pages
 {
-    public class IndexModel : PageModel
+    public class IndexModel(
+        AbdContext context,
+        IEmailService emailService,
+        ILogger<IndexModel> logger) : PageModel
     {
-        private readonly AbdContext _context;
-        private readonly IEmailService _emailService; // Injecting the dependency interface
-
-        public IndexModel(AbdContext context, IEmailService emailService)
-        {
-            _context = context;
-            _emailService = emailService;
-        }
+        private readonly AbdContext _context = context;
+        private readonly IEmailService _emailService = emailService; // Injecting the dependency interface
+        private readonly ILogger<IndexModel> _logger = logger;
 
         [BindProperty]
         public SubscriberInputDto SubscriberData { get; set; } = new();
-
-        public void OnGet() { }
+        public List<CarouselSlide> Slides { get; set; } = new();
+        public HomepageContent Content { get; set; } = default!;
+        public async Task OnGetAsync()
+        {
+            Slides = await _context.CarouselSlides.OrderBy(s => s.DisplayOrder).ToListAsync();
+            Content = await _context.HomepageContents.FirstOrDefaultAsync(c => c.Id == 1)
+                      ?? new HomepageContent(); // Transparent fallback defaults if database rows are completely blank
+        }
 
         public async Task<IActionResult> OnPostSubscribeAsync()
         {

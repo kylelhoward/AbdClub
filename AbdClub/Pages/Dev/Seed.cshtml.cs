@@ -30,6 +30,11 @@ public class SeedModel : PageModel
 
     public async Task OnGetAsync()
     {
+        await LoadDashboardMetricsAsync();
+    }
+
+    private async Task LoadDashboardMetricsAsync()
+    {
         await LoadMembersAsync();
         await LoadNewsLetterSubscribersAsync();
         await LoadRegistryPersonsAsync();
@@ -399,6 +404,56 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         return Page();
     }
 
+    public async Task<IActionResult> OnPostSeedHomepageAsync()
+    {
+        // Authorization layer check to verify administrator identities
+        bool isAuthorized = User.IsInRole("TechAdmin") || User.IsInRole("Admin");
+        if (!isAuthorized) return Forbid();
 
+        // 1. SEED HOMEPAGE MARKETING TEXT COPIES
+        var existingContent = await _db.HomepageContents.FindAsync(1);
+        if (existingContent == null)
+        {
+            _db.HomepageContents.Add(new HomepageContent
+            {
+                Id = 1,
+                MarketingHeader = "Welcome to Austin Ballroom Dancers",
+                MarketingSubtitle = "Join us for weekly social dances, foundational technique lessons, and seasonal showcases open to all experience levels across Central Texas!"
+            });
+        }
+        else
+        {
+            existingContent.MarketingHeader = "Welcome to Austin Ballroom Dancers";
+            existingContent.MarketingSubtitle = "Join us for weekly social dances, foundational technique lessons, and seasonal showcases open to all experience levels across Central Texas!";
+        }
+
+        // 2. SEED DEFAULT PHOTO CAROUSEL SLIDES
+        // Clear out existing mockup rows first to prevent duplicate structural keys crashes
+        var existingSlides = await _db.CarouselSlides.ToListAsync();
+        if (existingSlides.Any())
+        {
+            _db.CarouselSlides.RemoveRange(existingSlides);
+        }
+
+        var defaultSlides = new List<CarouselSlide>
+        {
+            new() { Title = "Our Annual Summer Gala", Subtitle = "Dancers gathering from across the state for our premier ballroom showcase event.", PhotoUrl = "/images/dances/abd_great_waltz.webp", DisplayOrder = 1 },
+            new() { Title = "Friday Night Swing Socials", Subtitle = "Weekly high-energy drop-in sessions open to the public with no partner required.", PhotoUrl = "/images/dances/ball.webp", DisplayOrder = 2 },
+            new() { Title = "Community Showcase Recitals", Subtitle = "Celebrating club membership accomplishments through coordinated team choreography.", PhotoUrl = "/images/dances/abd_party_hancock.webp", DisplayOrder = 3 }
+        };
+
+        _db.CarouselSlides.AddRange(defaultSlides);
+
+        // Save changes to database layout tracking tables
+        await _db.SaveChangesAsync();
+
+        // Set dashboard response tracking notification string
+        // Assuming your page model class uses a public 'Message' or 'StatusNotice' bind string variable
+        TempData["StatusNotice"] = "Success: Seeded homepage copy defaults and initialized 3 carousel gallery rows.";
+
+        // Reload metric structures as usual to refresh the dev dashboard interface state
+        await LoadDashboardMetricsAsync();
+        return Page();
+    }
 
 }

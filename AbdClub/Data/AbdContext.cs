@@ -7,6 +7,8 @@ public class AbdContext : DbContext
 {
     public AbdContext(DbContextOptions<AbdContext> options) : base(options) { }
 
+    public DbSet<CarouselSlide> CarouselSlides { get; set; } = null!;
+    public DbSet<HomepageContent> HomepageContents { get; set; } = null!;
     public DbSet<Member> Members { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<EmailLog> EmailLogs { get; set; } = null!;
