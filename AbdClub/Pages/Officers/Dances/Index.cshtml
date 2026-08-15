@@ -8,9 +8,12 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-calendar-event me-2"></i>Official Dance Matrix</h2>
+
+        @* CREATION_INPUT_MODAL  *@
         <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createDanceModal">
             <i class="bi bi-plus-circle me-1"></i>Create New Dance
         </button>
+
     </div>
 
     @if (Model.UpdateFeedback != null)
@@ -21,6 +24,7 @@
         </div>
     }
 
+    @* ------------ Begin DanceList -------------- *@
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <table class="table table-hover align-middle mb-0">
@@ -31,6 +35,7 @@
                         <th>Location Venue</th>
                         <th>Time Window</th>
                         <th>Assigned DJ</th>
+                        @* ActionControls *@
                         <th class="pe-3 text-end">Action Controls</th>
                     </tr>
                 </thead>
@@ -62,19 +67,38 @@
 
                                 <td><span class="badge bg-secondary">@dance.StartTime.ToString("h:mm tt") - @dance.EndTime.ToString("h:mm tt")</span></td>
                                 <td>@(dance.AssignedDj != null ? dance.AssignedDj.Name : "Unassigned")</td>
+
+                                @* ActionControls *@
                                 <td class="pe-3 text-end">
                                     <div class="btn-group gap-1">
-                                        <!-- 1. NEW COMPONENT LINK: Navigates straight to your Generic Contact Manager directory -->
+
+                                        @* NEW COMPONENT LINK: Navigates straight to your Generic Contact Manager directory *@
                                         @* <a class="btn btn-sm btn-outline-info" asp-page="./ManageContacts" asp-route-id="@dance.Id">
                                             <i class="bi bi-person-lines-fill me-1"></i> Staff Directory
                                         </a> *@
-                                        <!-- Navigation trigger jump to attendance panel management layers -->
+
+                                         @* Navigation trigger jump to attendance panel management layers *@
                                         <a class="btn btn-sm btn-outline-success" asp-page="./AttendingOfficers" asp-route-id="@dance.Id">
                                             <i class="bi bi-shield-check"></i> Officer Attendance
                                         </a>
+
+                                        @* Volunteers *@
                                        @*  <a class="btn btn-sm btn-outline-primary" asp-page="./Volunteers" asp-route-id="@dance.Id">
                                             <i class="bi bi-people-fill"></i> Volunteers
                                         </a> *@
+
+                                        @* PrintRosters *@
+                                        <button type="button" 
+                                            class="btn btn-sm btn-outline-dark" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#printManifestModal"
+                                            data-dance-id="@dance.Id"
+                                            data-dance-title="@dance.Title"
+                                            data-dance-meta="@dance.Date.ToString("ddd, MMM dd, yyyy") at @dance.Location.VenueName">
+                                            <i class="bi bi-printer-fill me-1"></i> Print Roster Sheets
+                                        </button>
+
+                                        @* Edit *@
                                         <a class="btn btn-sm btn-outline-dark" asp-page="./Edit" asp-route-id="@dance.Id">
                                             <i class="bi bi-pencil-square"></i> Edit
                                         </a>
@@ -96,9 +120,87 @@
      <!-- Render the reusable venue popup partial view shell at the bottom of the root wrapper -->
     <partial name="_VenueDetailModal" />
 </div>
+@*  --------- End DanceList ------------------------ *@
 
+@* ----------- Begin Modals ------------------ *@
 
-<!-- REFACTORED CREATION INPUT MODAL PANEL WITH ALL PROPERTIES -->
+@* ------- Begin PrintRosters MODAL ---------------------------------------- *@
+<div class="modal fade" id="printManifestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-dark text-white p-3 border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-pdf-fill text-warning me-2"></i>Event Logistics Print Dispatcher</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-white">
+                
+                <!-- Target Header Focus Meta Block -->
+                <div class="bg-light p-3 rounded-3 border border-light-subtle mb-3">
+                    <div class="text-uppercase tracking-wider fw-bold text-muted" style="font-size: 0.7rem;">Target Profile Context</div>
+                    <h5 id="printTargetTitle" class="fw-bold text-dark mb-1"></h5>
+                    <small id="printTargetMeta" class="text-secondary font-monospace"></small>
+                </div>
+
+                <!-- Global Style Control Switches -->
+                <div class="row g-2 mb-4 border-bottom pb-3">
+                    <div class="col-6">
+                        <div class="form-check form-switch card p-2 bg-light border-0 shadow-sm mb-0">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" id="chkUseGenericLayout">
+                            <label class="form-check-label small fw-bold text-dark" for="chkUseGenericLayout">Generic Form (Blanks)</label>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check form-switch card p-2 bg-light border-0 shadow-sm mb-0">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" id="chkSelectAllForms" onchange="toggleSelectAllManifestForms(this)">
+                            <label class="form-check-label small fw-bold text-dark" for="chkSelectAllForms">Select All Manifests</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manifest Checklist Selection Blocks -->
+                <h6 class="fw-bold text-muted small text-uppercase mb-2">Select Roster Manifests to Include:</h6>
+                <div class="d-flex flex-column gap-2" id="manifestFormCheckboxGroup">
+                    
+                    <div class="form-check card p-2.5 border border-light-subtle hover-shadow mb-0">
+                        <input class="form-check-input ms-1 me-3 manifest-print-item" type="checkbox" value="active-members" id="formActive">
+                        <label class="form-check-label small fw-bold text-dark text-start" for="formActive">Active Members Check-In Sheet</label>
+                    </div>
+                    
+                    <div class="form-check card p-2.5 border border-light-subtle hover-shadow mb-0">
+                        <input class="form-check-input ms-1 me-3 manifest-print-item" type="checkbox" value="inactive-members" id="formInactive">
+                        <label class="form-check-label small fw-bold text-dark text-start" for="formInactive">Inactive Members Registry (Lapsed Lookup)</label>
+                    </div>
+                    
+                    <div class="form-check card p-2.5 border border-light-subtle hover-shadow mb-0">
+                        <input class="form-check-input ms-1 me-3 manifest-print-item" type="checkbox" value="duty-log" id="formDuty">
+                        <label class="form-check-label small fw-bold text-dark text-start" for="formDuty">Event Duty Log (Officers, Hosts, DJs, Instructors)</label>
+                    </div>
+                    
+                    <div class="form-check card p-2.5 border border-light-subtle hover-shadow mb-0">
+                        <input class="form-check-input ms-1 me-3 manifest-print-item" type="checkbox" value="new-signup" id="formNew">
+                        <label class="form-check-label small fw-bold text-dark text-start" for="formNew">New Member Sign-Up Intake Ledger</label>
+                    </div>
+                    
+                    <div class="form-check card p-2.5 border border-light-subtle hover-shadow mb-0">
+                        <input class="form-check-input ms-1 me-3 manifest-print-item" type="checkbox" value="non-member" id="formNonMember">
+                        <label class="form-check-label small fw-bold text-dark text-start" for="formNonMember">Non-Member / Guest Sign-In Ledger</label>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3 border-0">
+                <button type="button" class="btn btn-secondary py-2 flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark py-2 flex-grow-1 fw-bold shadow" onclick="executeManifestPrintStream()">
+                    <i class="bi bi-printer-fill me-1 text-warning"></i>Generate & Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ------- End PrintRosters MODAL ---------------------------------------- *@
+
+@* ------- Begin CREATION_INPUT_MODAL ---------------------------------------- *@
 <div class="modal fade" id="createDanceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
 
@@ -124,27 +226,27 @@
             </div>
             <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
 
-                <!-- Section 1: Core Event Fields -->
-<div class="row g-3 mb-3">
-    <div class="col-md-6">
-        <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
-        <input asp-for="NewDance.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
-        <span asp-validation-for="NewDance.Title" class="text-danger small"></span>
-    </div>
-    
-    <!-- 🌟 REFACTORED DROPDOWN: Replaces the raw location text box -->
-    <div class="col-md-6">
-        <label class="form-label fw-bold small text-muted mb-1">Location / Venue Room</label>
-        <select asp-for="NewDance.SelectedLocationId" class="form-select bg-light fw-medium" required>
-            <option value="">-- Choose Registered Club Venue --</option>
-            @foreach (var loc in Model.AvailableLocations)
-            {
-                <option value="@loc.Id">@loc.VenueName (@loc.Address)</option>
-            }
-        </select>
-        <span asp-validation-for="NewDance.SelectedLocationId" class="text-danger small"></span>
-    </div>
-</div>
+            <!-- Section 1: Core Event Fields -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
+                    <input asp-for="NewDance.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
+                    <span asp-validation-for="NewDance.Title" class="text-danger small"></span>
+                </div>
+                
+                <!-- 🌟 REFACTORED DROPDOWN: Replaces the raw location text box -->
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-muted mb-1">Location / Venue Room</label>
+                    <select asp-for="NewDance.SelectedLocationId" class="form-select bg-light fw-medium" required>
+                        <option value="">-- Choose Registered Club Venue --</option>
+                        @foreach (var loc in Model.AvailableLocations)
+                        {
+                            <option value="@loc.Id">@loc.VenueName (@loc.Address)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="NewDance.SelectedLocationId" class="text-danger small"></span>
+                </div>
+            </div>
 
 
                 <!-- Section 2: Date and Time Operations Configurations -->
@@ -356,11 +458,16 @@
         </form>
     </div>
 </div>
+@* ------- End CREATION_INPUT_MODAL ---------------------------------------- *@
+
+@* ----------- End Modals ------------------ *@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-               document.addEventListener('DOMContentLoaded', function() {
+
+        //  Begin CREATION_INPUT_MODAL
+        document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('#createDanceModal form');
             const submitBtn = document.getElementById('createDanceSubmitBtn');
 
@@ -371,7 +478,58 @@
                 });
             }
         });
+        //  End CREATION_INPUT_MODAL
  
-    </script>
+
+        // Begin PrintRosters 
+        document.addEventListener("DOMContentLoaded", function () {
+        var printModal = document.getElementById('printManifestModal');
+        if (!printModal) return;
+
+            printModal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                // Extract the database-backed tracking values
+                var danceId = button.getAttribute('data-dance-id');
+                var title = button.getAttribute('data-dance-title');
+                var meta = button.getAttribute('data-dance-meta');
+
+                // Hydrate values text content blocks
+                document.getElementById('printTargetTitle').textContent = title;
+                document.getElementById('printTargetMeta').textContent = meta;
+                printModal.setAttribute('data-current-id', danceId);
+                });
+            });
+
+            function toggleSelectAllManifestForms(masterCheckbox) {
+                var items = document.querySelectorAll('.manifest-print-item');
+                items.forEach(box => box.checked = masterCheckbox.checked);
+            }
+
+            function executeManifestPrintStream() {
+                var checkedItems = [];
+                document.querySelectorAll('.manifest-print-item:checked').forEach(box => {
+                    checkedItems.push(box.value);
+                });
+
+                if (checkedItems.length === 0) {
+                    alert('Please select at least one manifest tracking sheet type to print.');
+                    return;
+                }
+
+                var modal = document.getElementById('printManifestModal');
+                var danceId = modal.getAttribute('data-current-id');
+                var useGeneric = document.getElementById('chkUseGenericLayout').checked;
+
+                // 🌟 ARCHITECTURAL DISPATCH: Redirect to a dedicated print-engine page layout
+                // passing checked arrays as standard string delimiters
+                var printUrl = `./Dances/PrintManifests?id=${danceId}&forms=${checkedItems.join(',')}&generic=${useGeneric}`;
+                
+                // Open the document layout inside a temporary browser print view lane container
+                var printWindow = window.open(printUrl, '_blank');
+                if (printWindow) printWindow.focus();
+            }
+            // End PrintRosters 
+</script>
 }
+
 
