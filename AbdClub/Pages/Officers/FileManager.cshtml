@@ -15,100 +15,225 @@
     bool canDeleteAsOfficer = authResult.Succeeded;
 }
 
-<h3>Upload Club File</h3>
-<!-- Breadcrumb Routing Consistency -->
+<!-- 1. BREADCRUMB ROUTING SYSTEM (Kept prominent at top for navigation layout consistency) -->
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+        <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard" class="text-decoration-none text-muted">Officers Dashboard</a></li>
         <li class="breadcrumb-item active" aria-current="page">File Manager</li>
     </ol>
 </nav>
 
+<!-- 2. HIGH LEVEL OPERATIONAL SUMMARY HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2><i class="bi bi-mailbox2 me-2"></i>Upload Club File</h2>
-        <p class="text-muted mb-0">Manage club files.</p>
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-folder-fill text-warning me-2"></i>Club Document Repository</h2>
+        <p class="text-muted small mb-0">Securely archive structural registries, asset data spreadsheets, and administrative file sets.</p>
     </div>
-    <div class="card bg-primary text-white border-0 shadow-sm px-4 py-2">
-        <div class="small">File Count Total</div>
-        <div class="fs-4 fw-bold text-center">@Model.SavedClubFiles.Count()</div>
+    <div class="card bg-dark text-white border-0 shadow-sm px-4 py-2 rounded-3 text-center">
+        <div class="text-uppercase tracking-wider fw-semibold text-muted" style="font-size: 0.65rem; letter-spacing: 0.5px;">File Ledger Count</div>
+        <div class="fs-4 fw-black font-monospace lh-1 mt-1 text-warning">@Model.SavedClubFiles.Count()</div>
     </div>
 </div>
 
-<!-- Display any validation errors (e.g., wrong file extension) -->
-<div asp-validation-summary="All" class="text-danger"></div>
+<!-- 3. COMPREHENSIVE REFACTORED ACCORDION CONSOLE FRAME -->
+<div class="accordion border-0 shadow-sm rounded-3 overflow-hidden mb-4" id="fileManagerAccordion">
+    <div class="accordion-item border-0">
+        <h2 class="accordion-header" id="headingUploadConsole">
+            <button class="accordion-button bg-dark text-white fw-bold shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUploadConsole" aria-expanded="true" aria-controls="collapseUploadConsole">
+                <i class="bi bi-cloud-arrow-up-fill text-info me-2"></i>Upload and Catalog Fresh Club Document
+            </button>
+        </h2>
+        <div id="collapseUploadConsole" class="accordion-collapse collapse show" aria-labelledby="headingUploadConsole" data-bs-parent="#fileManagerAccordion">
+            <div class="accordion-body bg-white p-4">
+                
+                <!-- Server-Side Exception & Validation Alert Stack -->
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger border-danger border-opacity-10 py-2.5 px-3 rounded-3 small mb-4 shadow-sm">
+                        <div class="fw-bold text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Input Parsing Validation Anomalies Detected:</div>
+                        <div asp-validation-summary="All" class="text-danger m-0 font-monospace ps-3" style="font-size: 0.8rem;"></div>
+                    </div>
+                }
 
-<form method="post" enctype="multipart/form-data">
-    @{
-        // Extract the genuine database Primary Key ID of the logged-in member
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-    }
+                <!-- Multipart Stream Secure Data Form -->
+                <form method="post" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        
+                        <!-- Col 1: File Category Selector Dropdown -->
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold small text-muted mb-1" asp-for="UploadData.Category">
+                                <i class="bi bi-tags-fill text-muted me-1"></i>Document Category Class
+                            </label>
+                            <select asp-for="UploadData.Category" class="form-select border-light-subtle bg-light fw-medium"
+                                    asp-items="Html.GetEnumSelectList<FileCategory>()" required>
+                                <option value="">-- Select Category Matrix --</option>
+                            </select>
+                            <span asp-validation-for="UploadData.Category" class="text-danger small font-monospace"></span>
+                        </div>
 
-    <!-- Feed the real ID dynamically into your form -->
-    <input type="hidden" asp-for="UploadData.UploadedByMemberId" value="@userIdClaim" />
+                        <!-- Col 2: Optional File Stream Picker -->
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold small text-muted mb-1">
+                                <i class="bi bi-file-earmark-arrow-up text-primary me-1"></i>Target File Stream <span class="text-muted fw-normal">(Optional)</span>
+                            </label>
+                            <!-- 🌟 FIXED: Removed 'required' attribute tag to ensure optional file posts pass natively -->
+                            <!-- 🌟 FIXED: Changed 'name="FormFile"' to 'name="formFile"' to resolve camelCase parameter binding -->
+                            <input type="file" name="formFile" class="form-control border-light-subtle" accept=".pdf,.docx,.txt,.xls,.xlsx,.pptx,.html,.csv" />
+                            <div class="form-text text-muted" style="font-size: 0.72rem;">
+                                Supported formats: PDF, Word, Excel, PowerPoint, Text, HTML, CSV. Leave blank to log data categories only.
+                            </div>
+                        </div>
 
+                        <!-- Full Row 3: Action Submission Core -->
+                        <div class="col-12 border-top pt-3 mt-3 text-end">
+                            <button type="submit" class="btn btn-dark fw-bold px-4 shadow-sm">
+                                <i class="bi bi-cloud-check-fill text-success me-1"></i>Upload & Catalog Record
+                            </button>
+                        </div>
+                    </div>
+                </form>
 
-    <div class="mb-3">
-        <label class="form-label">Select File</label>
-        <input type="file" name="FormFile" class="form-control" accept=".pdf,.docx, .txt,.docx,.xls,.xlsx,.pptx,.html,.csv" required />
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label class="form-label">Category</label>
-        <select asp-for="UploadData.Category" class="form-select"
-                asp-items="Html.GetEnumSelectList<FileCategory>()" required>
-            <option value="">-- Select Category --</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary">Upload & Save</button>
-</form>
 
 <hr />
 
-<h3>Club Documents</h3>
-<table class="table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Uploaded By</th> <!-- New Column -->
-            <th>Uploaded At</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var file in Model.SavedClubFiles)
-        {
-            <tr>
-                <td>@file.FileName</td>
-                <td><span class="badge bg-secondary">@file.Category.ToString()</span></td>
+<!-- SYSTEM MANAGER DIRECTORY ACCORDION CONSOLE -->
+<div class="accordion border-0 shadow-sm rounded-3 overflow-hidden mb-5" id="documentsArchiveAccordion">
+    <div class="accordion-item border-0">
+        <h2 class="accordion-header" id="headingArchiveConsole">
+            <button class="accordion-button bg-secondary text-white fw-bold shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArchiveConsole" aria-expanded="true" aria-controls="collapseArchiveConsole">
+                <i class="bi bi-collection-fill text-warning me-2"></i>Active Document Registries Archive
+            </button>
+        </h2>
+        <div id="collapseArchiveConsole" class="accordion-collapse collapse show" aria-labelledby="headingArchiveConsole" data-bs-parent="#documentsArchiveAccordion">
+            <div class="accordion-body bg-white p-4">
 
-                <!-- Display the member's name securely -->
-                <td>
-                    @if (file.UploadedBy != null)
-                    {
-                        @($"{file.UploadedBy.FullName}: {file.UploadedBy.Email}")
-                    }
-                    else
-                    {
-                        <span class="text-muted">Unknown Member</span>
-                    }
-                </td>
+                <!-- INTEGRATED CMS FILTER CONSOLE SYSTEM BAR -->
+                <form method="get" class="bg-light p-3 rounded-3 border border-light-subtle mb-4 shadow-sm">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-search me-1"></i>Search File Name / Uploaded By</label>
+                            <input type="text" asp-for="SearchActor" class="form-control form-control-sm" placeholder="e.g., Kyle Howard or pdf..." />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-funnel-fill me-1"></i>Category Class</label>
+                            <select asp-for="SelectedCategory" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<FileCategory>()">
+                                <option value="">-- All Categories --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label 
+                                class="form-label fw-bold small text-muted mb-1">
+                                <i class="bi bi-arrow-down-up me-1"></i>Sort Alignment</label>
+                           <select asp-for="SortOrder" class="form-select form-select-sm">
+    <!-- The binding engine matches these value markers directly to your string properties -->
+    <option value="date_desc">Uploaded At (Newest First)</option>
+    <option value="date_asc">Uploaded At (Oldest First)</option>
+    <option value="name_asc">File Name (A - Z)</option>
+    <option value="name_desc">File Name (Z - A)</option>
+    <option value="cat_asc">Category Grouping</option>
+</select>
 
-                <td>@file.UploadedAt.ToLocalTime().ToString("g")</td>
-                <td>
-                    <a asp-page-handler="Download" asp-route-id="@file.Id" class="btn btn-sm btn-success">Download</a>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-sm btn-dark w-100 fw-bold py-1.5"><i class="bi bi-sliders me-1 text-info"></i>Apply Filter</button>
+                        </div>
+                    </div>
+                </form>
 
-                    @if (file.UploadedByMemberId == currentUserId || canDeleteAsOfficer)
+                <!-- ACTIVE LEDGER DATA TABLE DISPLAY LAYER -->
+                @if (!Model.SavedClubFiles.Any())
+                {
+                    <div class="text-center py-5 text-muted border rounded-3 bg-light bg-opacity-50">
+                        <i class="bi bi-cloud-slash display-4 text-secondary opacity-50 d-block mb-2"></i>
+                        <span class="small fw-semibold">No active file registries match your selected search matrices filter.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive border rounded-3">
+                        <table class="table table-hover align-middle mb-0 text-nowrap small">
+                            <thead class="table-light text-uppercase tracking-wider font-monospace" style="font-size: 0.7rem;">
+                                <tr>
+                                    <th class="ps-3">Document Title Node Name</th>
+                                    <th>Category Tag</th>
+                                    <th>Archived / Uploaded By Officer</th>
+                                    <th>Timestamp Stamp</th>
+                                    <th class="pe-3 text-end">Action Core Handles</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var file in Model.SavedClubFiles)
+                                {
+                                    <tr>
+                                        <td class="ps-3 fw-bold text-dark max-w-xs overflow-hidden text-overflow-ellipsis">
+                                            <i class="bi bi-file-earmark-text text-secondary me-1.5"></i>@file.FileName
+                                        </td>
+                                        <td>
+                                            <!-- 🌟 Clean string text displays natively instead of requiring custom conversions -->
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2.5 py-1">
+                                                @file.Category
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (file.UploadedBy != null)
+                                            {
+                                                <div class="fw-semibold text-dark">@file.UploadedBy.FullName</div>
+                                                <div class="text-muted font-monospace" style="font-size: 0.7rem;">@file.UploadedBy.Email</div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted italic"><i class="bi bi-question-circle me-1"></i>System Orphan Record</span>
+                                            }
+                                        </td>
+                                        <td class="font-monospace">@file.UploadedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td class="pe-3 text-end">
+                                            <div class="btn-group gap-1">
+                                                <a asp-page-handler="Download" asp-route-id="@file.Id" class="btn btn-xs btn-outline-success font-monospace px-2 py-0.5">
+                                                    <i class="bi bi-cloud-arrow-down-fill"></i> Get
+                                                </a>
+
+                                                @if (file.UploadedByMemberId == Model.CurrentUserId || Model.CanDeleteAsOfficer)
+                                                {
+                                                    <form method="post" asp-page-handler="Delete" asp-route-id="@file.Id" class="d-inline" onsubmit="return confirm('Permanently drop this file asset from system physical directories?');">
+                                                        <button type="submit" class="btn btn-xs btn-outline-danger font-monospace px-2 py-0.5"><i class="bi bi-trash3"></i> Del</button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- REUSABLE RESPONSIVE DATA PAGINATION LOWER NAV FOOTER -->
+                    @if (Model.TotalPages > 1)
                     {
-                        <form method="post" asp-page-handler="Delete" asp-route-id="@file.Id" class="d-inline"
-                              onsubmit="return confirm('Are you sure you want to delete this file?');">
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
+                        <nav aria-label="Page navigation" class="mt-4">
+                            <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                    <a class="page-link border shadow-sm rounded px-2.5 py-1" asp-all-route-data='new Dictionary<string, string> { { "CurrentPage", (Model.CurrentPage - 1).ToString() }, { "SearchActor", Model.SearchActor ?? "" }, { "SelectedCategory", Model.SelectedCategory ?? "" }, { "SortOrder", Model.SortOrder } }'>Previous</a>
+                                </li>
+                                @for (int i = 1; i <= Model.TotalPages; i++)
+                                {
+                                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                        <a class="page-link border shadow-sm rounded px-3 py-1 @(Model.CurrentPage == i ? "bg-dark border-dark text-white fw-bold" : "text-dark")" asp-all-route-data='new Dictionary<string, string> { { "CurrentPage", i.ToString() }, { "SearchActor", Model.SearchActor ?? "" }, { "SelectedCategory", Model.SelectedCategory ?? "" }, { "SortOrder", Model.SortOrder } }'>@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                    <a class="page-link border shadow-sm rounded px-2.5 py-1" asp-all-route-data='new Dictionary<string, string> { { "CurrentPage", (Model.CurrentPage + 1).ToString() }, { "SearchActor", Model.SearchActor ?? "" }, { "SelectedCategory", Model.SelectedCategory ?? "" }, { "SortOrder", Model.SortOrder } }'>Next</a>
+                                </li>
+                            </ul>
+                        </nav>
                     }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>

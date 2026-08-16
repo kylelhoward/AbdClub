@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using QuestPDF.Helpers;
 
 namespace AbdClub.Pages.Officers
 {
@@ -33,12 +35,85 @@ namespace AbdClub.Pages.Officers
         public ClubFilePostDto UploadData { get; set; } = new();
 
         public List<ClubFile> SavedClubFiles { get; set; } = [];
+        // 🌟 CMS OPERATIONAL QUERY STRINGS
+        // 🌟 FIXED: Made parameters explicitly nullable to prevent framework "field is required" validation drops
+        [BindProperty(SupportsGet = true)]
+        public string? SearchActor { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public string? SelectedCategory { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? SortOrder { get; set; } = "date_desc"; // Default assignment fallback
+
+        [BindProperty(SupportsGet = true)]
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; }
+        public const int PageSize = 15;
+
+        public int CurrentUserId { get; set; }
+        public bool CanDeleteAsOfficer { get; set; }
         public async Task OnGetAsync()
         {
-            SavedClubFiles = await _context.ClubFiles
-                .Include(f => f.UploadedBy) // Fetches the related Member record
-                .OrderByDescending(f => f.UploadedAt)
+            // 1. Establish User Permission Identity States
+            var idClaim = User.FindFirst("MemberId")?.Value;
+            if (int.TryParse(idClaim, out int parsedId))
+            {
+                CurrentUserId = parsedId;
+            }
+            CanDeleteAsOfficer = User.IsInRole("Officer") || User.IsInRole("Admin") || User.IsInRole("TechAdmin");
+
+            // 2. Build the Change-Tracking Base Query with Eager Loading
+            var query = _context.ClubFiles
+                .Include(f => f.UploadedBy)
+                .AsNoTracking()
+                .AsQueryable();
+
+            // 3. APPLY SEARCH FILTERS: Scan across categories, names, and email strings
+            if (!string.IsNullOrWhiteSpace(SelectedCategory))
+            {
+                // 🌟 THE FIX: Parse the numeric dropdown string selection back into a concrete Enum,
+                // then call .ToString() so it matches the string words saved in your database column!
+                if (int.TryParse(SelectedCategory, out int enumValueIndex))
+                {
+                    var targetEnumStringName = ((FileCategory)enumValueIndex).ToString();
+                    query = query.Where(f => f.Category == targetEnumStringName);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(SearchActor))
+            {
+                var search = SearchActor.Trim().ToLower();
+                query = query.Where(f =>
+                    f.FileName.ToLower().Contains(search) ||
+                    (f.UploadedBy != null && (
+                        f.UploadedBy.FullName.ToLower().Contains(search) ||
+                        f.UploadedBy.Email.ToLower().Contains(search)
+                    ))
+                );
+            }
+
+            // .4
+            // 🌟 FIXED: Appended ?? "date_desc" to handle empty/null URL string parameters gracefully
+            query = (SortOrder ?? "date_desc") switch
+            {
+                "name_asc" => query.OrderBy(f => f.FileName),
+                "name_desc" => query.OrderByDescending(f => f.FileName),
+                "date_asc" => query.OrderBy(f => f.UploadedAt),
+                "date_desc" => query.OrderByDescending(f => f.UploadedAt),
+                "cat_asc" => query.OrderBy(f => f.Category),
+                _ => query.OrderByDescending(f => f.UploadedAt)
+            };
+
+            // 5. PROCESS SERVER-SIDE PAGINATION WINDOWS
+            int totalItems = await query.CountAsync();
+            TotalPages = (int)Math.Ceiling((double)totalItems / PageSize);
+            if (CurrentPage < 1) CurrentPage = 1;
+            if (CurrentPage > TotalPages && TotalPages > 0) CurrentPage = TotalPages;
+
+            SavedClubFiles = await query
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
                 .ToListAsync();
         }
 
@@ -120,7 +195,9 @@ namespace AbdClub.Pages.Officers
                 UploadedAt = DateTime.UtcNow
             };
 
-            _context.ClubFiles.Add(clubFile);
+            _context.ClubFiles.Add(clubFile); 
+            
+          
             await _context.SaveChangesAsync();
 
             return RedirectToPage();
