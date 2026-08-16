@@ -72,7 +72,7 @@
                          <ul class="dropdown-menu" aria-labelledby="officersDropdown">
                              <li><a class="dropdown-item" asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/Members/MembersList">Members</a></li>
-                             <li><a class="dropdown-item" asp-page="/Officers/Meetings/Index">Meetings</a></li>
+                             @* <li><a class="dropdown-item" asp-page="/Officers/Meetings/Index">Meetings</a></li> *@
                              <li><a class="dropdown-item" asp-page="/Officers/Registry/Index">Registry</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/Dances/Index">Dances</a></li>
                              @* <li><a class="dropdown-item" asp-page="/Officers/Dances/PrintManifests">Print Manifests</a></li> *@
@@ -94,7 +94,6 @@
                          </a>
                          <ul class="dropdown-menu" aria-labelledby="adminDropdown">
                              <li><a class="dropdown-item" asp-page="/Admin/BatchNotify">Officer Broadcast Center</a></li>
-                              <li><a class="dropdown-item" asp-page="/Admin/AuditLogs">System Audit Ledger</a></li>
                               <li><a class="dropdown-item" asp-page="/Admin/ManageHomepage">Manage Home Page</a></li>
                                  
 @*                              <li><a class="dropdown-item" asp-page="/Admin/Dashboard">Executive Panel</a></li>
@@ -108,10 +107,21 @@
                 @* 3. REFACTORED TO POLICY: Dev Link — restricted strictly to accounts matching the "isTechAdmin" rule *@
                  @if ((await AuthorizationService.AuthorizeAsync(User,null, "isTechAdmin")).Succeeded)
                  {
-                     <li class="nav-item">
-                         <a class="nav-link text-dark fw-bold text-danger" asp-page="/Dev/Index">Dev Zone</a>
+               <li class="nav-item  text-dark   dropdown">
+                         <a class="nav-link dropdown-toggle fw-bold text-danger" href="#"
+                            id="adminDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                             Dev Zone
+                         </a>
+                         <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                             <li><a class="dropdown-item" asp-page="/Dev/Index">Dev Dashboard</a></li>
+                              <li><a class="dropdown-item" asp-page="/Dev/AuditLogs">Audit Logs</a></li>
+                              <li><a class="dropdown-item" asp-page="/Dev/Seed">Seed Test Data</a></li>
+                              <li><a class="dropdown-item" asp-page="/Dev/Email">Send Test Email</a></li>
+                                 
+                         </ul>
                      </li>
-                 }
+                     }
                  
                  @* Login — only when NOT logged in  *@
                  @if (User.Identity?.IsAuthenticated != true)

@@ -48,6 +48,7 @@ namespace AbdClub.Pages.Officers
 
         [BindProperty(SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
+        public int TotalFiles { get; private set; }
         public int TotalPages { get; set; }
         public const int PageSize = 10;
 
@@ -68,6 +69,7 @@ namespace AbdClub.Pages.Officers
                 .Include(f => f.UploadedBy)
                 .AsNoTracking()
                 .AsQueryable();
+            TotalFiles = query.Count();
 
             // 3. APPLY SEARCH FILTERS: Scan across categories, names, and email strings
             if (!string.IsNullOrWhiteSpace(SelectedCategory))
@@ -106,7 +108,7 @@ namespace AbdClub.Pages.Officers
             };
 
             // 5. PROCESS SERVER-SIDE PAGINATION WINDOWS
-            int totalItems = await query.CountAsync();
+            var totalItems = await query.CountAsync();
             TotalPages = (int)Math.Ceiling((double)totalItems / PageSize);
             if (CurrentPage < 1) CurrentPage = 1;
             if (CurrentPage > TotalPages && TotalPages > 0) CurrentPage = TotalPages;

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using AbdClub.Data;
 
-namespace AbdClub.Pages.Admin;
+namespace AbdClub.Pages.Dev;
 
 [Authorize(Policy = "isAdmin")]
 public class AuditLogsModel : PageModel
