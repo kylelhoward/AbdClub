@@ -113,37 +113,69 @@
             <div class="accordion-body bg-white p-4">
 
                 <!-- INTEGRATED CMS FILTER CONSOLE SYSTEM BAR -->
-                <form method="get" class="bg-light p-3 rounded-3 border border-light-subtle mb-4 shadow-sm">
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-search me-1"></i>Search File Name / Uploaded By</label>
-                            <input type="text" asp-for="SearchActor" class="form-control form-control-sm" placeholder="e.g., Kyle Howard or pdf..." />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-funnel-fill me-1"></i>Category Class</label>
-                            <select asp-for="SelectedCategory" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<FileCategory>()">
-                                <option value="">-- All Categories --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label 
-                                class="form-label fw-bold small text-muted mb-1">
-                                <i class="bi bi-arrow-down-up me-1"></i>Sort Alignment</label>
-                           <select asp-for="SortOrder" class="form-select form-select-sm">
-    <!-- The binding engine matches these value markers directly to your string properties -->
-    <option value="date_desc">Uploaded At (Newest First)</option>
-    <option value="date_asc">Uploaded At (Oldest First)</option>
-    <option value="name_asc">File Name (A - Z)</option>
-    <option value="name_desc">File Name (Z - A)</option>
-    <option value="cat_asc">Category Grouping</option>
-</select>
+                <!-- 🌟 AUTOMATED INSTANT FILTER CONSOLE BAR (ALPINE.JS DRIVEN) -->
+<form method="get" 
+      id="filterFormConsole"
+      x-data 
+      class="bg-light p-3 rounded-3 border border-light-subtle mb-4 shadow-sm">
+    <div class="row g-2 align-items-end">
+        
+        <!-- Field 1: Live Text Keyword Search -->
+        <div class="col-md-4">
+            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-search me-1"></i>Search File Name / Uploaded By</label>
+            <!-- x-on:input.debounce.400ms submits automatically 400ms after user stops typing to avoid page flickering -->
+            <input type="text" 
+                   asp-for="SearchActor" 
+                   class="form-control form-control-sm bg-white" 
+                   placeholder="e.g., Kyle Howard or bylaws..."
+                   x-on:input.debounce.400ms="$el.form.submit()" />
+        </div>
 
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-sm btn-dark w-100 fw-bold py-1.5"><i class="bi bi-sliders me-1 text-info"></i>Apply Filter</button>
-                        </div>
-                    </div>
-                </form>
+        <!-- Field 2: Auto-Submit Category Dropdown -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-funnel-fill me-1"></i>Category Class</label>
+            <select asp-for="SelectedCategory" 
+                    class="form-select form-select-sm bg-white fw-medium text-dark" 
+                    asp-items="Html.GetEnumSelectList<FileCategory>()"
+                    x-on:change="$el.form.submit()">
+                <option value="">-- All Categories --</option>
+            </select>
+        </div>
+
+        <!-- Field 3: Auto-Submit Sorting Options -->
+        <div class="col-md-3">
+            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-arrow-down-up me-1"></i>Sort Alignment</label>
+            <select asp-for="SortOrder" 
+                    class="form-select form-select-sm bg-white fw-medium text-dark"
+                    x-on:change="$el.form.submit()">
+                <option value="date_desc">Uploaded At (Newest First)</option>
+                <option value="date_asc">Uploaded At (Oldest First)</option>
+                <option value="name_asc">File Name (A - Z)</option>
+                <option value="name_desc">File Name (Z - A)</option>
+                <option value="cat_asc">Category Grouping</option>
+            </select>
+        </div>
+
+        <!-- 🌟 MODULE REFACTOR: CONVERTED FROM APPLY TO CLEAN CLEAR FILTERS BUTTON -->
+        <div class="col-md-2">
+            @if (!string.IsNullOrEmpty(Model.SearchActor) || !string.IsNullOrEmpty(Model.SelectedCategory) || Model.SortOrder != "date_desc")
+            {
+                <!-- Show high-contrast clear action button if active tracking filters exist -->
+                <a asp-page="./FileManager" class="btn btn-sm btn-outline-danger w-100 fw-bold py-1.5 transition-all shadow-sm">
+                    <i class="bi bi-x-circle-fill me-1"></i>Clear Filters
+                </a>
+            }
+            else
+            {
+                <!-- Muted placeholder state button if filters match default state metrics -->
+                <button type="button" disabled class="btn btn-sm btn-light border w-100 py-1.5 text-muted small opacity-60">
+                    <i class="bi bi-sliders me-1"></i>Live Filtering
+                </button>
+            }
+        </div>
+
+    </div>
+</form>
 
                 <!-- ACTIVE LEDGER DATA TABLE DISPLAY LAYER -->
                 @if (!Model.SavedClubFiles.Any())

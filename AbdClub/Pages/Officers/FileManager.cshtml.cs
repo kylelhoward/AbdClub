@@ -49,7 +49,7 @@ namespace AbdClub.Pages.Officers
         [BindProperty(SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
-        public const int PageSize = 15;
+        public const int PageSize = 10;
 
         public int CurrentUserId { get; set; }
         public bool CanDeleteAsOfficer { get; set; }
