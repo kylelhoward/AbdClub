@@ -43,65 +43,77 @@ namespace AbdClub.Pages.Officers
         }
 
         // 1. Validated Upload Feature
-        public async Task<IActionResult> OnPostAsync(IFormFile formFile)
+        public async Task<IActionResult> OnPostAsync(IFormFile? formFile) // 🌟 FIXED: Changed to Nullable parameter to stop automatic framework binder drops!
         {
-            if (formFile == null || formFile.Length == 0)
-            {
-                ModelState.AddModelError("", "Please select a valid file.");
-                await OnGetAsync();
-                return Page();
-            }
-
-            // 1. Read your specific custom cookie claim string
+            // 1. COOKIE IDENTITY VERIFICATION GATEWAY
             var currentUserIdClaim = User.FindFirst("MemberId")?.Value;
 
-            // DEBUGGING ASSISTANCE: Check if the claim is missing entirely
-            if (string.IsNullOrEmpty(currentUserIdClaim))
+            if (string.IsNullOrEmpty(currentUserIdClaim) || !int.TryParse(currentUserIdClaim, out int loggedInMemberId))
             {
-                ModelState.AddModelError("", "Security Error: The 'MemberId' claim was not found in your login cookie. Please log out and log back in.");
+                ModelState.AddModelError("", "Security Error: Your member tracking identity session is invalid.");
                 await OnGetAsync();
                 return Page();
             }
 
-            if (!int.TryParse(currentUserIdClaim, out int loggedInMemberId))
-            {
-                ModelState.AddModelError("", $"Security Error: The 'MemberId' claim value '{currentUserIdClaim}' is not a valid integer.");
-                await OnGetAsync();
-                return Page();
-            }
-
-            // 2. CRITICAL GATE: Query the database to see if this Member ID actually exists
+          
+            // 3. DATABASE PRIVILEGES CORROBORATION CHECK
             bool memberExists = await _context.Members.AnyAsync(m => m.Id == loggedInMemberId);
             if (!memberExists)
             {
-                // This stops EF Core from trying to save an invalid ID, preventing the 23503 exception!
                 ModelState.AddModelError("", $"Database Error: Your cookie has Member ID '{loggedInMemberId}', but no row with ID {loggedInMemberId} exists in the Members table.");
                 await OnGetAsync();
                 return Page();
             }
-
-            // 3. File Validation Logic
-            var fileExtension = Path.GetExtension(formFile.FileName).ToLowerInvariant();
-            if (!_allowedExtensions.Contains(fileExtension))
+            // Moving this below your manual checks allows you to safely process remaining fields (like Category)
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError("", $"Invalid file type. Only {string.Join(", ", _allowedExtensions)} files are allowed.");
                 await OnGetAsync();
                 return Page();
             }
+            // Initialize tracking variables with safe data fallbacks
+            var rawFileName = "No file attached";
+            var uniqueFileName = string.Empty;
 
-            var rawFileName = Path.GetFileName(formFile.FileName);
-            var uniqueFileName = $"{Guid.NewGuid()}_{rawFileName}";
-            var fullPhysicalPath = Path.Combine(_storageFolder, uniqueFileName);
-
-            using (var stream = new FileStream(fullPhysicalPath, FileMode.Create))
+            // 4. OPTIONAL FILE PROCESSING PIPELINE
+            if (formFile != null) // 🌟 RUNS ONLY IF A FILE IS PRESENT IN THE CELL PICKER
             {
-                await formFile.CopyToAsync(stream);
+                if (formFile.Length == 0)
+                {
+                    ModelState.AddModelError("", "The selected file is empty or corrupted. Please pick an active file asset.");
+                    await OnGetAsync();
+                    return Page();
+                }
+
+                // File Extension Validation Rules Guard Check
+                var fileExtension = Path.GetExtension(formFile.FileName).ToLowerInvariant();
+                if (!_allowedExtensions.Contains(fileExtension))
+                {
+                    ModelState.AddModelError("", $"Invalid file type. Only {string.Join(", ", _allowedExtensions)} files are allowed.");
+                    await OnGetAsync();
+                    return Page();
+                }
+
+                // Extract and formulate unique file stream naming allocations
+                rawFileName = Path.GetFileName(formFile.FileName);
+                uniqueFileName = $"{Guid.NewGuid()}_{rawFileName}";
+                var fullPhysicalPath = Path.Combine(_storageFolder, uniqueFileName);
+
+                // Pipe file bytes directly onto physical storage allocations
+                using (var stream = new FileStream(fullPhysicalPath, FileMode.Create))
+                {
+                    await formFile.CopyToAsync(stream);
+                }
+            }
+            else
+            {
+                // 🌟 SUCCESS BOUNDARY: Picker was left empty by choice! 
+                // Code execution automatically drops through here without any error states added.
             }
 
-            // 4. Map the verified ID to your model
+            // 5. SECURELY POPULATE DATABASE DATA RECORD PROFILES
             var clubFile = new ClubFile
             {
-                UploadedByMemberId = loggedInMemberId, // Safe and verified
+                UploadedByMemberId = loggedInMemberId, // 🌟 Safe, verified, and completely derived from the secure server cookie!
                 FileName = rawFileName,
                 FilePath = uniqueFileName,
                 Category = UploadData.Category!.Value.ToString(),
@@ -109,8 +121,6 @@ namespace AbdClub.Pages.Officers
             };
 
             _context.ClubFiles.Add(clubFile);
-
-            // Line 96 - Safe from constraint violations now
             await _context.SaveChangesAsync();
 
             return RedirectToPage();
@@ -174,9 +184,12 @@ namespace AbdClub.Pages.Officers
 
     public class ClubFilePostDto
     {
-        public int UploadedByMemberId { get; set; }
+        // 🌟 THE FIX: Changing to int? clears the automatic "0 is invalid" error
+        public int? UploadedByMemberId { get; set; }
 
-        // Nullable ensures the user is forced to make a dropdown selection
         public FileCategory? Category { get; set; }
+
+        public IFormFile? FormFile { get; set; }
     }
+
 }

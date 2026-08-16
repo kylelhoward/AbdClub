@@ -5,9 +5,6 @@
 @{
     ViewData["Title"] = "Officer Dashboard";
 
-    // FIXED: Evaluated using the freshly injected, capitalized AuthorizationService instance
-    var authResult = await AuthorizationService.AuthorizeAsync(User, null, "isAdmin");
-    bool canDeleteAsOfficer = authResult.Succeeded;
 }
 
 <div class="card border-0 shadow-sm rounded p-4 mb-4 bg-white">
@@ -28,10 +25,7 @@
     <li><a href="/Officers/Dances/Index">Manage Dances</a></li>
     <li><a href="/Officers/Locations/Index">Manage Locations</a></li>
     <li><a href="/Officers/Registry/Index">Manage Registry</a></li>
+    @* <li><a href="/Officers/Dances/PrintManifests">Print Manifests</a></li> *@
     <li><a href="/Officers/FileManager">Club Files</a></li>
-    @if (authResult.Succeeded)
-    {
-        <li><a href="/Officers/BatchNotify">Officer Broadcast Center</a></li>
-    }
     <li><a href="/Officers/NewsLetter/Index">Manager NewsLetter Subscribers</a></li>
 </ul>

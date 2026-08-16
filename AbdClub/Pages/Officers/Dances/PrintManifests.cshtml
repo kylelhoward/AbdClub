@@ -1,0 +1,296 @@
+﻿@page
+@model AbdClub.Pages.Officers.Dances.PrintManifestsModel
+@{
+    Layout = null; // 🌟 Completely strips away site layout menus, banners, and headers
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Event Logistics Manifest Registry</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body { font-size: 13px; color: #000; background: #fff; }
+        .print-page { page-break-after: always; padding: 20px 0; }
+        .print-page:last-child { page-break-after: avoid; }
+        .table th { background-color: #f2f2f2 !important; color: #000 !important; font-size: 11px; text-uppercase; }
+        .checkbox-cell { width: 40px; text-align: center; }
+        .blank-underline { border-bottom: 1px solid #000; display: inline-block; width: 250px; height: 18px; vertical-align: bottom; }
+        .checkbox-square { border: 1px solid #000; width: 14px; height: 14px; display: inline-block; }
+        
+        /* 🌟 ENFORCES HARD CSS PRINTER BREAK LIFECYCLES */
+            @@media print {
+                .no-print {
+                    display: none !important;
+                }
+            body { padding: 0; margin: 0; }
+            .print-page { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- UTILITY SYSTEM ACTION BAR: Stays invisible on paper -->
+    <div class="bg-light p-3 border-bottom mb-4 no-print d-flex justify-content-between align-items-center">
+        <div>
+            <strong class="text-dark">Print Manifest Workspace</strong>
+            <span class="text-muted small ms-2">Verify forms below before dispatching layout items to hardware channels.</span>
+        </div>
+        <div>
+            <button onclick="window.print()" class="btn btn-sm btn-dark fw-bold"><i class="bi bi-printer"></i> Execute Hard Copy Print</button>
+            <button onclick="window.close()" class="btn btn-sm btn-outline-secondary">Close Tab</button>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+
+        @* ==========================================
+           MANIFEST 1: ACTIVE MEMBERS SIGN-IN
+           ========================================== *@
+        @if (Model.SelectedForms.Contains("active-members"))
+        {
+            <div class="print-page">
+                <!-- 🌟 TO THIS CLEAN COMPACT VERSION: -->
+                <div class="border-bottom pb-2 mb-3">
+                    <h4 class="fw-bold m-0">Austin Ballroom Dancers — Active Roster Manifest</h4>
+                    <p class="text-muted m-0 small">
+                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) |
+                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd"))
+                    </p>
+                </div>
+
+                <table class="table table-bordered table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">Sign In</th>
+                            <th>Full Name</th>
+                            <th>Email Address</th>
+                            <th style="width: 110px;">Join Date</th>
+                            <th style="width: 110px;">Expiration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.IsGeneric || !Model.ActiveRoster.Any())
+                        {
+                            @for (int i = 0; i < 28; i++) {
+                                <tr style="height: 32px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td></td><td></td><td></td><td></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            foreach (var member in Model.ActiveRoster)
+                            {
+                                <tr style="height: 28px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="fw-bold">@member.FullName</td>
+                                    <td class="text-muted">@member.Email</td>
+                                    <td>@member.JoinDate.ToString("yyyy-MM-dd")</td>
+                                    <td>@member.ExpiryDate?.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* ==========================================
+           MANIFEST 2: INACTIVE MEMBERS MATRIX
+           ========================================== *@
+        @if (Model.SelectedForms.Contains("inactive-members"))
+        {
+            <div class="print-page">
+                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
+                    <div>
+                        <h4 class="fw-bold m-0">Austin Ballroom Dancers — Inactive / Lapsed Registry</h4>
+                        <p class="text-muted m-0 small">Please confirm details or process renewals at the front desk before entry tracking logs.</p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">Paid $50</th>
+                            <th>Full Name</th>
+                            <th>Email Address</th>
+                            <th style="width: 120px;">Lapsed Expiry</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.IsGeneric || !Model.InactiveRoster.Any())
+                        {
+                            @for (int i = 0; i < 28; i++) {
+                                <tr style="height: 32px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td></td><td></td><td></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            foreach (var member in Model.InactiveRoster)
+                            {
+                                <tr style="height: 28px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="fw-bold text-danger opacity-75">@member.FullName</td>
+                                    <td class="text-muted">@member.Email</td>
+                                    <td>@member.ExpiryDate?.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @* End Manifest 2 *@
+             
+        
+           @* ==========================================
+           MANIFEST 3: EVENT DUTY LOG 
+           ========================================== *@
+
+            @if (Model.SelectedForms.Contains("duty-log"))
+            {
+                <div class="print-page">
+                    <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
+                        <div>
+                            <h4 class="fw-bold m-0">Official Event Duty Log & Staff Manifest</h4>
+                            <p class="text-muted m-0 small">
+                                Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) |
+                                Location: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Location.VenueName)
+                            </p>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered table-sm align-middle mb-4">
+                        <thead>
+                            <tr>
+                                <th style="width: 180px;">Assigned Assignment Role</th>
+                                <th style="width: 250px;">Printed Staff Name</th>
+                                <th>Signature Acknowledgement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="height: 40px;">
+                                <td class="fw-bold bg-light">Dance Instructor</td>
+                                <td>@(Model.IsGeneric ? "" : "___________________________")</td>
+                                <td></td>
+                            </tr>
+                            <tr style="height: 40px;">
+                                <td class="fw-bold bg-light">Event Disc Jockey (DJ)</td>
+                                <td>@(Model.IsGeneric ? "" : (Model.TargetDance?.AssignedDj?.Name ?? "___________________________"))</td>
+                                <td></td>
+                            </tr>
+                            <tr style="height: 40px;">
+                                <td class="fw-bold bg-light">Lead Officer-In-Charge</td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            @for (int i = 1; i <= 6; i++)
+                            {
+                                <tr style="height: 40px;">
+                                    <td class="text-muted">Volunteer / Door Host #@i</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+        @* End Manifest 3 *@
+
+        @* ==========================================
+           MANIFEST 4: NEW MEMBER SIGN-UP INTAKE LEDGER
+           ========================================== *@
+        @if (Model.SelectedForms.Contains("new-signup"))
+        {
+            <div class="print-page">
+                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
+                    <div>
+                        <h4 class="fw-bold m-0">New Member Registration & Intake Ledger</h4>
+                        <p class="text-muted m-0 small">Collect $50 annual dues. Print information clearly to ensure database indexing accuracy.</p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Full Name (Please Print)</th>
+                            <th>Email Address</th>
+                            <th style="width: 150px;">Phone Number</th>
+                            <th class="checkbox-cell">Paid $50</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < 22; i++)
+                        {
+                            <tr style="height: 38px;">
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        @* End Manifest 4 *@
+
+        @* ==========================================
+           MANIFEST 5: NON-MEMBER / GUEST SIGN-IN
+           ========================================== *@
+        @if (Model.SelectedForms.Contains("non-member"))
+        {
+            <div class="print-page">
+                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
+                    <div>
+                        <h4 class="fw-bold m-0">Non-Member / Community Guest Sign-In Ledger</h4>
+                        <p class="text-muted m-0 small">Welcome to the club! Please print your primary email details to receive schedule newsletters.</p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">No.</th>
+                            <th>Printed Full Name</th>
+                            <th>Primary Contact Email Address</th>
+                            <th style="width: 180px;">City / Neighborhood</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 1; i <= 24; i++)
+                        {
+                            <tr style="height: 35px;">
+                                <td class="text-center text-muted font-monospace bg-light" style="font-size: 10px;">@i</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* End Manifest 5 *@
+
+    </div> <!-- Close of main container-fluid markup layer -->
+
+    <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                // Marginally delay dispatching to confirm structural painting processes wrap up
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+            });
+    </script>
+</body>
+</html>
