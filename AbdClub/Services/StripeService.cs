@@ -177,7 +177,6 @@ public class StripeService : IStripeService
                     : DateTime.UtcNow;
 
                 existing.ExpiryDate = baseDate.AddYears(1);
-                existing.IsActive = true;
                 existing.FullName = fullName.Trim();
                 existing.Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
 
@@ -224,7 +223,6 @@ public class StripeService : IStripeService
                     Phone = string.IsNullOrEmpty(phone) ? null : phone.Trim(),
                     JoinDate = DateTime.UtcNow,
                     ExpiryDate = DateTime.UtcNow.AddYears(1),
-                    IsActive = true,
                     CreatedAt = DateTime.UtcNow,
                     SelfRegistered = true   // paid online via Stripe 
                 };

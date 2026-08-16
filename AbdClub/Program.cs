@@ -65,7 +65,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Dev", "isTechAdmin");
     // 🌟 OVERRIDE SPECIFIC PAGES TO THE HIGHER PRIVILEGE ADMIN POLICY:
     options.Conventions.AuthorizePage("/Officers/Dances/Create", "isAdmin");
-    options.Conventions.AuthorizePage("/Officers/Dances/Edit", "isAdmin");
+    options.Conventions.AuthorizePage("/Officers/Dances/Edit", "isOfficer");
     options.Conventions.AuthorizePage("/Officers/Dances/Delete", "isAdmin");
     options.Conventions.AuthorizePage("/Officers/Members/Create", "isAdmin");
     options.Conventions.AuthorizePage("/Officers/Members/Edit", "isAdmin");

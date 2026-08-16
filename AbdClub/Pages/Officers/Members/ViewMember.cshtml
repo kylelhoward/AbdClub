@@ -1,5 +1,10 @@
 ﻿@page "{id:int}"
 @model AbdClub.Pages.Officers.Members.DetailsModel
+@{
+    // 🌟 Establish read-only context conditions globally for this render pipeline
+    bool isReadOnly = !User.IsInRole("Admin") && !User.IsInRole("TechAdmin");
+    ViewData["Title"] = "Member Details";
+}
 
 <div class="container mt-4" style="max-width: 600px;">
     <div class="card shadow-sm">
@@ -91,9 +96,12 @@
                 <a asp-page="./MembersList" class="btn btn-outline-secondary">
                     Back to List
                 </a>
-                <a asp-page="./EditMember" asp-route-id="@Model.Member.Id" class="btn btn-primary px-4">
-                    Edit Member
-                </a>
+                @if (!isReadOnly)
+                {
+                    <a asp-page="./EditMember" asp-route-id="@Model.Member.Id" class="btn btn-primary px-4">
+                        Edit Member
+                    </a>
+                }
             </div>
         </div>
     </div>

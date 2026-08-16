@@ -42,18 +42,31 @@
         }
      }">
 
+ <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Breadcrumb Routing Consistency -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Dance List</li>
+            </ol>
+        </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
             <h2><i class="bi bi-person-rolodex text-dark me-2"></i>Global Registry Directories</h2>
             <p class="text-muted mb-0">Maintain permanent lookup records for system wide select integration drop boxes.</p>
         </div>
-        <!-- Button maps context values dynamically via Alpine bindings -->
+           
+        </div>
+         @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+        {
+             <!-- Button maps context values dynamically via Alpine bindings -->
         <button type="button" class="btn btn-dark btn-lg shadow-sm" x-on:click="openCreateModal(activeTab.slice(0, -1))">
             <i class="bi bi-plus-circle me-1"></i> Add To <span x-text="activeTab"></span>
         </button>
+        }
     </div>
-
+    
     @if (Model.StatusNotice != null)
     {
         <div class="alert @(Model.StatusNotice.StartsWith("Error") ? "alert-danger" : "alert-success") alert-dismissible fade show shadow-sm mb-4">

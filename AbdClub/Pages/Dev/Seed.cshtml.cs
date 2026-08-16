@@ -64,8 +64,7 @@ public class SeedModel : PageModel
             JoinDate = DateTime.UtcNow,
             ExpiryDate = expiryDate,
             IsOfficer = memberType == "officer",
-            OfficerRole = memberType == "officer" ? officerRole : null,
-            IsActive = true
+            OfficerRole = memberType == "officer" ? officerRole : null
         });
 
         await _db.SaveChangesAsync();
@@ -84,35 +83,32 @@ public class SeedModel : PageModel
         {
             // Active members
             new() { FullName = "Alice Johnson",   Email = "alice.johnson.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddYears(1),  IsActive = true },
+                    JoinDate = today, ExpiryDate = today.AddYears(1)
+                },
             new() { FullName = "Bob Martinez",    Email = "bob.martinez.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddMonths(8), IsActive = true },
+                    JoinDate = today, ExpiryDate = today.AddMonths(8)},
             new() { FullName = "Carol Williams",  Email = "carol.williams.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddMonths(6), IsActive = true },
+                    JoinDate = today, ExpiryDate = today.AddMonths(6) },
 
             // Expiring soon
             new() { FullName = "David Chen",      Email = "david.chen.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddDays(55),  IsActive = true },
+                    JoinDate = today, ExpiryDate = today.AddDays(55) },
             new() { FullName = "Eve Thompson",    Email = "eve.thompson.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddDays(28),  IsActive = true },
+                    JoinDate = today, ExpiryDate = today.AddDays(28) },
             new() { FullName = "Frank Garcia",    Email = "frank.garcia.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddDays(5),   IsActive = true },
+                    JoinDate = today, ExpiryDate = today.AddDays(5) },
 
             // Expired
             new() { FullName = "Grace Lee",       Email = "grace.lee.test@gmail.com",
-                    JoinDate = today.AddYears(-1), ExpiryDate = today.AddDays(-10),
-                    IsActive = true },
+                    JoinDate = today.AddYears(-1), ExpiryDate = today.AddDays(-10) },
             new() { FullName = "Henry Wilson",    Email = "henry.wilson.test@gmail.com",
-                    JoinDate = today.AddYears(-1), ExpiryDate = today.AddDays(-45),
-                    IsActive = true },
+                    JoinDate = today.AddYears(-1), ExpiryDate = today.AddDays(-45) },
 
             // Officers
             new() { FullName = "Isabel Cruz",     Email = "isabel.cruz.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddYears(1),
-                    IsActive = true, IsOfficer = true, OfficerRole = "President" },
+                    JoinDate = today, ExpiryDate = today.AddYears(1), IsOfficer = true, OfficerRole = "President" },
             new() { FullName = "James Park",      Email = "james.park.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddYears(1),
-                    IsActive = true, IsOfficer = true, OfficerRole = "Treasurer" },
+                    JoinDate = today, ExpiryDate = today.AddYears(1), IsOfficer = true, OfficerRole = "Treasurer" },
         };
 
         // Skip any emails already in the database
@@ -220,8 +216,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
             Email = email,
             Phone = phone,
             JoinDate = DateTime.UtcNow,
-            ExpiryDate = DateTime.UtcNow.AddYears(1),
-            IsActive = true
+            ExpiryDate = DateTime.UtcNow.AddYears(1)
         };
 
         _db.Members.Add(member);

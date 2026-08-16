@@ -63,12 +63,11 @@ public class EditMemberModel(AbdContext db,IAuthorizationService authorizationSe
 
         memberInDb.FullName = Member.FullName;
         memberInDb.Email = Member.Email;
-        memberInDb.IsActive = Member.IsActive;
         memberInDb.ExpiryDate = Member.ExpiryDate.HasValue
             ? System.DateTime.SpecifyKind(Member.ExpiryDate.Value, System.DateTimeKind.Utc)
             : (DateTime?)null;
         memberInDb.IsOfficer = Member.IsOfficer;
-        memberInDb.IsAdmin = Member.IsAdmin;
+        memberInDb.IsSuspended= Member.IsSuspended;
         memberInDb.IsTechAdmin = Member.IsTechAdmin;
         memberInDb.OfficerRole = Member.OfficerRole;
         memberInDb.Phone = Member.Phone;

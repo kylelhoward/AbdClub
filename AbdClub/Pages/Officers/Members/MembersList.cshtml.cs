@@ -29,24 +29,40 @@ public class MembersListModel(AbdContext db, IAuthorizationService authorization
                 m.Email.ToLower().Contains(q));
         }
 
-        // Then apply filter
+        // 🌟 SERVER-SIDE REALIGNMENT: Bypasses the unmapped IsActive parameter natively
         query = filter switch
         {
+            // A member is genuinely active if they are not administratively suspended and their date is in the future
+            "suspended" => query.Where(m =>
+                m.IsSuspended),
+
+            // A member is genuinely active if they are not administratively suspended and their date is in the future
             "active" => query.Where(m =>
-                m.IsActive && (m.ExpiryDate == null || m.ExpiryDate >= DateTime.UtcNow)),
+                !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow),
+
+            // Expiring within a 60-day warning horizon window
             "expiring" => query.Where(m =>
-                m.ExpiryDate != null &&
-                m.ExpiryDate <= DateTime.UtcNow.AddDays(60) &&
-                m.ExpiryDate >= DateTime.UtcNow),
+                !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value <= DateTime.UtcNow.AddDays(60) &&
+                m.ExpiryDate.Value >= DateTime.UtcNow),
+
+            // Lapsed or physically expired chronologically
             "expired" => query.Where(m =>
-                m.ExpiryDate != null && m.ExpiryDate < DateTime.UtcNow),
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value < DateTime.UtcNow),
+
             "officers" => query.Where(m => m.IsOfficer),
             "admins" => query.Where(m => m.IsAdmin || m.IsTechAdmin),
             _ => query
         };
 
+        // This query execution will now compile and fetch cleanly into PostgreSQL without any translation errors!
         Members = await query
             .OrderBy(m => m.FullName)
             .ToListAsync();
+
     }
 }

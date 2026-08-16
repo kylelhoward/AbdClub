@@ -7,25 +7,25 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 namespace AbdClub.Pages.Officers.Members;
 
 [Authorize(Policy = "isAdmin")]
-public class AddMemberModel : PageModel
+public class AddMemberModel(AbdContext db,IAuthorizationService authorizationService) : PageModel
 {
-    private readonly AbdContext _db;
-    private readonly IAuthorizationService _authorizationService; 
-    public AddMemberModel(AbdContext db) => _db = db;
+    private readonly AbdContext _db = db;
+    private readonly IAuthorizationService _authorizationService = authorizationService;
 
     [BindProperty]
     public Member Member { get; set; } = new()
     {
         JoinDate = DateTime.UtcNow,
-        ExpiryDate = DateTime.UtcNow.AddYears(1),
-        IsActive = true
+        ExpiryDate = DateTime.UtcNow.AddYears(1)
     };
+    [BindProperty]
+    public bool RecordPayment { get; set; } // Defaults to false automatically
 
     public string? ErrorMessage { get; set; }
 
     public void OnGet() { }
 
-    public async Task<IActionResult> OnPostAsync(bool recordPayment = false)
+    public async Task<IActionResult> OnPostAsync()
     {
          // 🌟 EVALUATE THE CENTRALIZED "isAdmin" POLICY DIRECTLY
     var authResult = await _authorizationService.AuthorizeAsync(User, null, "isAdmin");
@@ -37,7 +37,6 @@ public class AddMemberModel : PageModel
         // Remove navigation property validation errors
         ModelState.Remove("Member.Payments");
         ModelState.Remove("Member.EmailLogs");
-
         if (!ModelState.IsValid)
             return Page();
 
@@ -70,7 +69,7 @@ public class AddMemberModel : PageModel
         await _db.SaveChangesAsync();
 
         // Optionally record a manual payment (cash/check)
-        if (recordPayment)
+        if (RecordPayment )
         {
             _db.Payments.Add(new Payment
             {
@@ -86,6 +85,6 @@ public class AddMemberModel : PageModel
             await _db.SaveChangesAsync();
         }
 
-        return RedirectToPage("./Members");
+        return RedirectToPage("./MembersList");
     }
 }

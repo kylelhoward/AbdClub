@@ -2,7 +2,9 @@
 @model AbdClub.Pages.Officers.Dances.EditModel
 @using System.Text.Encodings.Web
 @{
-    ViewData["Title"] = "Comprehensive Event Matrix Editor";
+    // 🌟 Establish read-only context conditions globally for this render pipeline
+    bool isReadOnly = !User.IsInRole("Admin") && !User.IsInRole("TechAdmin");
+    ViewData["Title"] = isReadOnly ? "View Event Details" : "Edit Event Details";
 }
 
 <!-- Pull down Alpine tool structures natively hosted locally -->
@@ -13,7 +15,7 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-page="/Officers/FileManager">Officer Panel</a></li>
             <li class="breadcrumb-item"><a asp-page="/Officers/Dances/Index">Dance Matrix</a></li>
-            <li class="breadcrumb-item active">Master Edit</li>
+            <li class="breadcrumb-item active">@(isReadOnly ? "View Event Details" : "Edit Event Details")</li>
         </ol>
     </nav>
 
@@ -61,21 +63,37 @@
                     <i class="bi bi-info-circle-fill me-2 text-warning"></i>Core Event Details
                 </button>
             </h2>
-            <div id="collapseCoreInfo" class="accordion-collapse collapse show" aria-labelledby="headingCoreInfo" data-bs-parent="#danceMatrixAccordion">
+            <div 
+                id="collapseCoreInfo" 
+                class="accordion-collapse collapse show" 
+                aria-labelledby="headingCoreInfo" 
+                data-bs-parent="#danceMatrixAccordion">
                 <div class="accordion-body bg-white p-4">
                     <div class="row g-3">
                         
                         <!-- Row 1: Event Title (Left 8 Columns) -->
                         <div class="col-md-8">
-                            <label class="form-label fw-bold small text-muted mb-1">Dance Event Title</label>
-                            <input asp-for="FormInput.Title" class="form-control form-control-lg fw-semibold" placeholder="e.g., Summer Retro Swing Gala" required />
+                            <label 
+                                class="form-label fw-bol/d small text-muted mb-1">Dance Event Title</label>
+                            <input 
+                                asp-for="FormInput.Title" 
+                                class="form-control form-control-lg fw-semibold" 
+                                placeholder="e.g., Summer Retro Swing Gala"
+                                disabled="@isReadOnly"
+                                required />
                             <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
                         </div>
 
                         <!-- 🌟 NEW LOCATION DROPDOWN (Right 4 Columns) -->
                         <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Assigned Venue / Hall</label>
-                            <select asp-for="FormInput.SelectedLocationId" class="form-select form-select-lg bg-light fw-medium text-dark" required>
+                            <label 
+                                class="form-label fw-bold small text-muted mb-1">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>Assigned Venue / Hall</label>
+                            <select 
+                                asp-for="FormInput.SelectedLocationId" 
+                                class="form-select form-select-lg bg-light fw-medium text-dark" 
+                                disabled="@isReadOnly"
+                                required>
                                 <option value="">-- Select Venue --</option>
                                 @foreach (var venue in Model.AvailableVenues)
                                 {
@@ -88,31 +106,57 @@
                         <!-- Row 2: Organizer Contact Email (Added back for completeness) -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted mb-1">Organizer Contact Email</label>
-                            <input asp-for="FormInput.ContactEmail" type="email" class="form-control text-secondary" placeholder="e.g., info@abdclub.org" />
+                            <input 
+                                asp-for="FormInput.ContactEmail"
+                                type="email"
+                                class="form-control text-secondary"
+                                placeholder="e.g., info@abdclub.org"
+                                disabled="@isReadOnly"/>
                             <span asp-validation-for="FormInput.ContactEmail" class="text-danger small"></span>
                         </div>
 
                         <!-- Row 3: Date and Operational Window Matrices -->
                         <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-calendar3 me-1 text-primary"></i>Target Event Date</label>
-                            <input asp-for="FormInput.Date" type="date" class="form-control" required />
+                            <label 
+                                class="form-label fw-bold small text-muted mb-1">
+                                <i class="bi bi-calendar3 me-1 text-primary"></i>Target Event Date</label>
+                            <input 
+                                asp-for="FormInput.Date"
+                                type="date" 
+                                class="form-control"
+                                disabled="@isReadOnly"
+                                required />
                             <span asp-validation-for="FormInput.Date" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock me-1 text-success"></i>Doors / Start Time</label>
-                            <input asp-for="FormInput.StartTime" type="time" class="form-control" required />
+                            <input 
+                                asp-for="FormInput.StartTime"
+                                type="time"
+                                class="form-control"
+                                disabled="@isReadOnly"
+                                required />
                             <span asp-validation-for="FormInput.StartTime" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-muted mb-1"><i class="bi bi-clock-fill me-1 text-danger"></i>Curfew / End Time</label>
-                            <input asp-for="FormInput.EndTime" type="time" class="form-control" required />
+                            <input 
+                                asp-for="FormInput.EndTime"
+                                type="time" 
+                                class="form-control"
+                                disabled="@isReadOnly"
+                                required />
                             <span asp-validation-for="FormInput.EndTime" class="text-danger small"></span>
                         </div>
 
                         <!-- Row 4: Public Calendar Announcement Description -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted mb-1">Public Calendar Announcement Description</label>
-                            <textarea asp-for="FormInput.Description" class="form-control" rows="3" placeholder="Provide public details about pricing, themes, attire rules..."></textarea>
+                            <textarea
+                                asp-for="FormInput.Description" 
+                                class="form-control" rows="3"
+                                placeholder="Provide public details about pricing, themes, attire rules..."
+                                disabled="@isReadOnly"></textarea>
                             <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
                         </div>
                     </div>
@@ -134,7 +178,10 @@
                 <div id="collapseDj" class="accordion-collapse collapse " aria-labelledby="headingDj" data-bs-parent="#danceMatrixAccordion">
                     <div class="accordion-body bg-white p-4">
                         <label class="form-label small fw-bold text-muted mb-1">Select Lookup Registry DJ</label>
-                        <select asp-for="FormInput.SelectedDjId" class="form-select form-select-lg bg-light border-light-subtle fw-semibold text-dark">
+                        <select
+                            asp-for="FormInput.SelectedDjId"
+                            class="form-select form-select-lg bg-light border-light-subtle fw-semibold text-dark"
+                            disabled="@isReadOnly">
                             <option value="">-- No DJ Assigned / Vacant Position --</option>
                             @foreach (var dj in Model.RegistryDjs)
                             {
@@ -171,7 +218,13 @@
                                         bool isChecked = Model.CurrentlyAssignedHostIds.Contains(host.Id);
                                         <div class="form-check p-2 border-bottom border-light d-flex justify-content-between align-items-center">
                                             <div>
-                                                <input class="form-check-input ms-0 me-2" type="checkbox" name="FormInput.SelectedHostIds" value="@host.Id" id="h_@host.Id" @(isChecked ? "checked" : "") />
+                                                <input
+                                                    class="form-check-input ms-0 me-2"
+                                                    type="checkbox"
+                                                    name="FormInput.SelectedHostIds"
+                                                    value="@host.Id"
+                                                    id="h_@host.Id" @(isChecked ? "checked" : "")
+                                                    disabled="@isReadOnly"/>
                                                 <label class="form-check-label small fw-semibold text-dark" for="h_@host.Id">@host.Name</label>
                                             </div>
                                             @if (!string.IsNullOrEmpty(host.Email))
@@ -192,7 +245,13 @@
                                         bool isChecked = Model.CurrentlyAssignedVolunteerIds.Contains(vol.Id);
                                         <div class="form-check p-2 border-bottom border-light d-flex justify-content-between align-items-center">
                                             <div>
-                                                <input class="form-check-input ms-0 me-2" type="checkbox" name="FormInput.SelectedVolunteerIds" value="@vol.Id" id="v_@vol.Id" @(isChecked ? "checked" : "") />
+                                                <input
+                                                    class="form-check-input ms-0 me-2"
+                                                    type="checkbox"
+                                                    name="FormInput.SelectedVolunteerIds"
+                                                    value="@vol.Id" id="v_@vol.Id"
+                                                    @(isChecked ? "checked" : "")
+                                                    disabled="@isReadOnly"/>
                                                 <label class="form-check-label small fw-semibold text-dark" for="v_@vol.Id">@vol.Name</label>
                                             </div>
                                             @if (!string.IsNullOrEmpty(vol.Email))
@@ -228,7 +287,13 @@
                                     <div class="col">
                                         <div class="form-check p-2 border rounded bg-light bg-opacity-50 d-flex justify-content-between align-items-center">
                                             <div class="d-flex align-items-center">
-                                                <input class="form-check-input ms-1 me-2 fs-5" type="checkbox" name="FormInput.SelectedOfficerIds" value="@officer.Id" id="of_@officer.Id" @(isChecked ? "checked" : "") />
+                                                <input
+                                                    class="form-check-input ms-1 me-2 fs-5"
+                                                    type="checkbox"
+                                                    name="FormInput.SelectedOfficerIds"
+                                                    value="@officer.Id" id="of_@officer.Id"
+                                                    @(isChecked ? "checked" : "") 
+                                                    disabled="@isReadOnly"/>
                                                 <label class="form-check-label small fw-bold text-dark pt-0" for="of_@officer.Id">
                                                     @($"{officer.FullName}")
                                                     <span class="text-muted font-monospace small">(@(officer.OfficerRole ?? "Staff"))</span>
@@ -261,10 +326,13 @@
                     <div class="accordion-body bg-white p-4">
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <span class="text-muted small">Configure specific structural lesson slots, topics, and assign live registry instructors to this schedule.</span>
-                            <button type="button" class="btn btn-sm btn-dark fw-bold px-3" x-on:click="addLesson()">
-                                <i class="bi bi-plus-circle-fill text-success me-1"></i>Add Lesson Slot
-                            </button>
-                        </div>
+                                @if (!isReadOnly)
+                                {
+                                    <button type="button" class="btn btn-sm btn-dark fw-bold px-3" x-on:click="addLesson()">
+                                        <i class="bi bi-plus-circle-fill text-success me-1"></i>Add Lesson Slot
+                                    </button>
+                                }
+                            </div>
 
                         <!-- Responsive matrix grid rendering dynamic side-by-side loop items -->
                         <div class="row row-cols-1 row-cols-md-2 g-3">
@@ -272,16 +340,32 @@
                                 <div class="col">
                                     <div class="bg-light border rounded p-3 position-relative shadow-sm h-100">
                                         <!-- Top corner close button with index array splice triggers -->
-                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-sm text-danger" style="font-size:0.75rem;" x-on:click="removeLesson(index)" aria-label="Remove Lesson"></button>
-
+                                      @if (!isReadOnly)
+                                {  
+                                    <button
+                                            type="button"
+                                            class="btn-close position-absolute top-0 end-0 m-2 btn-sm text-danger"
+                                            style="font-size:0.75rem;"
+                                            x-on:click="removeLesson(index)"
+                                            aria-label="Remove Lesson"></button>
+                                }
                                         <div class="row g-2">
                                             <div class="col-sm-6">
                                                 <label class="form-label small fw-bold text-muted mb-0">Lesson Topic / Type</label>
-                                                <input type="text" :name="'FormInput.Lessons['+index+'].Type'" x-model="lesson.Type" class="form-control form-control-sm border-light-subtle" placeholder="e.g., East Coast Swing (Intro)" required />
+                                                <input
+                                                    type="text" :name="'FormInput.Lessons['+index+'].Type'" x-model="lesson.Type"
+                                                    class="form-control form-control-sm border-light-subtle"
+                                                    placeholder="e.g., East Coast Swing (Intro)"
+                                                    disabled="@isReadOnly"
+                                                    required />
                                             </div>
                                             <div class="col-sm-6">
                                                 <label class="form-label small fw-bold text-muted mb-0">Assigned Master Instructor</label>
-                                                <select :name="'FormInput.Lessons['+index+'].InstructorId'" x-model="lesson.InstructorId" class="form-select form-select-sm border-light-subtle" required>
+                                                <select
+                                                    :name="'FormInput.Lessons['+index+'].InstructorId'" x-model="lesson.InstructorId"
+                                                    class="form-select form-select-sm border-light-subtle"
+                                                    disabled="@isReadOnly"
+                                                    required>
                                                     <option value="">-- Choose Instructor --</option>
                                                     @foreach (var inst in Model.RegistryInstructors)
                                                     {
@@ -291,11 +375,22 @@
                                             </div>
                                             <div class="col-sm-6">
                                                 <label class="form-label small fw-bold text-muted mb-0">Start Time</label>
-                                                <input type="time" :name="'FormInput.Lessons['+index+'].StartTime'" x-model="lesson.StartTime" class="form-control form-control-sm border-light-subtle" required />
+                                                <input
+                                                    type="time" :name="'FormInput.Lessons['+index+'].StartTime'"
+                                                    x-model="lesson.StartTime"
+                                                    class="form-control form-control-sm border-light-subtle"
+                                                    disabled="@isReadOnly"
+                                                    required />
                                             </div>
                                             <div class="col-sm-6">
                                                 <label class="form-label small fw-bold text-muted mb-0">End Time</label>
-                                                <input type="time" :name="'FormInput.Lessons['+index+'].EndTime'" x-model="lesson.EndTime" class="form-control form-control-sm border-light-subtle" required />
+                                                <input
+                                                    type="time"
+                                                    :name="'FormInput.Lessons['+index+'].EndTime'"
+                                                    x-model="lesson.EndTime"
+                                                    class="form-control form-control-sm border-light-subtle"
+                                                    disabled="@isReadOnly"
+                                                    required />
                                             </div>
                                         </div>
                                     </div>
@@ -320,12 +415,16 @@
                <!-- FOOTER SAVE AND CANCEL BUTTON CARDS -->
         <div class="card bg-light border-0 p-3 d-flex flex-row justify-content-between align-items-center rounded shadow-sm mt-2">
             <a asp-page="./Index" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left-circle me-1"></i>Cancel & Return
+                <i class="bi bi-arrow-left-circle me-1"></i>@(isReadOnly ? "Return" : "Cancel & Return")
+
             </a>
-            <button type="submit" id="masterSubmitBtn" class="btn btn-dark px-4 btn-lg shadow-sm">
-                <i class="bi bi-cloud-arrow-up-fill me-1"></i>Commit Master Configuration Update
-            </button>
-        </div>
+                   @if (!isReadOnly)
+                    {
+                        <button type="submit" id="masterSubmitBtn" class="btn btn-dark px-4 btn-lg shadow-sm">
+                            <i class="bi bi-cloud-arrow-up-fill me-1"></i>Commit Master Configuration Update
+                        </button>
+                    }
+                </div>
 
     </form>
 </div>

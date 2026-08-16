@@ -46,12 +46,15 @@ public class ReminderService : BackgroundService
             var end = start.AddDays(1);
             // Find members expiring on exactly this target date
             // who haven't already received this reminder
-            var members = await db.Members
+            var membersToRemind = await db.Members
      .Where(m =>
-         m.IsActive &&
-         m.ExpiryDate.HasValue &&
-         m.ExpiryDate.Value >= start &&
-         m.ExpiryDate.Value < end &&
+        // 🌟 THE DATABASE REALIGNMENT FIX: 
+        // Replaces the unmapped property with physical database column flags!
+        !m.IsSuspended &&
+        m.ExpiryDate.HasValue &&
+        m.ExpiryDate.Value.Date >= today && // Ensures they are active today
+        m.ExpiryDate.Value.Date >= start &&
+        m.ExpiryDate.Value.Date < end &&
          !db.EmailLogs.Any(e =>
              e.MemberId == m.Id &&
              e.EmailType == emailType &&
@@ -59,7 +62,7 @@ public class ReminderService : BackgroundService
              e.SentAt < today.Date.AddDays(1)))
      .ToListAsync();
 
-            foreach (var member in members)
+            foreach (var member in membersToRemind)
             {
                 await emailService.SendReminderAsync(member, emailType);
 

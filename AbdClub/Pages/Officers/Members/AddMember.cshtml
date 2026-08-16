@@ -62,10 +62,10 @@
                         <div class="row">
                         <div class="col">
                             <div class="form-check form-switch mb-2">
-                        <input asp-for="Member.IsActive" type="checkbox"
+                        <input asp-for="Member.IsSuspended" type="checkbox"
                                class="form-check-input" role="switch" checked />
-                        <label asp-for="Member.IsActive" class="form-check-label fw-bold">
-                            Active Member
+                        <label asp-for="Member.IsSuspended" class="form-check-label fw-bold">
+                            Suspend Member
                         </label>
                     </div>
                     <div class="form-check form-switch mb-2">
@@ -122,16 +122,17 @@
                         </small>
                     </label>
                     <div class="form-check form-switch">
-                        <input type="checkbox" class="form-check-input" role="switch"
-                               id="recordPayment" name="recordPayment" />
-                        <label class="form-check-label" for="recordPayment">
+                       <!-- 🌟 APPROACH A: Use the formal Tag Helper (Highly Recommended) -->
+<input type="checkbox" class="form-check-input" role="switch" asp-for="RecordPayment" id="recordPayment" />
+
+                        <label class="form-check-label" for="RecordPayment">
                             Record $50 payment
                         </label>
                     </div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                    <a asp-page="./Members/MembersList" class="btn btn-outline-secondary">
+                    <a asp-page="./MembersList" class="btn btn-outline-secondary">
                         Cancel
                     </a>
                     <button type="submit" class="btn btn-success px-4">

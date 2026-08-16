@@ -40,6 +40,9 @@
                 <a class="nav-link @(Model.Filter == "active" ? "active" : "")" href="?filter=active">Active</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link @(Model.Filter == "suspended" ? "active" : "")" href="?filter=suspended">Suspended</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link @(Model.Filter == "expiring" ? "active" : "")" href="?filter=expiring">Expiring Soon</a>
             </li>
             <li class="nav-item">
@@ -145,9 +148,9 @@
                                 }
                             </td>
                             <td class="text-center">
-                                @if (!member.IsActive)
+                                @if (member.IsSuspended)
                                 {
-                                    <span class="badge bg-secondary">Inactive</span>
+                                    <span class="badge bg-secondary">Suspended</span>
                                 }
                                 else if (isExpired)
                                 {
@@ -160,6 +163,10 @@
                                 else if (!expiry.HasValue)
                                 {
                                     <span class="badge bg-info text-dark">No expiry</span>
+                                }
+                                else if (!member.IsActive)
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
                                 }
                                 else
                                 {

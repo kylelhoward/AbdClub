@@ -9,24 +9,32 @@
 <div class="status-card @(Model.IsExpiringSoon ? "warning" : "good")">
     <div class="label">Membership status</div>
     <div class="value">
-        @if (Model.IsExpired)
-        {
-            <span class="badge bg-danger">
-                Expired @Model.Member.ExpiryDate?.ToString("MMM d, yyyy")
-            </span>
-        }
-        else if (Model.IsExpiringSoon)
-        {
-            <span class="badge bg-warning text-dark">
-                Expires @Model.Member.ExpiryDate?.ToString("MMM d, yyyy") — renew soon
-            </span>
-        }
-        else
-        {
-            <span class="badge bg-success">
-                Active until @Model.Member.ExpiryDate?.ToString("MMM d, yyyy")
-            </span>
-        }
+        <!-- Reusable status badge system that reflects administrative overrides instantly -->
+@if (Model.Member.IsSuspended)
+{
+    <span class="badge bg-dark text-white p-2 shadow-sm rounded-2">
+        <i class="bi bi-shield-slash-fill text-danger me-1"></i> Administrative Suspension
+    </span>
+}
+else if (Model.Member.IsExpired)
+{
+    <span class="badge bg-danger p-2 shadow-sm rounded-2">
+        <i class="bi bi-exclamation-octagon-fill me-1"></i> Expired @Model.Member.ExpiryDate?.ToString("MMM d, yyyy")
+    </span>
+}
+else if (Model.Member.IsExpiringSoon)
+{
+    <span class="badge bg-warning text-dark p-2 shadow-sm rounded-2">
+        <i class="bi bi-clock-history me-1"></i> Expires @Model.Member.ExpiryDate?.ToString("MMM d, yyyy") — Renew Soon!
+    </span>
+}
+else
+{
+    <span class="badge bg-success p-2 shadow-sm rounded-2">
+        <i class="bi bi-shield-check me-1"></i> Active until @Model.Member.ExpiryDate?.ToString("MMM d, yyyy")
+    </span>
+}
+
     </div>
 </div>
 
@@ -35,5 +43,5 @@
     <a href="/Membership" class="btn-primary">Renew now — $50/year</a>
 }
 
-<h2>Upcoming events</h2>
+@* <h2>Upcoming events</h2> *@
 @* Events list goes here *@

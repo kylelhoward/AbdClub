@@ -62,7 +62,7 @@ namespace AbdClub.Pages.Officers
             {
                 CurrentUserId = parsedId;
             }
-            CanDeleteAsOfficer = User.IsInRole("Officer") || User.IsInRole("Admin") || User.IsInRole("TechAdmin");
+            CanDeleteAsOfficer =  User.IsInRole("Admin") || User.IsInRole("TechAdmin");
 
             // 2. Build the Change-Tracking Base Query with Eager Loading
             var query = _context.ClubFiles

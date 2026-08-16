@@ -1,19 +1,35 @@
 ﻿@page
 @model AbdClub.Pages.Officers.Dances.IndexModel
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+
 @{
     ViewData["Title"] = "Manage Club Dances";
 }
 
 <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+                <!-- Breadcrumb Routing Consistency -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Dance List</li>
+            </ol>
+        </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
         <h2><i class="bi bi-calendar-event me-2"></i>Official Dance Matrix</h2>
-
-        @* CREATION_INPUT_MODAL  *@
-        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createDanceModal">
-            <i class="bi bi-plus-circle me-1"></i>Create New Dance
-        </button>
-
+                <p class="text-muted mb-0">Manage club members and their statuses</p>
+            </div>
+           
+        </div>
+         @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
+        {
+            @* CREATION_INPUT_MODAL  *@
+            <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createDanceModal">
+                <i class="bi bi-plus-circle me-2"></i>Create New Dance
+            </button>
+        }
     </div>
 
     @if (Model.UpdateFeedback != null)
@@ -97,11 +113,21 @@
                                             data-dance-meta="@dance.Date.ToString("ddd, MMM dd, yyyy") at @dance.Location.VenueName">
                                             <i class="bi bi-printer-fill me-1"></i> Print Roster Sheets
                                         </button>
+                                        @* Edit/View *@
+                                        <!-- 🌟 DYNAMIC SECURITY BUTTON: Adjusts label and appearance automatically based on role permissions -->
+                                        @if (User.IsInRole("Admin") || User.IsInRole("TechAdmin"))
+                                        {
+                                            <a class="btn btn-sm btn-outline-dark" asp-page="./Edit" asp-route-id="@dance.Id">
+                                                <i class="bi bi-pencil-square me-1"></i>Edit
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-sm btn-outline-secondary" asp-page="./Edit" asp-route-id="@dance.Id">
+                                                <i class="bi bi-eye-fill me-1"></i>View
+                                            </a>
+                                        }
 
-                                        @* Edit *@
-                                        <a class="btn btn-sm btn-outline-dark" asp-page="./Edit" asp-route-id="@dance.Id">
-                                            <i class="bi bi-pencil-square"></i> Edit
-                                        </a>
                                     </div>
                                 </td>
                             </tr>

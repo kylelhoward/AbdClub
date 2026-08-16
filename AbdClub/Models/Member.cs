@@ -1,4 +1,6 @@
-﻿namespace AbdClub.Models;
+﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace AbdClub.Models;
 
 public class Member
 {
@@ -13,9 +15,32 @@ public class Member
     public bool IsAdmin { get; set; } = false;
     public bool IsTechAdmin { get; set; } = false;
     public string? OfficerRole { get; set; }
-    public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool SelfRegistered { get; set; } = false;
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public ICollection<EmailLog> EmailLogs { get; set; } = new List<EmailLog>();
+
+// 🌟 THE ADMINISTRATIVE MANUAL OVERRIDE FLAG:
+    // Keeps a physical column in the database table. Defaults to false.
+    public bool IsSuspended { get; set; } = false;
+
+    // 🌟 SMART CALCULATED PROPERTY: 
+    // A member is only active if their date is valid AND they aren't manually suspended!
+    [NotMapped]
+    public bool IsActive => 
+        !IsSuspended && 
+        ExpiryDate.HasValue && 
+        ExpiryDate.Value.Date >= DateTime.UtcNow.Date;
+
+    // UI Helper properties adapt automatically
+    [NotMapped]
+    public bool IsExpired => !ExpiryDate.HasValue || ExpiryDate.Value.Date < DateTime.UtcNow.Date;
+
+    [NotMapped]
+    public bool IsExpiringSoon => 
+        !IsSuspended &&
+        ExpiryDate.HasValue && 
+        ExpiryDate.Value.Date >= DateTime.UtcNow.Date && 
+        ExpiryDate.Value.Date <= DateTime.UtcNow.AddDays(30).Date;
+
 }
