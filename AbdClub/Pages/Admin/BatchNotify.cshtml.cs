@@ -45,8 +45,12 @@ public class BatchNotifyModel(
     private async Task LoadAudienceCountsAndLedgerAsync()
     {
         // Compute individual counts natively inside the database layer
-        MembersCount = await _context.Members.CountAsync(m => m.IsActive);
-        OfficersCount = await _context.Members.CountAsync(m => m.IsActive && m.IsOfficer);
+        MembersCount = await _context.Members.CountAsync(m => !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow );
+        OfficersCount = await _context.Members.CountAsync(m => !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow && m.IsOfficer);
 
         var uniquelySubscribedEmailsCount = await _context.NewsletterSubscribers
             .Select(s => s.Email.ToLower())
@@ -93,21 +97,25 @@ public class BatchNotifyModel(
         {
             case "MembersOnly":
                 targets = await _context.Members
-                    .Where(m => m.IsActive)
-                    .Select(m => new RecipientDetails { Email = m.Email, FullName = m.FullName })
+                    .Where(m => !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow)
+                    .Select(m => new RecipientDetails { Email = m.Email, LastName = m.LastName })
                     .ToListAsync();
                 break;
 
             case "Everyone":
                 // Fetch active members
                 var members = await _context.Members
-                    .Where(m => m.IsActive)
-                    .Select(m => new RecipientDetails { Email = m.Email, FullName = m.FullName})
+                    .Where(m => !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow)
+                    .Select(m => new RecipientDetails { Email = m.Email, LastName = m.LastName})
                     .ToListAsync();
 
                 // Fetch newsletter subscribers
                 var subscribers = await _context.NewsletterSubscribers
-                    .Select(s => new RecipientDetails { Email = s.Email, FullName = s.FirstName })
+                    .Select(s => new RecipientDetails { Email = s.Email, LastName = s.FirstName })
                     .ToListAsync();
 
                 // Merge and deduplicate by email address to ensure nobody gets double-emailed if they are in both tables
@@ -119,8 +127,11 @@ public class BatchNotifyModel(
 
             case "OfficersOnly":
                 targets = await _context.Members
-                    .Where(m => m.IsActive && m.IsOfficer) // Filters explicitly for active officer flags
-                    .Select(m => new RecipientDetails { Email = m.Email, FullName = m.FullName })
+                    .Where(m => !m.IsSuspended 
+                    && m.ExpiryDate.HasValue 
+                    && m.ExpiryDate.Value >= DateTime.UtcNow 
+                    && m.IsOfficer ) // Filters explicitly for active officer flags
+                    .Select(m => new RecipientDetails { Email = m.Email, LastName = m.LastName })
                     .ToListAsync();
                 break;
 
@@ -160,7 +171,7 @@ public class BatchNotifyModel(
             {
                 try
                 {
-                    await _emailService.SendBroadcastEmailAsync(recipient.Email, recipient.FullName, subject, messageContent);
+                    await _emailService.SendBroadcastEmailAsync(recipient.Email, recipient.LastName, subject, messageContent);
                     await Task.Delay(150); 
                 }
                 catch (Exception ex)
@@ -176,7 +187,7 @@ public class BatchNotifyModel(
 
     private async Task RefreshPageDataAsync()
     {
-        TotalActiveMembersCount = await _context.Members.CountAsync(m => m.IsActive);
+        TotalActiveMembersCount = await _context.Members.CountAsync(m => !m.IsSuspended && m.ExpiryDate.HasValue && m.ExpiryDate.Value >= DateTime.UtcNow);
         PastAnnouncements = await _context.BroadcastAuditLogs
             .Include(a => a.SentByOfficer)
             .OrderByDescending(a => a.SentAt)
@@ -211,5 +222,5 @@ public class BatchNotifyModel(
 public class RecipientDetails
 {
     public string Email { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
 }

@@ -295,7 +295,7 @@
                                                     @(isChecked ? "checked" : "") 
                                                     disabled="@isReadOnly"/>
                                                 <label class="form-check-label small fw-bold text-dark pt-0" for="of_@officer.Id">
-                                                    @($"{officer.FullName}")
+                                                    @($"{officer.LastName}")
                                                     <span class="text-muted font-monospace small">(@(officer.OfficerRole ?? "Staff"))</span>
                                                 </label>
                                             </div>

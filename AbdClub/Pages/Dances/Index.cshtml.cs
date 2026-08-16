@@ -66,7 +66,7 @@ public class IndexModel : PageModel
             // If they have never volunteered before, save them permanently into the registry directory
             masterVolunteer = new MasterVolunteer
             {
-                Name = $"{currentMember.FullName}".Trim(),
+                Name = $"{currentMember.LastName}".Trim(),
                 Email = memberEmail,
                 Notes = "Automatically registered profile via Member Portal self-service."
             };

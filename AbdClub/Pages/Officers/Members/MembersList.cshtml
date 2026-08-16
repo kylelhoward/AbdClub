@@ -184,7 +184,7 @@
                                 }
                             </td>
                             <td class="text-end">
-                                <div class="btn-group" role="group" aria-label="Actions for @member.FullName">
+                                <div class="btn-group" role="group" aria-label="Actions for @member.LastName">
                                     @if ((await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
                                     {
                                         <a class="btn btn-sm btn-outline-primary" href="/Officers/Members/EditMember/@member.Id">Edit</a>

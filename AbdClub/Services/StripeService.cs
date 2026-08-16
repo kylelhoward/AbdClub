@@ -177,7 +177,7 @@ public class StripeService : IStripeService
                     : DateTime.UtcNow;
 
                 existing.ExpiryDate = baseDate.AddYears(1);
-                existing.FullName = fullName.Trim();
+                existing.LastName = fullName.Trim();
                 existing.Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
 
                 _db.Payments.Add(new Payment
@@ -218,7 +218,7 @@ public class StripeService : IStripeService
                 // New member configuration allocation
                 var member = new Member
                 {
-                    FullName = fullName.Trim(),
+                    LastName = fullName.Trim(),
                     Email = cleanEmail,
                     Phone = string.IsNullOrEmpty(phone) ? null : phone.Trim(),
                     JoinDate = DateTime.UtcNow,

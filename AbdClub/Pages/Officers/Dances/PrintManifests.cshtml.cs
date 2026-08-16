@@ -51,19 +51,27 @@ public class PrintManifestsModel : PageModel
         {
             if (SelectedForms.Contains("active-members"))
             {
+                // 🌟 CLEAN COMPREHENSIVE NATIVE SORT: Runs instantly on the database engine server side
                 ActiveRoster = await _context.Members
-                    .Where(m => m.IsActive == true && m.Email != null)
-                    .OrderBy(m => m.FullName)
+                    .Where(m => !m.IsSuspended && m.ExpiryDate.HasValue && m.ExpiryDate.Value >= DateTime.UtcNow && m.Email != null)
+                    .OrderBy(m => m.LastName) // 👈 Beautiful, indexed native server sorting!
+                    .ThenBy(m => m.FirstName)
                     .ToListAsync();
+
             }
+
+            // Inside Pages/Officers/Dances/PrintManifests.cshtml.cs inside OnGetAsync():
 
             if (SelectedForms.Contains("inactive-members"))
             {
+                // 🌟 FIXED SERVER-SIDE EVALUATION: Removed the unmapped IsActive parameter entirely
                 InactiveRoster = await _context.Members
-                    .Where(m => (m.IsActive == false || !m.ExpiryDate.HasValue || m.ExpiryDate.Value < DateTime.UtcNow) && m.Email != null)
-                    .OrderBy(m => m.FullName)
+                    .Where(m => (m.IsSuspended || !m.ExpiryDate.HasValue || m.ExpiryDate.Value < DateTime.UtcNow) && m.Email != null)
+                    .OrderBy(m => m.LastName)
+                    .ThenBy(m => m.FirstName) // Keeps matching surnames perfectly alphabetized on paper
                     .ToListAsync();
             }
+
         }
 
         return Page();

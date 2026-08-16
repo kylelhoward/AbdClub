@@ -74,11 +74,11 @@
                         <tbody>
                             @if (Model.TargetDance.AttendingOfficers.Any())
                             {
-                                foreach (var officer in Model.TargetDance.AttendingOfficers.OrderBy(o => o.FullName))
+                                foreach (var officer in Model.TargetDance.AttendingOfficers.OrderBy(o => o.LastName))
                                 {
                                     <tr class="@(officer.Id == Model.CurrentMemberId ? "table-success-subtle fw-semibold" : "")">
                                         <td class="ps-3">
-                                            @($"{officer.FullName}")
+                                            @($"{officer.LastName}")
                                             @if (officer.Id == Model.CurrentMemberId)
                                             {
                                                 <span class="badge bg-success ms-1 small">You</span>
@@ -131,7 +131,7 @@
                                 <option value="">-- Choose From Active Officers --</option>
                                 @foreach (var available in Model.ActiveOfficersList)
                                 {
-                                    <option value="@available.Id">@($"{available.FullName} ({available.OfficerRole ?? "No Role Specified"})")</option>
+                                    <option value="@available.Id">@($"{available.LastName} ({available.OfficerRole ?? "No Role Specified"})")</option>
                                 }
                             </select>
                         </div>

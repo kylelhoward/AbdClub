@@ -42,7 +42,7 @@ public class CallbackModel : PageModel
             return RedirectToPage("/Auth/Login", new { notamember = true });
         }
 
-        if (!member.IsActive || member.ExpiryDate < DateTime.UtcNow)
+        if (!member.IsActive )
         {
             // Lapsed member — let them in but redirect to membership page
             return RedirectToPage("/Membership", new { expired = true });
@@ -51,7 +51,7 @@ public class CallbackModel : PageModel
         // All good — build a principal that includes the Officer role when applicable
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, member.FullName ?? member.Email ?? string.Empty),
+            new Claim(ClaimTypes.Name, member.LastName ?? member.Email ?? string.Empty),
             new Claim(ClaimTypes.Email, member.Email ?? string.Empty),
             new Claim("MemberId", member.Id.ToString()),
             new Claim("IsOfficer", member.IsOfficer.ToString().ToLower()),

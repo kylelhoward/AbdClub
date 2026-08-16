@@ -79,7 +79,16 @@ public class IndexModel : PageModel
         RegistryHosts = await _context.MasterHosts.OrderBy(h => h.Name).ToListAsync();
         RegistryInstructors = await _context.MasterInstructors.OrderBy(i => i.Name).ToListAsync();
         RegistryVolunteers = await _context.MasterVolunteers.OrderBy(v => v.Name).ToListAsync();
-        AvailableOfficers = await _context.Members.Where(m => m.IsActive && m.IsOfficer).OrderBy(m => m.FullName).ToListAsync();
+        // 🌟 FIXED SERVER-SIDE EVALUATION: Uses persistent table fields for water-tight SQL translation
+        AvailableOfficers = await _context.Members
+            .Where(m =>
+                m.IsOfficer &&
+                !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow)
+            .OrderBy(m => m.LastName)
+            .ThenBy(m => m.FirstName) // Added an extra sort pass to keep matching surnames alphabetized
+            .ToListAsync();
 
         UpcomingDances = await _context.Events
             .OfType<Dance>()

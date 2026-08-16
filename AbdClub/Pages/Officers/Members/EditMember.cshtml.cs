@@ -61,7 +61,9 @@ public class EditMemberModel(AbdContext db,IAuthorizationService authorizationSe
             return Page();
         }
 
-        memberInDb.FullName = Member.FullName;
+        memberInDb.FirstName = Member.FirstName;
+        memberInDb.MiddleName = Member.MiddleName;
+        memberInDb.LastName = Member.LastName;
         memberInDb.Email = Member.Email;
         memberInDb.ExpiryDate = Member.ExpiryDate.HasValue
             ? System.DateTime.SpecifyKind(Member.ExpiryDate.Value, System.DateTimeKind.Utc)
@@ -69,6 +71,7 @@ public class EditMemberModel(AbdContext db,IAuthorizationService authorizationSe
         memberInDb.IsOfficer = Member.IsOfficer;
         memberInDb.IsSuspended= Member.IsSuspended;
         memberInDb.IsTechAdmin = Member.IsTechAdmin;
+        memberInDb.IsAdmin = Member.IsAdmin;
         memberInDb.OfficerRole = Member.OfficerRole;
         memberInDb.Phone = Member.Phone;
 

@@ -19,9 +19,21 @@
                 <input type="hidden" asp-for="Member.Id" />
 
                 <div class="mb-3">
-                    <label asp-for="Member.FullName" class="form-label">Full Name</label>
-                    <input asp-for="Member.FullName" class="form-control" placeholder="Enter full name" />
-                    <span asp-validation-for="Member.FullName" class="text-danger small"></span>
+                    <label asp-for="Member.FirstName" class="form-label">First Name</label>
+                    <input asp-for="Member.FirstName" class="form-control" placeholder="Enter first name" />
+                    <span asp-validation-for="Member.FirstName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.MiddleName" class="form-label">Middle Name</label>
+                    <input asp-for="Member.MiddleName" class="form-control" placeholder="Enter middle name" />
+                    <span asp-validation-for="Member.MiddleName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.LastName" class="form-label">Last Name</label>
+                    <input asp-for="Member.LastName" class="form-control" placeholder="Enter last name" />
+                    <span asp-validation-for="Member.LastName" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">

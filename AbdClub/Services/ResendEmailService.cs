@@ -31,7 +31,7 @@ public class ResendEmailService : IEmailService
 
         var body = $@"
         <h2>Your Login Link</h2>
-        <p>Hi {member.FullName},</p>
+        <p>Hi {member.LastName},</p>
         <p>Click the button below to log in to your Austin Ballroom Dancers account.</p>
         <p>
             <a href=""{magicUrl}""
@@ -167,7 +167,7 @@ public class ResendEmailService : IEmailService
 
         var body = $@"
             <h2>Membership Renewal Reminder</h2>
-            <p>Hi {member.FullName},</p>
+            <p>Hi {member.LastName},</p>
             <p>Your Austin Ballroom Dancers membership expires on <strong>{expiry}</strong>.</p>
             <p>Please renew to continue enjoying club events and benefits:</p>
             <p><a href=""{renewUrl}"">Renew Membership</a></p>
@@ -213,7 +213,7 @@ public class ResendEmailService : IEmailService
         var subject = $"Officer Reminder: {dance.Title}";
         var body = $@"
             <h2>Officer Reminder</h2>
-            <p>Hi {officer.FullName},</p>
+            <p>Hi {officer.LastName},</p>
             <p>You are scheduled to serve as an officer at <strong>{dance.Title}</strong>.</p>
             <h3>Event Details:</h3>
             <ul>
@@ -259,7 +259,9 @@ public class ResendEmailService : IEmailService
 
     public async Task SendEventNotificationToAllMembersAsync(Dance dance, string subject, string body)
     {
-        var members = await _db.Members.Where(m => m.IsActive).ToListAsync();
+        var members = await _db.Members.Where(m => !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow && m.IsOfficer).ToListAsync();
 
         if (!members.Any())
         {
@@ -326,7 +328,7 @@ public class ResendEmailService : IEmailService
         {
             "Welcome" => $@"
                 <h2>Welcome to Austin Ballroom Dancers!</h2>
-                <p>Hi {member.FullName},</p>
+                <p>Hi {member.LastName},</p>
                 <p>We're thrilled to have you. Your membership is active until <strong>{expiry}</strong>.</p>
                 <p><a href=""https://yourdomain.com/calendar"">Check our calendar for upcoming events</a></p>
                 <p>See you on the dance floor!<br/>— The ABD Team</p>
@@ -334,7 +336,7 @@ public class ResendEmailService : IEmailService
 
             "Reminder60" => $@"
                 <h2>Membership Renewal Reminder</h2>
-                <p>Hi {member.FullName},</p>
+                <p>Hi {member.LastName},</p>
                 <p>Your Austin Ballroom Dancers membership expires on <strong>{expiry}</strong> — just 60 days away.</p>
                 <p><a href=""{renewUrl}"">Renew your membership</a></p>
                 <p>See you at the next social!<br/>— The ABD Team</p>
@@ -342,7 +344,7 @@ public class ResendEmailService : IEmailService
 
             "Reminder30" => $@"
                 <h2>Membership Expiring in 30 Days</h2>
-                <p>Hi {member.FullName},</p>
+                <p>Hi {member.LastName},</p>
                 <p>Your membership expires on <strong>{expiry}</strong> — just 30 days away.</p>
                 <p>Don't let your membership lapse: <a href=""{renewUrl}"">Renew now</a></p>
                 <p>— The ABD Team</p>
@@ -350,7 +352,7 @@ public class ResendEmailService : IEmailService
 
             "Reminder7" => $@"
                 <h2>Last Week to Renew!</h2>
-                <p>Hi {member.FullName},</p>
+                <p>Hi {member.LastName},</p>
                 <p>Your membership expires on <strong>{expiry}</strong> — only 7 days away!</p>
                 <p><a href=""{renewUrl}"">Renew now to keep your access</a></p>
                 <p>— The ABD Team</p>
@@ -358,14 +360,14 @@ public class ResendEmailService : IEmailService
 
             "Expired" => $@"
                 <h2>Your Membership Has Expired</h2>
-                <p>Hi {member.FullName},</p>
+                <p>Hi {member.LastName},</p>
                 <p>Your membership expired on {expiry}. We'd love to have you back!</p>
                 <p><a href=""{renewUrl}"">Renew your membership</a></p>
                 <p>Questions? Contact an officer at the next social.<br/>— The ABD Team</p>
             ",
 
             _ => $@"
-                <p>Hi {member.FullName},</p>
+                <p>Hi {member.LastName},</p>
                 <p>A message from Austin Ballroom Dancers.</p>
                 <p><a href=""https://yourdomain.com"">Visit us</a></p>
                 <p>— The ABD Team</p>

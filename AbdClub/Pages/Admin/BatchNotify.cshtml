@@ -175,7 +175,7 @@
                             <tr>
                                 <td class="ps-3 text-muted small">@log.SentAt.ToLocalTime().ToString("g")</td>
                                 <td class="fw-bold">
-                                    @(log.SentByOfficer != null ? $"{log.SentByOfficer.FullName}" : "System")
+                                    @(log.SentByOfficer != null ? $"{log.SentByOfficer.LastName}" : "System")
                                 </td>
                                 <td><span class="text-truncate d-inline-block" style="max-width: 300px;">@log.Subject</span></td>
                                 <td class="text-center"><span class="badge bg-secondary">@log.RecipientCount members</span></td>

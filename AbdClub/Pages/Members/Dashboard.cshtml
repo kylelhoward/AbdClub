@@ -4,7 +4,7 @@
     ViewData["Title"] = "Member Dashboard";
 }
 
-<h1>Welcome, @Model.Member.FullName</h1>
+<h1>Welcome, @Model.Member.LastName</h1>
 
 <div class="status-card @(Model.IsExpiringSoon ? "warning" : "good")">
     <div class="label">Membership status</div>

@@ -1,11 +1,20 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace AbdClub.Models;
 
 public class Member
 {
     public int Id { get; set; }
-    public string FullName { get; set; } = string.Empty;
+    // 🌟 THE CLEAN ARCHITECTURE UPGRADE
+    [Required, StringLength(50)] public string FirstName { get; set; } = string.Empty;
+    [StringLength(50)] public string? MiddleName { get; set; }
+    [Required, StringLength(50)] public string LastName { get; set; } = string.Empty;
+    // 🌟 COMPATIBILITY BRIDGE: Combines names automatically on the fly for your frontend views
+    [NotMapped]
+    public string FullName => string.IsNullOrWhiteSpace(MiddleName)
+        ? $"{FirstName} {LastName}"
+        : $"{FirstName} {MiddleName} {LastName}";
     public string Email { get; set; } = string.Empty;
     public string? Phone { get; set; }
     public string? GoogleSubId { get; set; }

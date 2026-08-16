@@ -180,7 +180,7 @@ public class EditModel(
             foreach (var officer in officersToRemove)
             {
                 danceToUpdate.AttendingOfficers.Remove(officer);
-                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.FullName}", danceToUpdate.Title, dateString, dropText);
+                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.LastName}", danceToUpdate.Title, dateString, dropText);
             }
         }
 
@@ -191,7 +191,7 @@ public class EditModel(
             foreach (var officer in officersToAdd)
             {
                 danceToUpdate.AttendingOfficers.Add(officer);
-                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.FullName}", danceToUpdate.Title, dateString, addText);
+                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.LastName}", danceToUpdate.Title, dateString, addText);
             }
         }
 
@@ -207,7 +207,13 @@ public class EditModel(
         RegistryHosts = await _context.MasterHosts.OrderBy(h => h.Name).ToListAsync();
         RegistryInstructors = await _context.MasterInstructors.OrderBy(i => i.Name).ToListAsync();
         RegistryVolunteers = await _context.MasterVolunteers.OrderBy(v => v.Name).ToListAsync();
-        AllActiveOfficers = await _context.Members.Where(m => m.IsActive && m.IsOfficer).OrderBy(m => m.FullName).ToListAsync();
+        AllActiveOfficers = await _context.Members
+            .Where(m => !m.IsSuspended &&
+            m.ExpiryDate.HasValue 
+            && m.ExpiryDate.Value >= DateTime.UtcNow
+            && m.IsOfficer)
+            .OrderBy(m => m.LastName)
+            .ToListAsync();
     }
 }
 

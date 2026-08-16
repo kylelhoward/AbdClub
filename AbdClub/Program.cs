@@ -1,11 +1,13 @@
 using AbdClub.Data;
 using AbdClub.Services;
 using AbdClub.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics; // 🌟 Add this for warning definitions
 using Resend;
 using Serilog;
 using Log = Serilog.Log;
-using Microsoft.EntityFrameworkCore.Diagnostics; // 🌟 Add this for warning definitions
 
 var builder = WebApplication.CreateBuilder(args);
 // 🌟 1. ENABLE DIAGNOSTICS FIRST: Catches configuration errors on initialization
@@ -77,8 +79,8 @@ builder.Services.AddRazorPages(options =>
 // --- Google Authentication ---
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = "Cookies";
-    options.DefaultChallengeScheme = "Cookies";
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
 })
 .AddCookie("Cookies", options =>
 {
@@ -124,6 +126,25 @@ builder.Services.AddAuthentication(options =>
             context.Fail("Not a registered member");
             return;
         }
+        // 🌟 HARD BLOCK FOR SUSPENDED ACCOUNTS
+        if (member.IsSuspended)
+        {
+            logger.LogWarning(
+               "Access Denied This account has been administratively suspended by a club officer.",
+               email);
+            context.Fail("Access Denied: This account has been administratively suspended by a club officer.");
+            return;
+        }
+
+// 🌟 HARD BLOCK FOR EXPIRED MEMBERSHIPS
+        //if (!member.ExpiryDate.HasValue || member.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
+        //{
+        //     logger.LogWarning(
+        //      "Access Denied: Your annual club membership subscription has lapsed or expired.",
+        //       email);
+        //    context.Fail("Access Denied: Your annual club membership subscription has lapsed or expired.");
+        //    return;
+        //}
 
         // Store GoogleSubId the first time they log in
         if (member.GoogleSubId == null && googleSub != null)

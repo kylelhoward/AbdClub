@@ -25,7 +25,7 @@ public class MembersListModel(AbdContext db, IAuthorizationService authorization
         {
             q = q.Trim().ToLower();
             query = query.Where(m =>
-                m.FullName.ToLower().Contains(q) ||
+                m.LastName.ToLower().Contains(q) ||
                 m.Email.ToLower().Contains(q));
         }
 
@@ -61,7 +61,7 @@ public class MembersListModel(AbdContext db, IAuthorizationService authorization
 
         // This query execution will now compile and fetch cleanly into PostgreSQL without any translation errors!
         Members = await query
-            .OrderBy(m => m.FullName)
+            .OrderBy(m => m.LastName)
             .ToListAsync();
 
     }

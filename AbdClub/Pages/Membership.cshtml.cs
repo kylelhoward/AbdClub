@@ -27,7 +27,7 @@ public class MembershipModel : PageModel
     public bool IsRenewal { get; set; }
 
     [BindProperty]
-    public string FullName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
 
     [BindProperty]
     public string Email { get; set; } = string.Empty;
@@ -52,7 +52,7 @@ public class MembershipModel : PageModel
             return;
 
         IsRenewal = true;
-        FullName = member.FullName;
+        LastName = member.LastName;
         Email = member.Email;
         Phone = member.Phone;
     }
@@ -76,7 +76,7 @@ public class MembershipModel : PageModel
             }
         }
 
-        if (string.IsNullOrWhiteSpace(FullName) ||
+        if (string.IsNullOrWhiteSpace(LastName) ||
             string.IsNullOrWhiteSpace(Email))
         {
             ModelState.AddModelError("", "Name and email are required.");
@@ -98,7 +98,7 @@ public class MembershipModel : PageModel
         try
         {
             var checkoutUrl = await _stripe.CreateCheckoutSessionAsync(
-                FullName, Email, Phone, successUrl, cancelUrl);
+                LastName, Email, Phone, successUrl, cancelUrl);
 
             return Redirect(checkoutUrl);
         }

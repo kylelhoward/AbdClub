@@ -119,9 +119,9 @@ public class AttendingOfficersModel : PageModel
                             header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Signature / Sign-In").Bold();
                         });
 
-                        foreach (var officer in dance.AttendingOfficers.OrderBy(o => o.FullName))
+                        foreach (var officer in dance.AttendingOfficers.OrderBy(o => o.LastName))
                         {
-                            table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{officer.FullName}");
+                            table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{officer.LastName}");
                             table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(officer.OfficerRole ?? "Staff Officer");
                             table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("[   ] ____________");
                         }
@@ -227,8 +227,10 @@ public class AttendingOfficersModel : PageModel
 
         // Fetch all system officers for Admin's dropdown selection tool
         ActiveOfficersList = await _context.Members
-            .Where(m => m.IsActive && m.IsOfficer)
-            .OrderBy(m => m.FullName)
+            .Where(m => !m.IsSuspended &&
+                m.ExpiryDate.HasValue &&
+                m.ExpiryDate.Value >= DateTime.UtcNow && m.IsOfficer)
+            .OrderBy(m => m.LastName)
             .ToListAsync();
 
         return Page();
@@ -265,7 +267,7 @@ public class AttendingOfficersModel : PageModel
         // TRIGGER NOTIFICATION DISPATCH
         await _emailService.SendOfficerDutyNotificationAsync(
             currentOfficer.Email,
-            $"{currentOfficer.FullName}",
+            $"{currentOfficer.LastName}",
             dance.Title,
             dance.Date.ToString("MMMM dd, yyyy"),
             actionText
@@ -296,20 +298,20 @@ public class AttendingOfficersModel : PageModel
 
         if (dance.AttendingOfficers.Any(o => o.Id == selectOfficerId))
         {
-            StatusNotice = $"Info: {targetOfficer.FullName} is already checked into this event.";
+            StatusNotice = $"Info: {targetOfficer.LastName} is already checked into this event.";
             return RedirectToPage(new { id });
         }
 
         dance.AttendingOfficers.Add(targetOfficer);
         await _context.SaveChangesAsync();
 
-        StatusNotice = $"Success: Checked {targetOfficer.FullName} into the event roster.";
+        StatusNotice = $"Success: Checked {targetOfficer.LastName} into the event roster.";
 
         // TRIGGER NOTIFICATION DISPATCH
         string actionText = "<span style='color:#198754; font-weight:bold;'>ASSIGNED TO DUTY</span> via Administrative Override by Admin.";
         await _emailService.SendOfficerDutyNotificationAsync(
             targetOfficer.Email,
-            $"{targetOfficer.FullName}",
+            $"{targetOfficer.LastName}",
             dance.Title,
             dance.Date.ToString("MMMM dd, yyyy"),
             actionText
@@ -335,13 +337,13 @@ public class AttendingOfficersModel : PageModel
         {
             dance.AttendingOfficers.Remove(targetOfficer);
             await _context.SaveChangesAsync();
-            StatusNotice = $"Success: Removed {targetOfficer.FullName} from the attendance grid.";
+            StatusNotice = $"Success: Removed {targetOfficer.LastName} from the attendance grid.";
 
             // TRIGGER NOTIFICATION DISPATCH
             string actionText = "<span style='color:#dc3545; font-weight:bold;'>REMOVED FROM DUTY</span> via Administrative Override by Admin.";
             await _emailService.SendOfficerDutyNotificationAsync(
                 targetOfficer.Email,
-                $"{targetOfficer.FullName}",
+                $"{targetOfficer.LastName}",
                 dance.Title,
                 dance.Date.ToString("MMMM dd, yyyy"),
                 actionText

@@ -37,9 +37,9 @@ public class MagicLinkModel : PageModel
         IsValid = true;
 
         // Build the same claims as Google login
-        var claims = new List<Claim>
+        var claimsToAdd = new List<Claim>
         {
-            new(ClaimTypes.Name,  member.FullName),
+            new(ClaimTypes.Name,  member.LastName),
             new(ClaimTypes.Email, member.Email),
             new("MemberId",       member.Id.ToString()),
             new("IsOfficer",      member.IsOfficer.ToString().ToLower()),
@@ -50,12 +50,15 @@ public class MagicLinkModel : PageModel
         };
 
         if (member.OfficerRole != null)
-            claims.Add(new("OfficerRole", member.OfficerRole));
+            claimsToAdd.Add(new("OfficerRole", member.OfficerRole));
 
         if (member.IsOfficer)
-            claims.Add(new(ClaimTypes.Role, "Officer"));
-
-        var identity = new ClaimsIdentity(claims, "MagicLink");
+            claimsToAdd.Add(new(ClaimTypes.Role, "Officer"));
+        if (member.IsAdmin)
+            claimsToAdd.Add(new(ClaimTypes.Role, "Admin"));
+        if (member.IsTechAdmin)
+            claimsToAdd.Add(new(ClaimTypes.Role, "TechAdmin"));
+        var identity = new ClaimsIdentity(claimsToAdd, "MagicLink");
         var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync("Cookies", principal,

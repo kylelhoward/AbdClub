@@ -1,5 +1,7 @@
 INSERT INTO "Members" (
-    "FullName",
+    "FirstName",
+    "MiddleName",
+    "LastName",
     "Email",
     "Phone",
     "JoinDate",
@@ -8,11 +10,12 @@ INSERT INTO "Members" (
     "IsAdmin",
     "IsTechAdmin",
     "OfficerRole",
-    "IsActive",
     "CreatedAt"
 ) VALUES (
-    'Kyle Howard',
-    'kylelhoward@gmail.com',   -- must match your Google account exactly
+    'Test',
+    'Middle',
+    'Last',
+    'testLast@gmail.com',   -- must match your Google account exactly
     NULL,
     NOW(),
     NOW() + INTERVAL '1 year',
@@ -20,6 +23,5 @@ INSERT INTO "Members" (
     False,
     TRUE,
     'Admin',             -- or whatever your role is
-    TRUE,
     NOW()
 );

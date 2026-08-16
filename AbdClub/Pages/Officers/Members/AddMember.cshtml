@@ -19,10 +19,21 @@
             <form method="post" novalidate>
 
                 <div class="mb-3">
-                    <label asp-for="Member.FullName" class="form-label">Full Name</label>
-                    <input asp-for="Member.FullName" class="form-control"
-                           placeholder="Jane Smith" />
-                    <span asp-validation-for="Member.FullName" class="text-danger small"></span>
+                    <label asp-for="Member.FirstName" class="form-label">First Name</label>
+                    <input asp-for="Member.FirstName" class="form-control" />
+                    <span asp-validation-for="Member.FirstName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.MiddleName" class="form-label">Middle Name</label>
+                    <input asp-for="Member.MiddleName" class="form-control" />
+                    <span asp-validation-for="Member.MiddleName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Member.LastName" class="form-label">Last Name</label>
+                    <input asp-for="Member.LastName" class="form-control" />
+                    <span asp-validation-for="Member.LastName" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-3">

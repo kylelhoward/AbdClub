@@ -89,7 +89,7 @@ namespace AbdClub.Pages.Officers
                 query = query.Where(f =>
                     f.FileName.ToLower().Contains(search) ||
                     (f.UploadedBy != null && (
-                        f.UploadedBy.FullName.ToLower().Contains(search) ||
+                        f.UploadedBy.LastName.ToLower().Contains(search) ||
                         f.UploadedBy.Email.ToLower().Contains(search)
                     ))
                 );

@@ -25,8 +25,16 @@ public class MagicLinkService : IMagicLinkService
     {
         // Check if email exists in Members table
         var member = await _db.Members
-            .FirstOrDefaultAsync(m => m.Email == email && m.IsActive);
+            .FirstOrDefaultAsync(m => m.Email == email);
 
+        if (member.IsSuspended)
+        {
+            // Don't reveal whether email exists — just return true
+            // This prevents email enumeration attacks
+            _logger.LogInformation(
+                "Suspended Member:Magic link not sent: {Email}", email);
+            return true;
+        }
         if (member == null)
         {
             // Don't reveal whether email exists — just return true
@@ -88,9 +96,11 @@ public class MagicLinkService : IMagicLinkService
         magicLink.Used = true;
         await _db.SaveChangesAsync();
 
-        // Return the member
+        // 🌟 FIXED SERVER-SIDE RETRIEVAL: Uses persistent table fields for a safe SQL translation
         return await _db.Members
             .FirstOrDefaultAsync(m =>
-                m.Email == magicLink.Email && m.IsActive);
+                m.Email == magicLink.Email &&
+                !m.IsSuspended); // 2. Membership must be chronologically active
+
     }
 }
