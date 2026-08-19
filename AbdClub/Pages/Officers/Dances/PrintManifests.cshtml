@@ -51,32 +51,49 @@
         @if (Model.SelectedForms.Contains("active-members"))
         {
             <div class="print-page">
-                <!-- 🌟 TO THIS CLEAN COMPACT VERSION: -->
                 <div class="border-bottom pb-2 mb-3">
-                    <h4 class="fw-bold m-0">Austin Ballroom Dancers — Active Roster Manifest</h4>
+                    <!-- 🌟 UPDATED: Refactored title text parameters -->
+                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - Active Member Sign-In</h4>
                     <p class="text-muted m-0 small">
-                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) |
-                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd"))
+                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
                     </p>
+                    <p class="text-muted m-0 small">
+                        <!-- 🌟 DYNAMIC ADMISSION FEE: Pulls straight out of your local appsettings configurations matrix -->
+                        <strong>Admission Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredAdmissionFee)</strong>
+                    </p>
+
                 </div>
 
-                <table class="table table-bordered table-sm align-middle">
-                    <thead>
-                        <tr>
-                            <th class="checkbox-cell">Sign In</th>
-                            <th>Full Name</th>
-                            <th>Email Address</th>
-                            <th style="width: 110px;">Join Date</th>
-                            <th style="width: 110px;">Expiration</th>
+
+                    <table class="table table-bordered table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-cell">Sign In</th>
+                                <th>Full Name</th>
+                                <th>Email Address</th>
+                                <th style="width: 110px;">Expiration</th>
+                                <th class="checkbox-cell">Cash</th>
+                                <th class="checkbox-cell">Card</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.IsGeneric || !Model.ActiveRoster.Any())
                         {
-                            @for (int i = 0; i < 28; i++) {
+                            @for (int i = 1; i < 40; i++) {
                                 <tr style="height: 32px;">
-                                    <td class="text-center"><span class="checkbox-square"></span></td>
-                                    <td></td><td></td><td></td><td></td>
+                                    <td class="text-center">
+                                        <span class="checkbox-square"></span>
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="text-center">
+                                        <span class="checkbox-square"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="checkbox-square"></span>
+                                    </td>
                                 </tr>
                             }
                         }
@@ -86,10 +103,11 @@
                             {
                                 <tr style="height: 28px;">
                                     <td class="text-center"><span class="checkbox-square"></span></td>
-                                    <td class="fw-bold">@member.LastName</td>
+                                    <td class="fw-bold text-danger opacity-75">@member.LastName, @member.FirstName</td>
                                     <td class="text-muted">@member.Email</td>
-                                    <td>@member.JoinDate.ToString("yyyy-MM-dd")</td>
                                     <td>@member.ExpiryDate?.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
                                 </tr>
                             }
                         }
@@ -104,29 +122,42 @@
         @if (Model.SelectedForms.Contains("inactive-members"))
         {
             <div class="print-page">
-                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
-                    <div>
-                        <h4 class="fw-bold m-0">Austin Ballroom Dancers — Inactive / Lapsed Registry</h4>
-                        <p class="text-muted m-0 small">Please confirm details or process renewals at the front desk before entry tracking logs.</p>
-                    </div>
-                </div>
+               <div class="border-bottom pb-2 mb-3">
+                    <!-- 🌟 UPDATED: Refactored title text parameters -->
+                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - Lapsed Member Renewal Form</h4>
+                    <p class="text-muted m-0 small">
+                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
+                    </p>
+                    <p class="text-muted m-0 small">
+                        <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                        <strong>Renewal Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredRenewalFee)</strong>
+                    </p>
+               </div>
 
                 <table class="table table-bordered table-sm align-middle">
                     <thead>
                         <tr>
-                            <th class="checkbox-cell">Paid $50</th>
+                            <th class="checkbox-cell">Renew</th>
+
                             <th>Full Name</th>
                             <th>Email Address</th>
                             <th style="width: 120px;">Lapsed Expiry</th>
+                            <th class="checkbox-cell">Cash</th>
+                            <th class="checkbox-cell">Card</th>
                         </tr>
                     </thead>
                     <tbody>
                         @if (Model.IsGeneric || !Model.InactiveRoster.Any())
                         {
-                            @for (int i = 0; i < 28; i++) {
+                            @for (int i = 0; i < 16; i++) {
                                 <tr style="height: 32px;">
                                     <td class="text-center"><span class="checkbox-square"></span></td>
-                                    <td></td><td></td><td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                   <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
                                 </tr>
                             }
                         }
@@ -136,9 +167,11 @@
                             {
                                 <tr style="height: 28px;">
                                     <td class="text-center"><span class="checkbox-square"></span></td>
-                                    <td class="fw-bold text-danger opacity-75">@member.LastName</td>
+                                    <td class="fw-bold text-danger opacity-75">@member.LastName, @member.FirstName</td>
                                     <td class="text-muted">@member.Email</td>
                                     <td>@member.ExpiryDate?.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
                                 </tr>
                             }
                         }
@@ -149,59 +182,169 @@
         @* End Manifest 2 *@
              
         
-           @* ==========================================
-           MANIFEST 3: EVENT DUTY LOG 
+        @* ==========================================
+           MANIFEST 3: COMPREHENSIVE EVENT DUTY LOG
            ========================================== *@
-
-            @if (Model.SelectedForms.Contains("duty-log"))
-            {
-                <div class="print-page">
-                    <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
-                        <div>
-                            <h4 class="fw-bold m-0">Official Event Duty Log & Staff Manifest</h4>
-                            <p class="text-muted m-0 small">
-                                Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) |
-                                Location: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Location.VenueName)
-                            </p>
-                        </div>
+        @if (Model.SelectedForms.Contains("duty-log"))
+        {
+            <div class="print-page">
+                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
+                    <div>
+                        <h4 class="fw-bold m-0"><i class="bi bi-shield-lock-fill me-2"></i>Official Event Duty Log & Staff Manifest</h4>
+                        <p class="text-muted m-0 small">
+                            Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                            Location: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Location?.VenueName) |
+                            Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd"))
+                        </p>
                     </div>
+                </div>
 
-                    <table class="table table-bordered table-sm align-middle mb-4">
-                        <thead>
-                            <tr>
-                                <th style="width: 180px;">Assigned Assignment Role</th>
-                                <th style="width: 250px;">Printed Staff Name</th>
-                                <th>Signature Acknowledgement</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style="height: 40px;">
-                                <td class="fw-bold bg-light">Dance Instructor</td>
-                                <td>@(Model.IsGeneric ? "" : "___________________________")</td>
-                                <td></td>
-                            </tr>
-                            <tr style="height: 40px;">
-                                <td class="fw-bold bg-light">Event Disc Jockey (DJ)</td>
-                                <td>@(Model.IsGeneric ? "" : (Model.TargetDance?.AssignedDj?.Name ?? "___________________________"))</td>
-                                <td></td>
-                            </tr>
-                            <tr style="height: 40px;">
-                                <td class="fw-bold bg-light">Lead Officer-In-Charge</td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            @for (int i = 1; i <= 6; i++)
+                <!-- SUBSECTION A: SCHEDULED SYSTEM EXECUTIVE & STAFF OFFICERS -->
+                <h6 
+                    class="fw-bold text-dark text-uppercase tracking-wider small mb-2">
+                    <i class="bi bi-person-badge-fill me-1"></i>1. Scheduled Administration Duty Officers</h6>
+                <table class="table table-bordered table-sm align-middle mb-4">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">Sign-In</th>
+                            <th style="width: 280px;">Officer Name</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                   <tbody>
+    @{
+        // Track the number of database records printed
+        int printedRowsCount = 0;
+    }
+
+    <!-- 1. Print all currently assigned database officers -->
+    @if (!Model.IsGeneric && Model.TargetDance?.AttendingOfficers != null)
+    {
+        foreach (var officer in Model.TargetDance.AttendingOfficers.OrderBy(o => o.LastName))
+        {
+            printedRowsCount++;
+            <tr style="height: 35px;">
+                <td class="text-center"><span class="checkbox-square"></span></td>
+                <td class="fw-bold">@officer.LastName, @officer.FirstName</td>
+                <td class="text-secondary font-monospace small">@officer.OfficerRole</td>
+            </tr>
+        }
+    }
+
+    <!-- 2. 🌟 MINIMUM FILLER LOOP: Generates empty padding rows to guarantee exactly 4 slots -->
+    @for (int i = printedRowsCount; i < 4; i++)
+    {
+        <tr style="height: 35px;">
+            <td class="text-center">
+                <span class="checkbox-square"></span>
+             </td>
+            <td> </td>
+            <td> </td>
+        </tr>
+    }
+</tbody>
+
+                </table>
+
+                <!-- SUBSECTION B: EVENT PROFESSIONALS & ASSIGNED CLUB DANCE HOSTS -->
+                <h6 
+                    class="fw-bold text-dark text-uppercase tracking-wider small mb-2">
+                    <i class="bi bi-music-note-beamed me-1"></i>2. Scheduled Event Professionals & Dance Hosts</h6>
+                <table class="table table-bordered table-sm align-middle mb-4">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">Sign-In</th>
+                            <th style="width: 280px;">Operational Assignment Role</th>
+                            <th>Assigned Professional / Host Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 1. The Single 1:1 Lesson Instructor Slot -->
+                        <tr style="height: 35px;">
+                            <td class="text-center"><span class="checkbox-square"></span></td>
+                            <td class="fw-bold bg-light">Dance Instructor</td>
+                            <td>
+                                @(Model.IsGeneric ? "" : 
+                                  (Model.TargetDance?.AssignedLesson?.Instructor != null ? Model.TargetDance.AssignedLesson.Instructor.Name : "VACANT / UNASSIGNED"))
+                            </td>
+                        </tr>
+
+                        <!-- 2. The Single Assigned Event DJ Slot -->
+                        <tr style="height: 35px;">
+                            <td class="text-center"><span class="checkbox-square"></span></td>
+                            <td class="fw-bold bg-light">Event Disc Jockey (DJ)</td>
+                            <td>
+                                @(Model.IsGeneric ? "" : 
+                                  (Model.TargetDance?.AssignedDj != null ? Model.TargetDance.AssignedDj.Name : "VACANT / UNASSIGNED"))
+                            </td>
+                        </tr>
+
+                        <!-- 3. Dynamic Loops Across Many-to-Many Assigned Hosts -->
+    @{
+        // Track the number of database records printed
+        int printedHostRowsCount = 1;
+    }
+                        @if (!Model.IsGeneric || Model.TargetDance?.AssignedHosts != null)
+                        {
+                            foreach (var host in Model.TargetDance.AssignedHosts)
                             {
-                                <tr style="height: 40px;">
-                                    <td class="text-muted">Volunteer / Door Host #@i</td>
-                                    <td></td>
+                                <tr style="height: 32px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="fw-bold bf-light">Dance Host #@(printedHostRowsCount++)</td>
+                                    <td>@host.Name</td>
+                                </tr>
+                            }  
+                           
+                        }
+                             @for (int i = printedHostRowsCount; i <= 4; i++) {
+                                <tr style="height: 34px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="fw-bold bg-light">Dance Host #@i</td>
                                     <td></td>
                                 </tr>
                             }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                    </tbody>
+                </table>
+
+                <!-- SUBSECTION C: SHIFT VOLUNTEERS REGISTER -->
+                <h6 class="fw-bold text-dark text-uppercase tracking-wider small mb-2"><i class="bi bi-people-fill me-1"></i>3. Public Shift Volunteers</h6>
+                <table class="table table-bordered table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">Sign-In</th>
+                            <th style="width: 280px;">Assigned Shift Duty Station</th>
+                            <th>Volunteer Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.IsGeneric || Model.TargetDance?.AssignedVolunteers == null || !Model.TargetDance.AssignedVolunteers.Any())
+                        {
+                            var coreDuties = new[] { "Front Desk Check-in", "Setup Team", "Clean Up Crew" };
+                            foreach (var duty in coreDuties)
+                            {
+                                <tr style="height: 35px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="fw-semibold text-secondary">@duty</td>
+                                    <td></td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            foreach (var volunteer in Model.TargetDance.AssignedVolunteers)
+                            {
+                                <tr style="height: 32px;">
+                                    <td class="text-center"><span class="checkbox-square"></span></td>
+                                    <td class="fw-semibold text-secondary">@volunteer.Notes</td> <!-- Assuming shift context is mapped inside Notes -->
+                                    <td class="fw-bold text-dark">@volunteer.Name</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
 
         @* End Manifest 3 *@
 
@@ -211,29 +354,42 @@
         @if (Model.SelectedForms.Contains("new-signup"))
         {
             <div class="print-page">
-                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
-                    <div>
-                        <h4 class="fw-bold m-0">New Member Registration & Intake Ledger</h4>
-                        <p class="text-muted m-0 small">Collect $50 annual dues. Print information clearly to ensure database indexing accuracy.</p>
-                    </div>
-                </div>
+                               <div class="border-bottom pb-2 mb-3">
+                    <!-- 🌟 UPDATED: Refactored title text parameters -->
+                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - New Member Registration & Intake Ledger</h4>
+                    <p class="text-muted m-0 small">
+                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) |
+                        Welcome to the club!  Please print information clearly.
+                    </p>
+                    <p class="text-muted m-0 small">
+                       <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                        <strong>Member Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredRenewalFee)</strong>
+                    </p>
+               </div>
 
                 <table class="table table-bordered table-sm align-middle">
                     <thead>
                         <tr>
-                            <th>Full Name (Please Print)</th>
+                                                       <th style="width: 40px;">No.</th>
+                            <th class="checkbox-cell">Join</th>
+                            <th>Full Name (Please Print Clearly)</th>
                             <th>Email Address</th>
                             <th style="width: 150px;">Phone Number</th>
-                            <th class="checkbox-cell">Paid $50</th>
+                            <th class="checkbox-cell">Cash</th>
+                            <th class="checkbox-cell">Card</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @for (int i = 0; i < 22; i++)
+                        @for (int i = 0; i < 21; i++)
                         {
                             <tr style="height: 38px;">
+                                <td class="text-center text-muted font-monospace bg-light" style="font-size: 10px;">@i</td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
                                 <td class="text-center"><span class="checkbox-square"></span></td>
                             </tr>
                         }
@@ -249,30 +405,38 @@
         @if (Model.SelectedForms.Contains("non-member"))
         {
             <div class="print-page">
-                <div class="d-flex justify-content-between align-items-baseline border-bottom pb-2 mb-3">
-                    <div>
-                        <h4 class="fw-bold m-0">Non-Member / Community Guest Sign-In Ledger</h4>
-                        <p class="text-muted m-0 small">Welcome to the club! Please print your primary email details to receive schedule newsletters.</p>
-                    </div>
-                </div>
-
+                               <div class="border-bottom pb-2 mb-3">
+                    <!-- 🌟 UPDATED: Refactored title text parameters -->
+                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - Non-Member Guest Sign-In Ledger</h4>
+                    <p class="text-muted m-0 small">
+                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
+                        Please print your email to receive schedule newsletters.
+                    </p>
+                    <p class="text-muted m-0 small">
+                       <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                        <strong>Adminssion Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredNonMemberFee)</strong>
+                        </p>
+               </div>
                 <table class="table table-bordered table-sm align-middle">
                     <thead>
                         <tr>
                             <th style="width: 40px;">No.</th>
                             <th>Printed Full Name</th>
-                            <th>Primary Contact Email Address</th>
-                            <th style="width: 180px;">City / Neighborhood</th>
+                            <th>Newsletter Subscription: Email Address</th>
+                            <th class="checkbox-cell">Cash</th>
+                            <th class="checkbox-cell">Card</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @for (int i = 1; i <= 24; i++)
+                        @for (int i = 1; i <= 40; i++)
                         {
                             <tr style="height: 35px;">
                                 <td class="text-center text-muted font-monospace bg-light" style="font-size: 10px;">@i</td>
                                 <td></td>
                                 <td></td>
-                                <td></td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
                             </tr>
                         }
                     </tbody>
@@ -282,6 +446,56 @@
 
         @* End Manifest 5 *@
 
+           @* ==========================================
+           MANIFEST 6: NON-MEMBER-STUDENT / GUEST SIGN-IN
+           ========================================== *@
+        @if (Model.SelectedForms.Contains("non-member-student"))
+        {
+            <div class="print-page">
+               <div class="border-bottom pb-2 mb-3">
+                    <!-- 🌟 UPDATED: Refactored title text parameters -->
+                    <h4 
+                        class="fw-bold m-0">
+                        <i class="bi bi-person-check-fill me-2"></i>ABD - Student Guest Sign-In Ledger</h4>
+                    <p class="text-muted m-0 small">
+                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
+                        Please print your email to receive schedule newsletters.
+                    </p>
+                    <p class="text-muted m-0 small">
+                       <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                        <strong>Adminssion Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredStudentNonMemberFee)</strong>
+                        </p>
+               </div>
+                <table class="table table-bordered table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">No.</th>
+                            <th>Printed Full Name</th>
+                            <th>Student Id</th>
+                            <th>Newsletter Subscription: Email Address</th>
+                            <th class="checkbox-cell">Cash</th>
+                            <th class="checkbox-cell">Card</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 1; i <= 18; i++)
+                        {
+                            <tr style="height: 35px;">
+                                <td class="text-center text-muted font-monospace bg-light" style="font-size: 10px;">@i</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
+                                <td class="text-center"><span class="checkbox-square"></span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* End Manifest 6 *@
     </div> <!-- Close of main container-fluid markup layer -->
 
     <script>

@@ -53,9 +53,8 @@ public class EditModel(
             .Include(d => d.AttendingOfficers)
             .Include(d => d.AssignedDj)
             .Include(d => d.AssignedHosts)
-            .Include(d => d.AssignedInstructors)
             .Include(d => d.AssignedVolunteers)
-            .Include(d => d.Lessons) // Eagerly loads updated Lesson collections
+            .Include(d => d.AssignedLesson) // Eagerly loads updated Lesson collections
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (TargetDance == null) return NotFound();
@@ -68,7 +67,6 @@ public class EditModel(
         CurrentlyAssignedHostIds = TargetDance.AssignedHosts.Select(h => h.Id).ToHashSet();
         FormInput.SelectedHostIds = CurrentlyAssignedHostIds.ToList();
 
-        CurrentlyAssignedInstructorIds = TargetDance.AssignedInstructors.Select(i => i.Id).ToHashSet();
         FormInput.SelectedInstructorIds = CurrentlyAssignedInstructorIds.ToList();
 
         CurrentlyAssignedVolunteerIds = TargetDance.AssignedVolunteers.Select(v => v.Id).ToHashSet();
@@ -83,14 +81,22 @@ public class EditModel(
         FormInput.EndTime = TargetDance.EndTime;
         FormInput.ContactEmail = TargetDance.ContactEmail;
         FormInput.SelectedLocationId = TargetDance.LocationId;
-        // REFACTORED INITIALIZATION MAP: Selects InstructorId integer indices
-        FormInput.Lessons = TargetDance.Lessons.Select(l => new LessonInputItem
+        // 🌟 REFACTORED 1:1 INITIALIZATION MAP: Replaces your old multi-row collection list loops
+if (TargetDance.AssignedLesson != null)
         {
-            InstructorId = l.InstructorId,
-            Type = l.Type,
-            StartTime = l.StartTime,
-            EndTime = l.EndTime
-        }).ToList();
+            FormInput.AssignedLesson = new LessonInputItem
+            {
+                InstructorId = TargetDance.AssignedLesson.InstructorId,
+                Type = TargetDance.AssignedLesson.Type,
+                StartTime = TargetDance.AssignedLesson.StartTime,
+                EndTime = TargetDance.AssignedLesson.EndTime
+            };
+        }
+        else
+        {
+            // Initialize as a blank default template instance so your HTML input elements don't throw null crashes
+            FormInput.AssignedLesson = new LessonInputItem();
+        }
 
         await LoadMasterRegistriesAsync();
         return Page();
@@ -107,9 +113,8 @@ public class EditModel(
         var danceToUpdate = await _context.Events.OfType<Dance>()
             .Include(d => d.AttendingOfficers)
             .Include(d => d.AssignedHosts)
-            .Include(d => d.AssignedInstructors)
             .Include(d => d.AssignedVolunteers)
-            .Include(d => d.Lessons)
+            .Include(d => d.AssignedLesson)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (danceToUpdate == null) return NotFound();
@@ -137,31 +142,33 @@ public class EditModel(
         if (FormInput.SelectedHostIds.Any())
             danceToUpdate.AssignedHosts = await _context.MasterHosts.Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
 
-        danceToUpdate.AssignedInstructors.Clear();
-        if (FormInput.SelectedInstructorIds.Any())
-            danceToUpdate.AssignedInstructors = await _context.MasterInstructors.Where(i => FormInput.SelectedInstructorIds.Contains(i.Id)).ToListAsync();
-
         danceToUpdate.AssignedVolunteers.Clear();
         if (FormInput.SelectedVolunteerIds.Any())
             danceToUpdate.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
 
-        // REFACTORED PERSISTENCE METHOD: Saves InstructorId references cleanly
-        _context.RemoveRange(danceToUpdate.Lessons);
-        danceToUpdate.Lessons.Clear();
-
-        if (FormInput.Lessons != null && FormInput.Lessons.Any())
+       // Water - tight 1:1 lesson hydration logic
+    if (FormInput.AssignedLesson != null)
         {
-            foreach (var item in FormInput.Lessons.Where(l => l.InstructorId > 0))
+            if (danceToUpdate.AssignedLesson == null)
             {
-                danceToUpdate.Lessons.Add(new Lesson
-                {
-                    DanceId = id,
-                    InstructorId = item.InstructorId,
-                    Type = item.Type.Trim(),
-                    StartTime = item.StartTime,
-                    EndTime = item.EndTime
-                });
+                // The event didn't have a lesson row yet -> Instantiate a clean entity tracker instance
+                danceToUpdate.AssignedLesson = new Lesson();
             }
+
+            // 🌟 THE CRITICAL REALIGNMENT FIX: 
+            // Manually push the dance primary key directly onto your lesson's relational properties.
+            // This satisfies the physical database "FK_Lessons_Events_DanceId" constraint instantly!
+            danceToUpdate.AssignedLesson.DanceId = danceToUpdate.Id;
+
+            danceToUpdate.AssignedLesson.InstructorId = FormInput.AssignedLesson.InstructorId;
+            danceToUpdate.AssignedLesson.Type = FormInput.AssignedLesson.Type?.Trim();
+            danceToUpdate.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime;
+            danceToUpdate.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime;
+        }
+        else
+        {
+            // If the user completely wiped the form input text boxes, clear the record from disk space
+            danceToUpdate.AssignedLesson = null;
         }
 
         // Handle Officer Assignments and Notifications
@@ -195,7 +202,17 @@ public class EditModel(
             }
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            // Save your changes. Fully safe from constraint drops now!
+            await _context.SaveChangesAsync(); // Line 203 will commit perfectly now!
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            var stillExists = await _context.Events.AnyAsync(e => e.Id == id);
+            if (!stillExists) return NotFound();
+            throw;
+        }
 
         UpdateFeedback = "Success: Event data rosters, lookups, and relational lesson instructor profiles updated.";
         return RedirectToPage(new { id });

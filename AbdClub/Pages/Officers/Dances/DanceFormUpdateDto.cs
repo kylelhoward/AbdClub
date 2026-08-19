@@ -28,6 +28,7 @@ public class DanceFormUpdateDto
     // 🌟 ADD THIS KEY: Tracks the updated relational venue ID
     [Required(ErrorMessage = "You must assign an active location to this event.")]
     public int SelectedLocationId { get; set; }
+    public LessonInputItem? AssignedLesson { get; set; }
 
     // Pre-existing structure mappings
     public int? SelectedDjId { get; set; }
@@ -35,5 +36,4 @@ public class DanceFormUpdateDto
     public List<int> SelectedHostIds { get; set; } = new();
     public List<int> SelectedInstructorIds { get; set; } = new();
     public List<int> SelectedVolunteerIds { get; set; } = new();
-    public List<LessonInputItem> Lessons { get; set; } = new();
 }

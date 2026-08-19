@@ -171,7 +171,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         _db.NewsletterSubscribers.AddRange(toAdd);
         await _db.SaveChangesAsync();
 
-        Message = $"Seeded {toAdd.Count} test news letter subscribers " +
+        Message = $"Seeded {toAdd.Count} test newsletter subscribers " +
                   $"({testSubs.Count - toAdd.Count} skipped — already exist).";
         await LoadNewsLetterSubscribersAsync();
         return Page();

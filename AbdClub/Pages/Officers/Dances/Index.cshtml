@@ -64,7 +64,6 @@
                                 <td class="ps-3 fw-bold">@dance.Date.ToString("ddd, MMM dd, yyyy")</td>
                                 <td>
                                     <span class="d-block fw-semibold text-primary">@dance.Title</span>
-                                    <small class="text-muted">@dance.Lessons.Count lessons mapped</small>
                                 </td>
                                <!-- 🌟 THE REUSABLE TRIGGER COMPONENT LAYOUT BLOCK -->
                                 <td>
@@ -212,6 +211,11 @@
                         <label class="form-check-label small fw-bold text-dark text-start" for="formNonMember">Non-Member / Guest Sign-In Ledger</label>
                     </div>
 
+                    <div class="form-check card p-2.5 border border-light-subtle hover-shadow mb-0">
+                        <input class="form-check-input ms-1 me-3 manifest-print-item" type="checkbox" value="non-member-student" id="formNonMember">
+                        <label class="form-check-label small fw-bold text-dark text-start" for="formNonMember">Student Non-Member / Guest Sign-In Ledger</label>
+                    </div>
+
                 </div>
             </div>
             <div class="modal-footer bg-light p-3 border-0">
@@ -256,21 +260,21 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
-                    <input asp-for="NewDance.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
-                    <span asp-validation-for="NewDance.Title" class="text-danger small"></span>
+                    <input asp-for="FormInput.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
+                    <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
                 </div>
                 
                 <!-- 🌟 REFACTORED DROPDOWN: Replaces the raw location text box -->
                 <div class="col-md-6">
                     <label class="form-label fw-bold small text-muted mb-1">Location / Venue Room</label>
-                    <select asp-for="NewDance.SelectedLocationId" class="form-select bg-light fw-medium" required>
+                    <select asp-for="FormInput.SelectedLocationId" class="form-select bg-light fw-medium" required>
                         <option value="">-- Choose Registered Club Venue --</option>
                         @foreach (var loc in Model.AvailableLocations)
                         {
                             <option value="@loc.Id">@loc.VenueName (@loc.Address)</option>
                         }
                     </select>
-                    <span asp-validation-for="NewDance.SelectedLocationId" class="text-danger small"></span>
+                    <span asp-validation-for="FormInput.SelectedLocationId" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -279,18 +283,18 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold small text-muted mb-1">Scheduled Event Date</label>
-                        <input asp-for="NewDance.Date" type="date" class="form-control" required />
-                        <span asp-validation-for="NewDance.Date" class="text-danger small"></span>
+                        <input asp-for="FormInput.Date" type="date" class="form-control" required />
+                        <span asp-validation-for="FormInput.Date" class="text-danger small"></span>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small text-muted mb-1">Start Time</label>
-                        <input asp-for="NewDance.StartTime" type="time" class="form-control" required />
-                        <span asp-validation-for="NewDance.StartTime" class="text-danger small"></span>
+                        <input asp-for="FormInput.StartTime" type="time" class="form-control" required />
+                        <span asp-validation-for="FormInput.StartTime" class="text-danger small"></span>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-bold small text-muted mb-1">End Time</label>
-                        <input asp-for="NewDance.EndTime" type="time" class="form-control" required />
-                        <span asp-validation-for="NewDance.EndTime" class="text-danger small"></span>
+                        <input asp-for="FormInput.EndTime" type="time" class="form-control" required />
+                        <span asp-validation-for="FormInput.EndTime" class="text-danger small"></span>
                     </div>
                 </div>
 
@@ -298,13 +302,13 @@
                 <div class="row g-3 mb-4">
                     <div class="col-md-12">
                         <label class="form-label fw-bold small text-muted mb-1">Public Coordination Contact Email</label>
-                        <input asp-for="NewDance.ContactEmail" type="email" class="form-control" placeholder="management@abdclub.com" />
-                        <span asp-validation-for="NewDance.ContactEmail" class="text-danger small">Contact Email required</span>
+                        <input asp-for="FormInput.ContactEmail" type="email" class="form-control" placeholder="management@abdclub.com" />
+                        <span asp-validation-for="FormInput.ContactEmail" class="text-danger small">Contact Email required</span>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label fw-bold small text-muted mb-1">Public Description / Calendar Announcements</label>
-                        <textarea asp-for="NewDance.Description" class="form-control" rows="2" placeholder="Add specific open schedules, pricing, dress code restrictions..."></textarea>
-                        <span asp-validation-for="NewDance.Description" class="text-danger small"></span>
+                        <textarea asp-for="FormInput.Description" class="form-control" rows="2" placeholder="Add specific open schedules, pricing, dress code restrictions..."></textarea>
+                        <span asp-validation-for="FormInput.Description" class="text-danger small"></span>
                     </div>
                 </div>
 
@@ -313,7 +317,7 @@
                 <!-- Section 4: Single-Select Master DJ Lookup Directory -->
                 <div class="mb-4">
                     <label class="form-label fw-bold small text-primary mb-1"><i class="bi bi-disc-fill me-1"></i>Select Event DJ Assignment</label>
-                    <select asp-for="NewDance.SelectedDjId" class="form-select bg-light border-primary-subtle fw-medium">
+                    <select asp-for="FormInput.SelectedDjId" class="form-select bg-light border-primary-subtle fw-medium">
                         <option value="">-- No DJ Assigned / Vacant Position --</option>
                         @foreach (var dj in Model.RegistryDjs)
                         {

@@ -47,7 +47,7 @@ public class IndexModel : PageModel
     public List<MasterVolunteer> RegistryVolunteers { get; set; } = new();
 
     [BindProperty]
-    public DanceRegistryCreationDto NewDance { get; set; } = new();
+    public DanceRegistryCreationDto FormInput { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -59,21 +59,21 @@ public class IndexModel : PageModel
 
         // HYDRATE FORM CONFIGURATION DEFAULTS FROM APPSETTINGS.JSON
         //NewDance.Location = _config["DanceDefaults:Location"] ?? "Go Dance";
-        NewDance.ContactEmail = _config["DanceDefaults:ContactEmail"] ?? "management@abdclub.com";
-        NewDance.Date = DateOnly.FromDateTime(DateTime.Today); // Sensible operational default parameter
+        FormInput.ContactEmail = _config["DanceDefaults:ContactEmail"] ?? "management@abdclub.com";
+        FormInput.Date = DateOnly.FromDateTime(DateTime.Today); // Sensible operational default parameter
         // Hydrate your new venue dropdown collection array
     AvailableLocations = await _context.Locations.OrderBy(l => l.VenueName).ToListAsync();
 
         // Parse time elements out safely into type-safe TimeOnly objects
         if (TimeOnly.TryParse(_config["DanceDefaults:StartTime"], out var startTime))
-            NewDance.StartTime = startTime;
+            FormInput.StartTime = startTime;
         else
-            NewDance.StartTime = new TimeOnly(19, 0); // Hard fallback safety
+            FormInput.StartTime = new TimeOnly(19, 0); // Hard fallback safety
 
         if (TimeOnly.TryParse(_config["DanceDefaults:EndTime"], out var endTime))
-            NewDance.EndTime = endTime;
+            FormInput.EndTime = endTime;
         else
-            NewDance.EndTime = new TimeOnly(22, 0);
+            FormInput.EndTime = new TimeOnly(22, 0);
         // Load your lookup registries
         RegistryDjs = await _context.MasterDjs.OrderBy(d => d.Name).ToListAsync();
         RegistryHosts = await _context.MasterHosts.OrderBy(h => h.Name).ToListAsync();
@@ -93,7 +93,7 @@ public class IndexModel : PageModel
         UpcomingDances = await _context.Events
             .OfType<Dance>()
             .Include(d => d.AssignedDj)
-            .Include(l=>l.Lessons)
+            .Include(l=>l.AssignedLesson)
             .Include(loc=>loc.Location)
             .OrderBy(d => d.Date)
             .ToListAsync();
@@ -110,53 +110,60 @@ public class IndexModel : PageModel
 
         if (!ModelState.IsValid) return Page();
 
-        var dance = new Dance
+        var danceToUpdate = new Dance
         {
-            Title = NewDance.Title,
-            Description = NewDance.Description,
-            ContactEmail = NewDance.ContactEmail,
-            Date = NewDance.Date,
-            StartTime = NewDance.StartTime,
-            EndTime = NewDance.EndTime,
+            Title = FormInput.Title,
+            Description = FormInput.Description,
+            ContactEmail = FormInput.ContactEmail,
+            Date = FormInput.Date,
+            StartTime = FormInput.StartTime,
+            EndTime = FormInput.EndTime,
              // 🌟 MAP THE STRATEGIC FOREIGN KEY LINK DIRECTLY
-        LocationId = NewDance.SelectedLocationId,
-            AssignedDjId = NewDance.SelectedDjId > 0 ? NewDance.SelectedDjId : null
+        LocationId = FormInput.SelectedLocationId,
+            AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null
         };
 
         // Attach Many-to-Many entities directly from lookups using ID mappings
-        if (NewDance.SelectedHostIds.Any())
-            dance.AssignedHosts = await _context.MasterHosts.Where(h => NewDance.SelectedHostIds.Contains(h.Id)).ToListAsync();
+        if (FormInput.SelectedHostIds.Any())
+            danceToUpdate.AssignedHosts = await _context.MasterHosts.Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
 
-        if (NewDance.SelectedInstructorIds.Any())
-            dance.AssignedInstructors = await _context.MasterInstructors.Where(i => NewDance.SelectedInstructorIds.Contains(i.Id)).ToListAsync();
+        if (FormInput.SelectedVolunteerIds.Any())
+            danceToUpdate.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
 
-        if (NewDance.SelectedVolunteerIds.Any())
-            dance.AssignedVolunteers = await _context.MasterVolunteers.Where(v => NewDance.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
+        if (FormInput.SelectedOfficerIds.Any())
+            danceToUpdate.AttendingOfficers = await _context.Members.Where(m => FormInput.SelectedOfficerIds.Contains(m.Id)).ToListAsync();
 
-        if (NewDance.SelectedOfficerIds.Any())
-            dance.AttendingOfficers = await _context.Members.Where(m => NewDance.SelectedOfficerIds.Contains(m.Id)).ToListAsync();
 
-        _context.Events.Add(dance);
-        await _context.SaveChangesAsync();
-        // REFACTORED PERSISTENCE METHOD: Saves InstructorId references cleanly
-        _context.RemoveRange(dance.Lessons);
-        dance.Lessons.Clear();
-
-        if (NewDance.Lessons != null && NewDance.Lessons.Any())
+        // Water - tight 1:1 lesson hydration logic
+        if (FormInput.AssignedLesson != null)
         {
-            foreach (var item in NewDance.Lessons.Where(l => l.InstructorId > 0))
+            if (danceToUpdate.AssignedLesson == null)
             {
-                dance.Lessons.Add(new Lesson
-                {
-                    DanceId = dance.Id,
-                    InstructorId = item.InstructorId,
-                    Type = item.Type.Trim(),
-                    StartTime = item.StartTime,
-                    EndTime = item.EndTime
-                });
+                // The event didn't have a lesson row yet -> Instantiate a clean entity tracker instance
+                danceToUpdate.AssignedLesson = new Lesson();
             }
+
+            // 🌟 THE CRITICAL REALIGNMENT FIX: 
+            // Manually push the dance primary key directly onto your lesson's relational properties.
+            // This satisfies the physical database "FK_Lessons_Events_DanceId" constraint instantly!
+            danceToUpdate.AssignedLesson.DanceId = danceToUpdate.Id;
+
+            danceToUpdate.AssignedLesson.InstructorId = FormInput.AssignedLesson.InstructorId;
+            danceToUpdate.AssignedLesson.Type = FormInput.AssignedLesson.Type?.Trim();
+            danceToUpdate.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime;
+            danceToUpdate.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime;
         }
-        await _context.SaveChangesAsync();
+        else
+        {
+            // If the user completely wiped the form input text boxes, clear the record from disk space
+            danceToUpdate.AssignedLesson = null;
+        }
+
+
+        _context.Events.Add(danceToUpdate);
+      
+            // Save your changes. Fully safe from constraint drops now!
+            await _context.SaveChangesAsync(); // Line 203 will commit perfectly now!
 
         UpdateFeedback = "Success: Event saved.";
         return RedirectToPage();

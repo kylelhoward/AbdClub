@@ -12,6 +12,7 @@ public class DanceRegistryCreationDto
     [Required(ErrorMessage = "Please select a venue from the lookup registry.")]
     [Range(1, int.MaxValue, ErrorMessage = "Please select a valid venue location.")]
     public int SelectedLocationId { get; set; }
+    public LessonInputItem? AssignedLesson { get; set; }
 
     public string? Description { get; set; }
     public string? ContactEmail { get; set; }
@@ -25,6 +26,5 @@ public class DanceRegistryCreationDto
     public List<int> SelectedInstructorIds { get; set; } = new();
     public List<int> SelectedVolunteerIds { get; set; } = new();
     public List<int> SelectedOfficerIds { get; set; } = new();
-    public List<LessonCreationItem> Lessons { get; set; } = new();
 }
 

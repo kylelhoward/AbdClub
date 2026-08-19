@@ -20,19 +20,24 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        // Verify your backend EF Core collection query loop contains these explicit Includes:
+        // 🌟 FULLY ALIGNED 1:1 EAGER LOADING QUERY
         ActiveSchedule = await _context.Events
             .OfType<Dance>()
-            .Include(d => d.AssignedDj) // Crucial to prevent DJ errors
-            .Include(d => d.Lessons)
-                .ThenInclude(l => l.Instructor) // Crucial to prevent instructor name errors
+            .Include(d => d.Location)
+            .Include(d => d.AssignedDj)
+
+            // 🌟 THE FIX: Eager-load your single lesson, then reach inside to extract its instructor profile
+            .Include(d => d.AssignedLesson)
+                .ThenInclude(l => l.Instructor)
+
             .Include(d => d.AssignedVolunteers)
-            .Include(loc=>loc.Location)
             .Where(d => d.Date >= DateOnly.FromDateTime(DateTime.Today))
             .OrderBy(d => d.Date)
             .ToListAsync();
+
         return Page();
     }
+
 
     public async Task<IActionResult> OnPostVolunteerAsync(int danceId, string dutyType)
     {

@@ -13,13 +13,13 @@
         </ol>
     </nav>
 
-    <div class="mb-4">
+   @*  <div class="mb-4">
         <h2><i class="bi bi-shield-check text-success me-2"></i>Officer Duty Attendance</h2>
         <h5 class="text-muted">Event: <span class="text-dark fw-bold">@Model.TargetDance.Title</span> (@Model.TargetDance.Date.ToString("MMMM dd, yyyy"))</h5>
         <a asp-page-handler="ExportPdf" asp-route-id="@Model.TargetDance.Id" class="btn btn-outline-dark shadow-sm">
             <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i>Download Print-Ready PDF
         </a>
-    </div>
+    </div> *@
 
     @if (Model.StatusNotice != null)
     {
@@ -67,7 +67,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-3">Officer Name</th>
-                                <th>Assigned Role</th>
+                                <th>Role</th>
                                     <th class="pe-3 text-end" style="width: 100px;">Action</th>
                             </tr>
                         </thead>

@@ -15,10 +15,13 @@ namespace AbdClub.Pages.Officers.Dances;
 public class PrintManifestsModel : PageModel
 {
     private readonly AbdContext _context;
+    private readonly IConfiguration _config; // Tracking field handle allocation
 
-    public PrintManifestsModel(AbdContext context)
+    // Inject the configuration dependency channel straight into the class constructor
+    public PrintManifestsModel(AbdContext context, IConfiguration config)
     {
         _context = context;
+        _config = config;
     }
 
     public Dance? TargetDance { get; set; }
@@ -28,7 +31,12 @@ public class PrintManifestsModel : PageModel
     // Configuration Parameter Flags
     public List<string> SelectedForms { get; set; } = new();
     public bool IsGeneric { get; set; }
-
+    // 🌟 STRATEGIC INTERFACE PROPERTY READOUT BOUNDS
+    public string ConfiguredAdmissionFee { get; set; } = "$10.00";
+    public string ConfiguredRenewalFee { get; set; } = "$50.00";
+    public string ConfiguredNonMemberFee{ get; set; } = "$15.00";
+    public string ConfiguredStudentNonMemberFee{ get; set; } = "$10.00";
+    
     public async Task<IActionResult> OnGetAsync(int id, string forms, bool generic)
     {
         IsGeneric = generic;
@@ -42,9 +50,22 @@ public class PrintManifestsModel : PageModel
         TargetDance = await _context.Events
             .OfType<Dance>()
             .Include(d => d.Location)
+            // 🌟 EAGER-LOAD EVERYTHING FOR MANIFEST 3 DUITY LOGS
+            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AssignedDj)
+            .Include(d => d.AssignedLesson).ThenInclude(l => l.Instructor)
+            .Include(d => d.AssignedHosts)
+            .Include(d => d.AssignedVolunteers)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (TargetDance == null && !IsGeneric) return NotFound();
+       
+        // 🌟 READ CONFIG VALUES NATIVELY: Pull decimal metrics and format as clean currency tokens
+        var admissionValue = _config.GetValue<decimal>("ClubPricing:AdmissionFee", 10.00m);
+        var renewalValue = _config.GetValue<decimal>("ClubPricing:MembershipRenewalFee", 50.00m);
+
+        ConfiguredAdmissionFee = admissionValue.ToString("C"); // Outputs format: $10.00
+        ConfiguredRenewalFee = renewalValue.ToString("C");     // Outputs format: $50.00
 
         // 2. Fetch records only if a member check-in layout sheet was checked
         if (!IsGeneric)

@@ -54,16 +54,23 @@ public class AbdContext : DbContext
             .OnDelete(DeleteBehavior.Restrict); // Restrict stops accidental deletions of instructors with active classes
 
 
-        // One-to-Many: DJ Lookup -> Dances
+        // 1. One-to-Many: DJ Lookup -> Dances
         modelBuilder.Entity<Dance>()
             .HasOne(d => d.AssignedDj)
             .WithMany()
             .HasForeignKey(d => d.AssignedDjId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Many-to-Many Junction table maps for reusable assignments
+        // 🌟 2. NEW ONE-TO-ONE RELATIONSHIP CONFIGURATION:
+        // Ties exactly one optional pre-dance lesson to a specific dance event row.
+        modelBuilder.Entity<Dance>()
+            .HasOne(d => d.AssignedLesson)
+            .WithOne() // Single inverse relationship mapping
+            .HasForeignKey<Dance>(d => d.LessonId) // Explicit structural foreign key target field
+            .OnDelete(DeleteBehavior.SetNull);     // Deleting a lesson record preserves the core event
+
+        // 3. Many-to-Many Junction table maps for reusable assignments
         modelBuilder.Entity<Dance>().HasMany(d => d.AssignedHosts).WithMany().UsingEntity(j => j.ToTable("DanceAssignedHosts"));
-        modelBuilder.Entity<Dance>().HasMany(d => d.AssignedInstructors).WithMany().UsingEntity(j => j.ToTable("DanceAssignedInstructors"));
         modelBuilder.Entity<Dance>().HasMany(d => d.AssignedVolunteers).WithMany().UsingEntity(j => j.ToTable("DanceAssignedVolunteers"));
 
 

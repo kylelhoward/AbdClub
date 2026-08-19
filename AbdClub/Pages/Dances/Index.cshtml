@@ -54,32 +54,38 @@
                         <!-- COLUMN A: LESSON SCHEDULE DETAILS & DJ -->
                         <div class="col-md-6">
                             <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3">
-                                <i class="bi bi-book-half me-2"></i>Pre-Dance Lessons
+                                <i class="bi bi-book-half me-2"></i>Pre-Dance Lesson Details
                             </h6>
-                            @if (dance.Lessons.Any())
-                            {
-                                <div class="list-group shadow-sm mb-3">
-                                    @foreach (var lesson in dance.Lessons.OrderBy(l => l.StartTime))
-                                    {
-                                        <div class="list-group-item bg-white">
-                                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                                <h6 class="mb-1 text-primary fw-semibold">@lesson.Type</h6>
-                                                <small class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-20">
-                                                    @lesson.StartTime.ToString("h:mm tt") - @lesson.EndTime.ToString("h:mm tt")
-                                                </small>
-                                            </div>
-                                            <!-- Dynamically prints the instructor's name via your master registry link -->
-                                            <small class="text-muted d-block mt-1">
-                                                <i class="bi bi-person-fill me-1"></i>Instructor: @(lesson.Instructor != null ? lesson.Instructor.Name : "TBD")
-                                            </small>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                            else
-                            {
-                                <p class="text-muted small bg-white p-3 rounded border mb-3">No instructional lessons configured for this date.</p>
-                            }
+                            @if (dance.AssignedLesson != null)
+    {
+        <div class="list-group shadow-sm mb-3">
+            <div class="list-group-item bg-white p-3 border border-light-subtle rounded">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <!-- Assuming your Lesson class uses .Type or .Topic for the description name -->
+                    <h5 class="mb-1 text-primary fw-bold">@dance.AssignedLesson.Type</h5>
+                    <small class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-20 px-2.5 py-1">
+                        @dance.AssignedLesson.StartTime.ToString("h:mm tt") - @dance.AssignedLesson.EndTime.ToString("h:mm tt")
+                    </small>
+                </div>
+                
+                <hr class="my-2 border-light-subtle" />
+
+                <!-- Dynamically pulls your master lookup instructor relations metadata info -->
+                <small class="text-secondary d-block">
+                    <i class="bi bi-person-fill text-muted me-1"></i><strong>Instructor:</strong> 
+                    @(dance.AssignedLesson.Instructor != null ? dance.AssignedLesson.Instructor.Name : "TBD / Unassigned")
+                </small>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Fallback baseline alert if no pre-dance instruction session is bound to the record -->
+        <div class="text-center py-4 bg-light border border-light-subtle rounded mb-3">
+            <i class="bi bi-calendar-x text-muted display-6 opacity-50 d-block mb-1"></i>
+            <span class="text-muted small fw-medium">No instructional lesson block configured for this date.</span>
+        </div>
+    }
 
                             <!-- EXPOSED MASTER DJ TIER REGISTRY SLOT -->
                             <div class="card border-0 shadow-sm bg-white p-3">
