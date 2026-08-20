@@ -32,7 +32,7 @@ builder.Host.UseSerilog(); // Instructs ASP.NET Core to route all logging throug
 builder.Services.AddDbContext<AbdContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    
+
     // 🌟 TEMPORARY LOOP BREAK: Force EF9 to ignore the pending model blocks during migration commands
     options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
@@ -136,7 +136,7 @@ builder.Services.AddAuthentication(options =>
             return;
         }
 
-// 🌟 HARD BLOCK FOR EXPIRED MEMBERSHIPS
+        // 🌟 HARD BLOCK FOR EXPIRED MEMBERSHIPS
         //if (!member.ExpiryDate.HasValue || member.ExpiryDate.Value.Date < DateTime.UtcNow.Date)
         //{
         //     logger.LogWarning(
@@ -196,22 +196,34 @@ builder.Services.AddAuthentication(options =>
 });
 
 
-// --- App Services ---
-// Choose one email service: Resend or SMTP (SMTP2GO, SendGrid, etc.)
-var emailProvider = builder.Configuration["Email:Provider"] ?? "Resend";
+#region --- App Services ---
 
-if (emailProvider.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+#region EmailService
+// Choose one email service:Sandbox(fake email), Resend or SMTP (SMTP2GO, SendGrid, etc.)
+var emailProvider = builder.Configuration["Email:Provider"] ?? "Smtp";
+
+if (emailProvider.Equals("Sandbox", StringComparison.OrdinalIgnoreCase))
 {
+    // Uses full SmtpEmailService logic & templates, but sends via FakeSmtpSender
+    builder.Services.AddScoped<ISmtpSender, FakeSmtpSender>();
+    builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+}
+else if (emailProvider.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+{
+    // Real SMTP delivery
+    builder.Services.AddScoped<ISmtpSender, RealSmtpSender>();
     builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 }
 else
 {
-    // Register Resend client
+    // Resend API delivery
     var resendApiKey = builder.Configuration["Email:ResendApiKey"]!;
     builder.Services.Configure<ResendClientOptions>(options => options.ApiToken = resendApiKey);
     builder.Services.AddHttpClient<ResendClient>();
     builder.Services.AddScoped<IEmailService, ResendEmailService>();
 }
+#endregion EmailService
+
 
 builder.Services.AddScoped<IStripeService, StripeService>();  // ← add this
 builder.Services.AddScoped<IMagicLinkService, MagicLinkService>();
@@ -228,6 +240,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
 
+#endregion --- App Services ---
 
 
 try
@@ -342,7 +355,7 @@ try
             .ToList();
         return Results.Json(claims);
     }).RequireAuthorization();
-     app.Run();
+    app.Run();
 }
 catch (Exception ex)
 {

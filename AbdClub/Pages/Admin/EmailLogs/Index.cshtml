@@ -1,0 +1,188 @@
+﻿@page
+@using System.Text.Encodings.Web
+@model AbdClub.Pages.Admin.EmailLogs.IndexModel
+@{
+    ViewData["Title"] = "System Email Audit Ledger";
+}
+
+<!-- BEGIN Container -->
+<div class="container-fluid py-4" style="max-width: 1400px;">
+    
+    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active">Email Logs</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+        <h2 class="fw-bold text-dark mb-0"><i class="bi bi-envelope-paper-fill text-primary me-2"></i>Email Dispatch Audit Ledger</h2>
+        <p class="text-muted small mb-0">Track all automated notifications, reminders, and officer-initiated communications.</p>
+    </div>
+    </div>
+
+    <!-- Filter Console -->
+    <form method="get" class="card p-3 border-0 shadow-sm rounded-3 mb-4 bg-light">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label 
+                    class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-search me-1">
+                    </i>Search Recipient, Subject, or Trigger Source</label>
+                <input 
+                    type="text" 
+                    asp-for="SearchTerm"
+                    class="form-control form-control-sm bg-white"
+                    placeholder="e.g. name@example.com, Reminder, System..." />
+            </div>
+            <div class="col-md-4">
+                <label 
+                    class="form-label small fw-bold text-muted mb-1">
+                    <i class="bi bi-funnel-fill me-1">
+                    </i>Email Type Category</label>
+                <select 
+                    asp-for="FilterType" 
+                    class="form-select form-select-sm bg-white">
+                    <option value="">-- All Categories --</option>
+                    <option value="SendNewsletterWelcomeEmail">Newsletter Welcome Email</option>
+                    <option value="Welcome">Welcome to Austin Ballroom Dancers</option>
+                    <option value="Expired">Your ABD membership has expired</option>
+                    <option value="SendBroadcast">Broadcast</option>
+                    <option value="SendMembershipReminder">Membership Reminder</option>
+                    <option value="SendOfficerReminder">Officer Reminder</option>
+                    <option value="SendEventNotificationToAllMembers">Event Notification All Members</option>
+                    <option value="Reminder60">Reminder 60-Day</option>
+                    <option value="Reminder30">Reminder 30-Day</option>
+                    <option value="Reminder7">Reminder 7-Day</option>
+                    <option value="MagicLink">Magic Link Auth</option>
+                    <option value="General">General / Announcement</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button 
+                    type="submit"
+                    class="btn btn-sm btn-dark flex-grow-1 fw-bold">
+                    <i class="bi bi-sliders me-1 text-info">
+                    </i>Filter</button>
+                @if (!string.IsNullOrEmpty(Model.SearchTerm) || !string.IsNullOrEmpty(Model.FilterType))
+                {
+                    <a 
+                        asp-page="./Index" 
+                        class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-circle">
+                        </i> Clear</a>
+                }
+            </div>
+        </div>
+    </form>
+    <!-- END Filter Console -->
+
+    <!-- Audit Ledger Table -->
+    <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+        <!-- Begin Responsive table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-nowrap small">
+                <thead class="table-dark font-monospace text-uppercase" style="font-size: 0.75rem;">
+                    <tr>
+                        <th>Id</th>
+                        <th class="ps-3">Status</th>
+                        <th>Sent (UTC)</th>
+                        <th>Recipient & Member</th>
+                        <th>Subject</th>
+                        <th>Type</th>
+                        <th>Triggered By</th>
+                        <th class="pe-3 text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Logs.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-mailbox2 display-6 d-block mb-2 opacity-50"></i>
+                                No email logs match your active filter settings.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var log in Model.Logs)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">@log.Id</div>
+                                </td>
+                                <td class="ps-3">
+                                    @if (log.IsSuccess)
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Delivered
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" title="@log.ErrorMessage">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Failed
+                                        </span>
+                                    }
+                                </td>
+                                <td class="font-monospace text-secondary">@log.SentAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>
+                                    <div class="fw-bold text-dark">@log.RecipientEmail</div>
+                                    @if (log.Member != null)
+                                    {
+                                        <div class="text-muted font-monospace" style="font-size: 0.7rem;">Member: @log.Member.FullName (ID: @log.Member.Id)</div>
+                                    }
+                                </td>
+                                <td class="text-dark fw-semibold text-truncate" style="max-width: 320px;">@log.Subject</td>
+                                <td>
+                                    <span 
+                                        class="badge bg-secondary-subtle text-secondary border px-2 py-0.5">
+                                        @log.EmailType</span>
+                                </td>
+                                <td class="pe-3 text-end">
+    <a asp-page="./Details" 
+       asp-route-id="@log.Id" 
+       class="btn btn-xs btn-outline-dark font-monospace px-2.5 py-1">
+        <i class="bi bi-eye-fill me-1"></i>View Details
+    </a>
+</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <!-- END Responsive table -->
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer bg-white border-top p-3">
+                <nav aria-label="Pagination">
+                    <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link rounded px-2.5 py-1 border shadow-sm" asp-all-route-data='new Dictionary<string, string> { { "CurrentPage", (Model.CurrentPage - 1).ToString() }, { "SearchTerm", Model.SearchTerm ?? "" }, { "FilterType", Model.FilterType ?? "" } }'>Previous</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                <a class="page-link rounded px-3 py-1 border shadow-sm @(Model.CurrentPage == i ? "bg-dark border-dark text-white fw-bold" : "text-dark")" asp-all-route-data='new Dictionary<string, string> { { "CurrentPage", i.ToString() }, { "SearchTerm", Model.SearchTerm ?? "" }, { "FilterType", Model.FilterType ?? "" } }'>@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link rounded px-2.5 py-1 border shadow-sm" asp-all-route-data='new Dictionary<string, string> { { "CurrentPage", (Model.CurrentPage + 1).ToString() }, { "SearchTerm", Model.SearchTerm ?? "" }, { "FilterType", Model.FilterType ?? "" } }'>Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+        <!-- END Pagination -->
+
+    </div>
+    <!-- Audit Ledger Table -->
+
+</div>
+<!-- END Container -->
+

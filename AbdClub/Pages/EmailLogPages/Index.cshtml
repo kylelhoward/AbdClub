@@ -1,0 +1,90 @@
+@page
+@model AbdClub.Pages.EmailLogPages.IndexModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-page="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].MemberId)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].Member)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].RecipientEmail)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].Subject)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].Body)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].EmailType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].TriggeredBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].SentAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].IsSuccess)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EmailLog[0].ErrorMessage)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model.EmailLog) {
+        <tr>
+            <td>
+                @Html.DisplayFor(model => item.MemberId)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Member)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.RecipientEmail)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Subject)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.Body)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.EmailType)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.TriggeredBy)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.SentAt)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.IsSuccess)
+            </td>
+            <td>
+                @Html.DisplayFor(model => item.ErrorMessage)
+            </td>
+            <td>
+                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
+                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

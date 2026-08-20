@@ -187,7 +187,14 @@ if (TargetDance.AssignedLesson != null)
             foreach (var officer in officersToRemove)
             {
                 danceToUpdate.AttendingOfficers.Remove(officer);
-                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.LastName}", danceToUpdate.Title, dateString, dropText);
+                await _emailService
+                        .SendOfficerDutyNotificationAsync(
+                            officer.Email, 
+                            $"{officer.LastName}", 
+                            danceToUpdate.Title, 
+                            dateString, 
+                            dropText,
+                            officer.Id);
             }
         }
 
@@ -198,7 +205,14 @@ if (TargetDance.AssignedLesson != null)
             foreach (var officer in officersToAdd)
             {
                 danceToUpdate.AttendingOfficers.Add(officer);
-                await _emailService.SendOfficerDutyNotificationAsync(officer.Email, $"{officer.LastName}", danceToUpdate.Title, dateString, addText);
+                await _emailService
+                        .SendOfficerDutyNotificationAsync(
+                            officer.Email, 
+                            $"{officer.LastName}",
+                            danceToUpdate.Title,
+                            dateString, 
+                            addText,
+                            officer.Id);
             }
         }
 

@@ -374,7 +374,8 @@ public class AttendingOfficersModel : PageModel
             $"{currentOfficer.LastName}",
             dance.Title,
             dance.Date.ToString("MMMM dd, yyyy"),
-            actionText
+            actionText,
+            currentOfficer.Id
         );
 
         return RedirectToPage(new { id });
@@ -418,7 +419,8 @@ public class AttendingOfficersModel : PageModel
             $"{targetOfficer.LastName}",
             dance.Title,
             dance.Date.ToString("MMMM dd, yyyy"),
-            actionText
+            actionText,
+            selectOfficerId
         );
 
         return RedirectToPage(new { id });
@@ -450,7 +452,8 @@ public class AttendingOfficersModel : PageModel
                 $"{targetOfficer.LastName}",
                 dance.Title,
                 dance.Date.ToString("MMMM dd, yyyy"),
-                actionText
+                actionText,
+                dropOfficerId
             );
         }
 

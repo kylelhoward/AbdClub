@@ -1,0 +1,141 @@
+﻿@page "{id:int}"
+@model AbdClub.Pages.Admin.EmailLogs.DetailsModel
+@{
+    ViewData["Title"] = "Email Log Record #" + Model.EmailRecord?.Id;
+}
+
+<div class="container py-4">
+    <!-- Navigation Breadcrumbs & Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-page="/Admin/Dashboard" class="text-decoration-none">Admin Dashboard</a></li>
+                    <li class="breadcrumb-item"><a asp-page="./Index" class="text-decoration-none">Email Audit Ledger</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Log #@Model.EmailRecord?.Id</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold text-dark mb-0">
+                <i class="bi bi-envelope-paper-fill text-primary me-2"></i>Email Dispatch Details
+            </h2>
+        </div>
+           </div>
+
+    @if (Model.EmailRecord == null)
+    {
+        <div class="alert alert-danger shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>The requested email log record could not be found.
+        </div>
+    }
+    else
+    {
+        <!-- Transmission Metadata Card -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden">
+            <div class="card-header bg-dark text-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold font-monospace">Record ID: #@Model.EmailRecord.Id</span>
+                    <div>
+                        @if (Model.EmailRecord.IsSuccess)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 fs-6">
+                                <i class="bi bi-check-circle-fill me-1"></i>Delivered Successfully
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5 fs-6">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>Delivery Failed
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Recipient Address</label>
+                        <div class="fs-5 fw-bold text-dark font-monospace">@Model.EmailRecord.RecipientEmail</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Associated Member Profile</label>
+                        @if (Model.EmailRecord.Member != null)
+                        {
+                            <div class="fw-semibold">
+                                <i class="bi bi-person-circle text-primary me-1"></i>
+                                @Model.EmailRecord.Member.FullName
+                                <span class="text-muted small font-monospace">(Member ID: #@Model.EmailRecord.Member.Id)</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-muted font-monospace fst-italic">Non-Member / Unlinked Guest</div>
+                        }
+                    </div>
+
+                    <div class="col-12"><hr class="my-1 border-light-subtle" /></div>
+
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Sent Timestamp (UTC)</label>
+                        <div class="font-monospace text-dark">@Model.EmailRecord.SentAt.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                        <small class="text-muted font-monospace">(@Model.EmailRecord.SentAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt local"))</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Email Category / Type</label>
+                        <span class="badge bg-secondary-subtle text-secondary border px-2.5 py-1 font-monospace">
+                            @Model.EmailRecord.EmailType
+                        </span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Triggered By / Source</label>
+                        <code class="text-primary bg-light px-2 py-1 rounded border d-inline-block">
+                            @Model.EmailRecord.TriggeredBy
+                        </code>
+                    </div>
+
+                    @if (!Model.EmailRecord.IsSuccess && !string.IsNullOrEmpty(Model.EmailRecord.ErrorMessage))
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-danger mb-0 border-danger border-opacity-25 rounded-3">
+                                <div class="fw-bold mb-1"><i class="bi bi-x-octagon-fill me-1"></i>Transmission Exception Message:</div>
+                                <div class="font-monospace small text-wrap">@Model.EmailRecord.ErrorMessage</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Rendered Email Payload Section (Isolated Sandbox) -->
+<div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div class="card-header bg-light py-3 border-bottom">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-muted small fw-bold text-uppercase">Subject:</div>
+            <div class="col-md-10 fw-bold fs-5 text-dark">@Model.EmailRecord.Subject</div>
+        </div>
+    </div>
+    <div class="card-body p-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold small text-muted text-uppercase mb-0">
+                <i class="bi bi-file-earmark-richtext me-1"></i>Rendered Message Body
+            </h6>
+            <span class="badge bg-light text-muted border font-monospace">Isolated Preview</span>
+        </div>
+        
+        @{
+            // Replace embedded CID references with the public web branding image path
+            var sanitizedHtml = Model.EmailRecord.Body.Replace("cid:club_logo_header", "/images/club-logo.jpeg");
+        }
+
+        <!-- 🌟 THE SANDBOX FIX: An isolated iframe prevents email CSS/HTML from leaking into the parent layout -->
+        <iframe srcdoc="@sanitizedHtml"
+                class="w-100 border rounded-3 bg-white shadow-inner"
+                style="min-height: 480px; height: 600px; border: 1px solid #dee2e6;"
+                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                title="Email Payload Preview">
+        </iframe>
+    </div>
+</div>
+
+    }
+</div>
+

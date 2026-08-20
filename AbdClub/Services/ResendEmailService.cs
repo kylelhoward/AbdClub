@@ -119,44 +119,6 @@ public class ResendEmailService : IEmailService
         }
     }
 
-    public async Task SendBroadcastAsync(List<Member> recipients, string subject, string body)
-    {
-        foreach (var member in recipients)
-        {
-            if (string.IsNullOrEmpty(member.Email)) continue;
-
-            try
-            {
-                var email = new EmailMessage
-                {
-                    From = GetFromAddress(),
-                    To = member.Email,
-                    Subject = subject,
-                    HtmlBody = body
-                };
-
-                var response = await _resendClient.EmailSendAsync(email);
-
-                if (response != null && response.Exception == null)
-                {
-                    _logger.LogInformation("Broadcast sent via Resend to {Email}",
-                        member.Email);
-                }
-                else
-                {
-                    var errorMsg = response?.Exception?.Message ?? "Unknown error";
-                    _logger.LogError("Failed broadcast to {Email}: {Error}",
-                        member.Email, errorMsg);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed broadcast to {Email}: {Exception}",
-                    member.Email, ex.Message);
-            }
-        }
-    }
-
     public async Task SendMembershipReminderAsync(Member member)
     {
         if (string.IsNullOrEmpty(member.Email)) return;
@@ -395,7 +357,13 @@ public class ResendEmailService : IEmailService
         throw new NotImplementedException();
     }
 
-    public Task SendOfficerDutyNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyActionText)
+    public Task SendOfficerDutyNotificationAsync(
+        string recipientEmail,
+        string recipientName,
+        string danceTitle,
+        string dateString,
+        string dutyActionText,
+        int memberId)
     {
         throw new NotImplementedException();
     }
@@ -404,4 +372,6 @@ public class ResendEmailService : IEmailService
     {
         throw new NotImplementedException();
     }
+
+  
 }

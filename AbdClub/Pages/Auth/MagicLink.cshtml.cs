@@ -39,7 +39,7 @@ public class MagicLinkModel : PageModel
         // Build the same claims as Google login
         var claimsToAdd = new List<Claim>
         {
-            new(ClaimTypes.Name,  member.LastName),
+            new(ClaimTypes.Name,  member.FirstName + ' ' + member.FullName),
             new(ClaimTypes.Email, member.Email),
             new("MemberId",       member.Id.ToString()),
             new("IsOfficer",      member.IsOfficer.ToString().ToLower()),

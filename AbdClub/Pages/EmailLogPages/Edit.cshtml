@@ -1,0 +1,85 @@
+@page
+@model AbdClub.Pages.EmailLogPages.EditModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>EmailLog</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="EmailLog.Id" />
+            <div class="form-group">
+                <label asp-for="EmailLog.MemberId" class="control-label"></label>
+                <input asp-for="EmailLog.MemberId" class="form-control" />
+                <span asp-validation-for="EmailLog.MemberId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EmailLog.Member" class="control-label"></label>
+                <input asp-for="EmailLog.Member" class="form-control" />
+                <span asp-validation-for="EmailLog.Member" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="EmailLog.RecipientEmail" class="control-label"></label>
+                <input asp-for="EmailLog.RecipientEmail" class="form-control" aria-required="true"/>
+                <span asp-validation-for="EmailLog.RecipientEmail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="EmailLog.Subject" class="control-label"></label>
+                <input asp-for="EmailLog.Subject" class="form-control" aria-required="true"/>
+                <span asp-validation-for="EmailLog.Subject" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="EmailLog.Body" class="control-label"></label>
+                <input asp-for="EmailLog.Body" class="form-control" aria-required="true"/>
+                <span asp-validation-for="EmailLog.Body" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="EmailLog.EmailType" class="control-label"></label>
+                <input asp-for="EmailLog.EmailType" class="form-control" aria-required="true"/>
+                <span asp-validation-for="EmailLog.EmailType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <span class="text-danger">*</span>
+                <label asp-for="EmailLog.TriggeredBy" class="control-label"></label>
+                <input asp-for="EmailLog.TriggeredBy" class="form-control" aria-required="true"/>
+                <span asp-validation-for="EmailLog.TriggeredBy" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EmailLog.SentAt" class="control-label"></label>
+                <input asp-for="EmailLog.SentAt" class="form-control" />
+                <span asp-validation-for="EmailLog.SentAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EmailLog.IsSuccess" class="control-label"></label>
+                <input asp-for="EmailLog.IsSuccess" class="form-check-input" />
+                <span asp-validation-for="EmailLog.IsSuccess" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EmailLog.ErrorMessage" class="control-label"></label>
+                <input asp-for="EmailLog.ErrorMessage" class="form-control" />
+                <span asp-validation-for="EmailLog.ErrorMessage" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-page="./Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

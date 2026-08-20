@@ -14,18 +14,95 @@ public class SmtpEmailService : IEmailService
     private readonly ILogger<SmtpEmailService> _logger;
     private readonly AbdContext _db;
     private readonly IWebHostEnvironment _env; // Inject environment to resolve web root paths
+    private readonly ISmtpSender _smtpSender;
 
-    public SmtpEmailService(
-        IConfiguration config,
+    public SmtpEmailService(IConfiguration config,
         ILogger<SmtpEmailService> logger,
         AbdContext db,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env,
+        ISmtpSender smtpSender)
     {
         _config = config;
         _logger = logger;
         _db = db;
         _env = env;
+        _smtpSender = smtpSender;
+
     }
+
+    public async Task SendReminderAsync(Member member, string emailType)
+    {
+        const string sourceTrigger = "System:ReminderService";
+
+        var subject = emailType switch
+        {
+            "Reminder60" => "Your ABD membership expires in 60 days",
+            "Reminder30" => "Your ABD membership expires in 30 days",
+            "Reminder7" => "Action needed — ABD membership expires in 7 days",
+            "Expired" => "Your ABD membership has expired",
+            "Welcome" => "Welcome to Austin Ballroom Dancers!",
+            _ => "A message from Austin Ballroom Dancers"
+        };
+
+        var body = BuildReminderBody(member, emailType);
+
+        try
+        {
+            using var message = BuildMessage(member.Email, member.LastName, subject, body, isHtml: true);
+
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(message);
+
+            _logger.LogInformation("Email sent via SMTP: {EmailType} to {Email}", emailType, member.Email);
+
+            // 🌟 SUCCESS LOGGING: Records delivery confirmation into your Admin audit tables
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Failed to send {EmailType} to {Email}: {Error}", emailType, member.Email, ex.Message);
+
+            // 🌟 FAILURE LOGGING: Captures the precise SMTP network exception error message for officer review
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
+        }
+    }
+
+    // 🌟 THE UNIFIED DATABASE LOGGER HOOK: Call this at the end of every email transmission method
+    private async Task WriteAuditLogAsync(
+        string recipientEmail,
+        string subject,
+        string body,
+        string emailType,
+        string triggeredBy,
+        int? memberId,
+        bool isSuccess,
+        string? errorMessage = null)
+    {
+        try
+        {
+            var log = new EmailLog
+            {
+                MemberId = memberId,
+                RecipientEmail = recipientEmail,
+                Subject = subject,
+                Body = body,
+                EmailType = emailType,
+                TriggeredBy = triggeredBy,
+                SentAt = DateTime.UtcNow,
+                IsSuccess = isSuccess,
+                ErrorMessage = errorMessage
+            };
+
+            _db.EmailLogs.Add(log);
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception dbEx)
+        {
+            // Fallback safety gate: Prevents a database exception from crashing the email transaction pipeline
+            _logger.LogError(dbEx, "Audit Ledger Error: Failed to write email log entry to database tables.");
+        }
+    }
+
 
     private SmtpClient GetSmtpClient()
     {
@@ -72,10 +149,14 @@ public class SmtpEmailService : IEmailService
 
     public async Task SendMagicLinkEmailAsync(Member member, string magicUrl)
     {
+        const string emailType = "MagicLink";
+        const string sourceTrigger = "System:MagicLinkAuth";
+
         // 1. Log the initiation event with structured variables
         _logger.LogInformation(
-            "Initiating outbound Magic Link communication dispatch request. Recipient: {RecipientEmail}",
-            member.Email);
+            "{sourceTrigger}. Recipient: {RecipientEmail}"
+            ,sourceTrigger
+            ,member.Email);
 
         var subject = "Your Austin Ballroom Dancers login link";
 
@@ -99,17 +180,18 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            using var smtp = GetSmtpClient();
             using var message = BuildMessage(
                 member.Email, member.LastName, subject, body, isHtml: true);
 
             // 2. Execute the third-party network API transaction call
-            await smtp.SendMailAsync(message);
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(message);
 
             // 3. Log a clear, successful operation footprint
             _logger.LogInformation(
                 "Communication successfully accepted by remote SMTP relay server. Message type: MagicLink, Destination: {RecipientEmail}",
                 member.Email);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
         }
         catch (SmtpException ex)
         {
@@ -117,6 +199,7 @@ public class SmtpEmailService : IEmailService
             _logger.LogError(ex,
                 "Relay Handshake Exception: Zoho SMTP gateway rejected outbound authentication headers for recipient {RecipientEmail}.",
                 member.Email);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
             throw; // Bubble up to let the controller gracefully alert the user
         }
         catch (Exception ex)
@@ -125,62 +208,16 @@ public class SmtpEmailService : IEmailService
             _logger.LogError(ex,
                 "Mailing Operational Error: An unexpected failure occurred while processing message envelopes targeting {RecipientEmail}.",
                 member.Email);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
             throw;
-        }
-    }
-
-    public async Task SendReminderAsync(Member member, string emailType)
-    {
-        var subject = emailType switch
-        {
-            "Reminder60" => "Your ABD membership expires in 60 days",
-            "Reminder30" => "Your ABD membership expires in 30 days",
-            "Reminder7" => "Action needed — ABD membership expires in 7 days",
-            "Expired" => "Your ABD membership has expired",
-            "Welcome" => "Welcome to Austin Ballroom Dancers!",
-            _ => "A message from Austin Ballroom Dancers"
-        };
-
-        var body = BuildReminderBody(member, emailType);
-
-        try
-        {
-            using var smtp = GetSmtpClient();
-            using var message = BuildMessage(member.Email, member.LastName, subject, body, isHtml: true);
-
-            await smtp.SendMailAsync(message);
-
-            _logger.LogInformation("Email sent via SMTP: {EmailType} to {Email}", emailType, member.Email);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError("Failed to send {EmailType} to {Email}: {Error}", emailType, member.Email, ex.Message);
-        }
-    }
-
-    public async Task SendBroadcastAsync(List<Member> recipients, string subject, string body)
-    {
-        using var smtp = GetSmtpClient();
-
-        foreach (var member in recipients)
-        {
-            try
-            {
-                using var message = BuildMessage(member.Email, member.LastName, subject, body, isHtml: true);
-
-                await smtp.SendMailAsync(message);
-
-                _logger.LogInformation("Broadcast sent via SMTP to {Email}", member.Email);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Failed broadcast to {Email}: {Error}", member.Email, ex.Message);
-            }
         }
     }
 
     public async Task SendMembershipReminderAsync(Member member)
     {
+        const string emailType = "SendMembershipReminder";
+        const string sourceTrigger = "System:SendMembershipReminderAsync";
+
         if (string.IsNullOrEmpty(member.Email)) return;
 
         var subject = "Membership Renewal Reminder";
@@ -198,35 +235,40 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            using var smtp = GetSmtpClient();
             using var message = BuildMessage(member.Email, member.LastName, subject, body, isHtml: true);
 
-            await smtp.SendMailAsync(message);
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(message);
 
             _logger.LogInformation("Membership reminder sent via SMTP to {Email}", member.Email);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
         }
         catch (Exception ex)
         {
             _logger.LogError("Failed to send membership reminder to {Email}: {Exception}", member.Email, ex.Message);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
             throw;
         }
     }
 
-    public async Task SendOfficerReminderAsync(Dance dance, Member officer)
+    public async Task SendOfficerReminderAsync(Dance dance, Member member)
     {
-        if (string.IsNullOrEmpty(officer.Email)) return;
+        const string emailType = "SendOfficerReminder";
+        const string sourceTrigger = "System:SendOfficerReminderAsync";
+
+        if (string.IsNullOrEmpty(member.Email)) return;
 
         var subject = $"Officer Reminder: {dance.Title}";
         var body = $@"
             <h2>Officer Reminder</h2>
-            <p>Hi {officer.LastName},</p>
+            <p>Hi {member.LastName},</p>
             <p>You are scheduled to serve as an officer at <strong>{dance.Title}</strong>.</p>
             <h3>Event Details:</h3>
             <ul>
                 <li>Date: {dance.Date:MMMM d, yyyy}</li>
                 <li>Time: {dance.StartTime} - {dance.EndTime}</li>
                 <li>Location: {dance.Location}</li>
-                <li>Role: {officer.OfficerRole ?? "Officer"}</li>
+                <li>Role: {member.OfficerRole ?? "Officer"}</li>
                 <li>Contact: {dance.ContactEmail ?? "Not provided"}</li>
             </ul>
             <p>Thank you for your leadership!<br/>— The ABD Team</p>
@@ -234,23 +276,28 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            using var smtp = GetSmtpClient();
-            using var message = BuildMessage(officer.Email, officer.LastName, subject, body, isHtml: true);
+            using var message = BuildMessage(member.Email, member.LastName, subject, body, isHtml: true);
 
-            await smtp.SendMailAsync(message);
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(message);
 
             _logger.LogInformation("Officer reminder sent via SMTP to {Email} for dance {DanceId}",
-                officer.Email, dance.Id);
+                member.Email, dance.Id);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
         }
         catch (Exception ex)
         {
             _logger.LogError("Failed to send officer reminder to {Email}: {Exception}",
-                officer.Email, ex.Message);
+                member.Email, ex.Message);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
         }
     }
 
     public async Task SendEventNotificationToAllMembersAsync(Dance dance, string subject, string body)
     {
+        const string emailType = "SendEventNotificationToAllMembers";
+        const string sourceTrigger = "System:SendEventNotificationToAllMembersAsync";
+
         var members = await _db.Members.Where(m => !m.IsSuspended &&
                 m.ExpiryDate.HasValue &&
                 m.ExpiryDate.Value >= DateTime.UtcNow).ToListAsync();
@@ -260,8 +307,6 @@ public class SmtpEmailService : IEmailService
             _logger.LogWarning("No active members found for event notification");
             return;
         }
-
-        using var smtp = GetSmtpClient();
 
         foreach (var member in members)
         {
@@ -285,15 +330,18 @@ public class SmtpEmailService : IEmailService
 
                 using var message = BuildMessage(member.Email, member.LastName, subject, emailBody, isHtml: true);
 
-                await smtp.SendMailAsync(message);
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(message);
 
                 _logger.LogInformation("Event notification sent via SMTP to {Email} for {DanceTitle}",
                     member.Email, dance.Title);
+            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
             }
             catch (Exception ex)
             {
                 _logger.LogError("Failed to send event notification to {Email}: {Exception}",
                     member.Email, ex.Message);
+                await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
             }
         }
     }
@@ -359,6 +407,10 @@ public class SmtpEmailService : IEmailService
 
     public async Task SendNewsletterWelcomeEmailAsync(string email, string firstName)
     {
+        const string emailType = "SendNewsletterWelcomeEmail";
+        const string sourceTrigger = "System:SendNewsletterWelcomeEmailAsync";
+        const string subject = "Welcome to the AbdClub Newsletter!";
+
         var subscriber = await _db.NewsletterSubscribers
             .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
 
@@ -372,7 +424,7 @@ public class SmtpEmailService : IEmailService
         string logoCid = "club_logo_header";
 
         // 2. Reference the images inside your HTML layout markup using standard 'cid:' syntax
-        var htmlContent = $@"
+        var body = $@"
         <!DOCTYPE html>
         <html>
         <head>
@@ -406,11 +458,11 @@ public class SmtpEmailService : IEmailService
 
         var mailMessage = new MailMessage(senderEmail, email)
         {
-            Subject = "Welcome to the AbdClub Newsletter!"
+            Subject = subject
         };
 
         // 3. Construct the HTML Alternate View container
-        var htmlView = AlternateView.CreateAlternateViewFromString(htmlContent, null, MediaTypeNames.Text.Html);
+        var htmlView = AlternateView.CreateAlternateViewFromString(body, null, MediaTypeNames.Text.Html);
 
         // 4. Resolve the local image file path on disk (e.g., located inside wwwroot/images/)
         //var imagePath = Path.Combine(_env.WebRootPath, "images", "club-logo.png");
@@ -438,15 +490,16 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            using (var smtpClient = GetSmtpClient())
-            {
-                await smtpClient.SendMailAsync(mailMessage);
-            }
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(mailMessage);
+
             _logger.LogInformation("HTML Newsletter with mapped inline assets sent to {Email}", email);
+            await WriteAuditLogAsync(email, subject, body, emailType, sourceTrigger,null , isSuccess: true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to execute inline asset email transmission to {Email}.", email);
+            await WriteAuditLogAsync(email, subject, body, emailType, sourceTrigger, null, isSuccess: false, errorMessage: ex.Message);
         }
     }
 
@@ -483,28 +536,54 @@ public class SmtpEmailService : IEmailService
         </html>";
     }
 
-    public async Task SendBroadcastEmailAsync(string recipientEmail, string recipientName, string subject, string bodyContent)
+    public async Task SendBroadcastEmailAsync(
+        string recipientEmail,
+        string recipientName,
+        string subject,
+        string bodyContent)
     {
+        const string emailType = "SendBroadcastEmail";
+        const string sourceTrigger = "System:SendBroadcastEmailAsyn";
+
         var senderEmail = _config["Email:Username"] ?? "management@abdclub.com";
 
         // Call the unified template generator
-        var htmlContent = GenerateBroadcastHtmlBody(recipientName, bodyContent);
+        var body = GenerateBroadcastHtmlBody(recipientName, bodyContent);
 
         var mailMessage = new MailMessage(senderEmail, recipientEmail)
         {
             Subject = subject,
-            Body = htmlContent,
+            Body = body,
             IsBodyHtml = true
         };
 
-        using (var smtpClient = GetSmtpClient())
+        try
         {
-            await smtpClient.SendMailAsync(mailMessage);
+
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(mailMessage);
+
+            _logger.LogInformation("SendBroadcastEmailAsync sent to {Email}", recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to SendBroadcastEmailAsync transmission to {Email}.", recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: false, errorMessage: ex.Message);
         }
     }
 
-    public async Task SendVolunteerAssignmentNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyType, bool isAddition)
+    public async Task SendVolunteerAssignmentNotificationAsync(
+        string recipientEmail,
+        string recipientName,
+        string danceTitle,
+        string dateString,
+        string dutyType,
+        bool isAddition)
     {
+        const string emailType = "SendVolunteerAssignmentNotificationAsync";
+        const string sourceTrigger = "System:SendVolunteerAssignmentNotificationAsync";
+
         if (string.IsNullOrEmpty(recipientEmail)) return;
 
         var senderEmail = _config["Email:Username"] ?? "coordination@abdclub.com";
@@ -514,54 +593,66 @@ public class SmtpEmailService : IEmailService
             ? $"Excellent news! You have been successfully scheduled for the <strong>{dutyType}</strong> team position."
             : $"This notification confirms that your scheduled shift position for <strong>{dutyType}</strong> has been cancelled.";
 
-        var htmlContent = $@"
-    <!DOCTYPE html>
-    <html>
-    <head><meta charset='utf-8'></head>
-    <body style='font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px;'>
-        <div style='background-color: #ffffff; padding: 25px; border-radius: 6px; max-width: 550px; margin: 0 auto; border: 1px solid #dee2e6;'>
-            <h3 style='color: {(isAddition ? "#198754" : "#dc3545")}; margin-top: 0;'>AbdClub Staffing Update: {subjectAction}</h3>
-            <p>Hi {recipientName},</p>
-            <p>{statusBodyText}</p>
-            <hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;' />
-            <p style='margin-bottom: 5px;'><strong>Event Details:</strong></p>
-            <ul style='margin-top: 0; padding-left: 20px;'>
-                <li>Event Title: {danceTitle}</li>
-                <li>Scheduled Date: {dateString}</li>
-            </ul>
-            <p style='font-size: 13px; color: #6c757d; margin-top: 25px;'>If you have scheduling questions, reply directly to this message tracking lane.</p>
-        </div>
-    </body>
-    </html>";
+        var body = $@"
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset='utf-8'></head>
+            <body style='font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px;'>
+                <div style='background-color: #ffffff; padding: 25px; border-radius: 6px; max-width: 550px; margin: 0 auto; border: 1px solid #dee2e6;'>
+                    <h3 style='color: {(isAddition ? "#198754" : "#dc3545")}; margin-top: 0;'>AbdClub Staffing Update: {subjectAction}</h3>
+                    <p>Hi {recipientName},</p>
+                    <p>{statusBodyText}</p>
+                    <hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;' />
+                    <p style='margin-bottom: 5px;'><strong>Event Details:</strong></p>
+                    <ul style='margin-top: 0; padding-left: 20px;'>
+                        <li>Event Title: {danceTitle}</li>
+                        <li>Scheduled Date: {dateString}</li>
+                    </ul>
+                    <p style='font-size: 13px; color: #6c757d; margin-top: 25px;'>If you have scheduling questions, reply directly to this message tracking lane.</p>
+                </div>
+            </body>
+            </html>";
+
+        var subject = $"[Staff Notification] {danceTitle} - {subjectAction}";
 
         var mailMessage = new MailMessage(senderEmail, recipientEmail)
         {
-            Subject = $"[Staff Notification] {danceTitle} - {subjectAction}",
-            Body = htmlContent,
+            Subject =subject,
+            Body = body,
             IsBodyHtml = true
         };
 
         try
         {
-            using (var smtpClient = GetSmtpClient())
-            {
-                await smtpClient.SendMailAsync(mailMessage);
-            }
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(mailMessage);
+
             _logger.LogInformation("Staff notification dispatch delivered successfully targeting {Email}.", recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Background transport wrapper failed distributing email notifications targeting {Email}", recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: false, errorMessage: ex.Message);
         }
     }
 
-    public async Task SendOfficerDutyNotificationAsync(string recipientEmail, string recipientName, string danceTitle, string dateString, string dutyActionText)
+    public async Task SendOfficerDutyNotificationAsync(
+        string recipientEmail,
+        string recipientName,
+        string danceTitle,
+        string dateString,
+        string dutyActionText,
+        int memberId)
     {
+        const string emailType = "SendOfficerDutyNotificationAsync";
+        const string sourceTrigger = "System:SendOfficerDutyNotificationAsync";
+
         if (string.IsNullOrEmpty(recipientEmail)) return;
 
         var senderEmail = _config["Email:Username"] ?? "coordination@abdclub.com";
 
-        var htmlContent = $@"
+        var body = $@"
     <!DOCTYPE html>
     <html>
     <head><meta charset='utf-8'></head>
@@ -591,29 +682,35 @@ public class SmtpEmailService : IEmailService
     </body>
     </html>";
 
+        var subject = $"[Duty Roster Notice] {danceTitle} Update";
+
         var mailMessage = new MailMessage(senderEmail, recipientEmail)
         {
-            Subject = $"[Duty Roster Notice] {danceTitle} Update",
-            Body = htmlContent,
+            Subject = subject,
+            Body = body,
             IsBodyHtml = true
         };
 
         try
         {
-            using (var smtpClient = GetSmtpClient())
-            {
-                await smtpClient.SendMailAsync(mailMessage);
-            }
+            // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
+            await _smtpSender.SendMailAsync(mailMessage);
+
             _logger.LogInformation("Officer notification dispatched to {Email}.", recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, memberId, isSuccess: true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed background transport delivery to officer destination: {Email}", recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, memberId, isSuccess: false, errorMessage: ex.Message);
         }
     }
 
     public Task SendVolunteerReminderAsync(Dance dance, MasterVolunteer volunteer)
     {
+        const string emailType = "SendVolunteerReminderAsync";
+        const string sourceTrigger = "System:SendVolunteerReminderAsync";
+
         throw new NotImplementedException();
     }
 

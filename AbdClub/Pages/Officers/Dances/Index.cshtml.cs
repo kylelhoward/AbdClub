@@ -29,7 +29,6 @@ public class IndexModel : PageModel
         _context = context;
         _logger = logger;
         QuestPDF.Settings.License = LicenseType.Community;
-        QuestPDF.Settings.License = LicenseType.Community;
         _emailService = emailService;
         _authorizationService = authorizationService;
         _config = config;
@@ -119,7 +118,7 @@ public class IndexModel : PageModel
             StartTime = FormInput.StartTime,
             EndTime = FormInput.EndTime,
              // 🌟 MAP THE STRATEGIC FOREIGN KEY LINK DIRECTLY
-        LocationId = FormInput.SelectedLocationId,
+            LocationId = FormInput.SelectedLocationId,
             AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null
         };
 
@@ -133,7 +132,8 @@ public class IndexModel : PageModel
         if (FormInput.SelectedOfficerIds.Any())
             danceToUpdate.AttendingOfficers = await _context.Members.Where(m => FormInput.SelectedOfficerIds.Contains(m.Id)).ToListAsync();
 
-
+        _context.Events.Add(danceToUpdate);
+        await _context.SaveChangesAsync();
         // Water - tight 1:1 lesson hydration logic
         if (FormInput.AssignedLesson != null)
         {
@@ -159,9 +159,6 @@ public class IndexModel : PageModel
             danceToUpdate.AssignedLesson = null;
         }
 
-
-        _context.Events.Add(danceToUpdate);
-      
             // Save your changes. Fully safe from constraint drops now!
             await _context.SaveChangesAsync(); // Line 203 will commit perfectly now!
 

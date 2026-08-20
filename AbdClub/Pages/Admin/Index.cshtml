@@ -1,0 +1,24 @@
+﻿@page "/Admin"
+@model AbdClub.Pages.Admin.IndexModel
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="card border-0 shadow-sm rounded p-4 mb-4 bg-white">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <img src="~/images/club-logo.webp" alt="Club Crest Logo" class="img-fluid rounded-circle" style="max-height: 80px;" />
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Admin Management Node</h3>
+            <p class="text-muted small mb-0">Authorized Officer Development Terminal Gateway .</p>
+        </div>
+    </div>
+</div>
+
+<p>Welcome, @User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")?.Value</p>
+
+<ul>
+    <li><a href="/Admin/BatchNotify">Admin Broadcast Center</a></li>
+    <li><a href="/Admin/ManageHomePage">Manage Home Page</a></li>
+    <li><a href="/Admin/EmailLogs/Index">Email Logs</a></li>
+</ul>

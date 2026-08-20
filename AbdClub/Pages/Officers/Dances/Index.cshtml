@@ -339,8 +339,15 @@
                                     foreach (var host in Model.RegistryHosts)
                                     {
                                         <div class="form-check mb-1">
-                                            <input class="form-check-input" type="checkbox" name="NewDance.SelectedHostIds" value="@host.Id" id="h_@host.Id" />
-                                            <label class="form-check-label small fw-semibold text-dark" for="h_@host.Id">@host.Name</label>
+                                            <input 
+                                                class="form-check-input" 
+                                                type="checkbox" 
+                                                name="FormInput.SelectedHostIds" 
+                                                value="@host.Id" 
+                                                id="h_@host.Id" />
+                                            <label 
+                                                class="form-check-label small fw-semibold text-dark" 
+                                                for="h_@host.Id">@host.Name</label>
                                         </div>
                                     }
                                 }
@@ -362,7 +369,7 @@
                                     foreach (var vol in Model.RegistryVolunteers)
                                     {
                                         <div class="form-check mb-1">
-                                            <input class="form-check-input" type="checkbox" name="NewDance.SelectedVolunteerIds" value="@vol.Id" id="v_@vol.Id" />
+                                            <input class="form-check-input" type="checkbox" name="FormInput.SelectedVolunteerIds" value="@vol.Id" id="v_@vol.Id" />
                                             <label class="form-check-label small fw-semibold text-dark" for="v_@vol.Id">@vol.Name</label>
                                         </div>
                                     }
@@ -388,7 +395,7 @@
                                     <div class="form-check mb-1">
                                         <input class="form-check-input"
                                                type="checkbox"
-                                               name="NewDance.SelectedOfficerIds"
+                                               name="FormInput.SelectedOfficerIds"
                                                value="@officer.Id" id="o_@officer.Id" />
                                         <label class="form-check-label small fw-semibold text-dark"
                                                for="o_@officer.Id">@officer.LastName</label>
@@ -403,87 +410,87 @@
                     </div>
                 </div>
 
-                <!--  DYNAMIC LESSON MANAGEMENT PANEL AREA -->
-                <div class="mb-4">
-                    <div class="card shadow-sm border-0 h-100 d-flex flex-column">
-                        <div class="card-header bg-secondary text-white p-3 d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0 text-uppercase tracking-wider fw-bold small"><i class="bi bi-journal-bookmark-fill me-2"></i>Event Pre-Dance Lessons</h6>
-                            <button type="button" class="btn btn-sm btn-light fw-bold" x-on:click="addLesson()">
-                                <i class="bi bi-plus-circle-fill text-success me-1"></i>Add Lesson Slot
-                            </button>
-                        </div>
+                <!-- DANCE LESSON CONFIGURATION PANEL (1:1 SINGULAR LESSON) -->
+<div class="mb-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-secondary text-white p-3">
+            <h6 class="mb-0 text-uppercase tracking-wider fw-bold small">
+                <i class="bi bi-journal-bookmark-fill me-2"></i>Event Pre-Dance Lesson Details
+            </h6>
+        </div>
 
-                        <div class="card-body p-3 flex-grow-1">
-                            <!-- Template Loop Slot running via Alpine array controls -->
-                            <template x-for="(lesson, index) in lessons" :key="index">
-                                <div class="bg-light border rounded p-3 mb-3 position-relative shadow-sm">
-                                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 btn-sm text-danger" style="font-size:0.75rem;" x-on:click="removeLesson(index)"></button>
-
-                                    <div class="row g-2">
-                                        <div class="col-sm-6">
-                                            <label class="form-label small fw-bold text-muted mb-0">Lesson Topic / Type</label>
-                                            <!-- FIXED: x-model tracks .type -->
-                                            <input type="text" :name="'NewDance.Lessons['+index+'].Type'" x-model="lesson.type" class="form-control form-control-sm" placeholder="e.g., East Coast Swing (Intro)" required />
-                                        </div>
-
-                                        <div class="col-sm-6">
-                                            <label class="form-label small fw-bold text-muted mb-0">Instructor Name</label>
-                                            <!-- FIXED: x-model tracks .instructorId -->
-                                            <select :name="'NewDance.Lessons['+index+'].InstructorId'"
-                                                    x-model="lesson.instructorId"
-                                                    class="form-select form-select-sm"
-                                                    required>
-                                                <option value="">-- Choose Instructor --</option>
-                                                @foreach (var inst in Model.RegistryInstructors)
-                                                {
-                                                    <option value="@inst.Id">@inst.Name</option>
-                                                }
-                                            </select>
-                                        </div>
-
-                                        <div class="col-sm-6">
-                                            <label class="form-label small fw-bold text-muted mb-0">Start Time</label>
-                                            <!-- FIXED: x-model tracks .startTime -->
-                                            <input type="time"
-                                                   :name="'NewDance.Lessons['+index+'].StartTime'"
-                                                   x-model="lesson.startTime"
-                                                   class="form-control form-control-sm"
-                                                   required />
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <label class="form-label small fw-bold text-muted mb-0">End Time</label>
-                                            <!-- FIXED: x-model tracks .endTime -->
-                                            <input type="time"
-                                                   :name="'NewDance.Lessons['+index+'].EndTime'"
-                                                   x-model="lesson.endTime"
-                                                   class="form-control form-control-sm"
-                                                   required />
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                            <div x-show="lessons.length === 0" class="text-center text-muted p-5 my-auto">
-                                <i class="bi bi-journals fs-3 d-block mb-2 text-opacity-50"></i>
-                                No instructional lessons configured for this social dance yet.
-                            </div>
-                        </div>
-
-                        <div class="card-footer bg-light p-3 d-flex justify-content-between mt-auto">
-                            <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
-                            <button type="submit" id="masterSubmitBtn" class="btn btn-dark px-4">
-                                <i class="bi bi-cloud-arrow-up-fill me-1"></i>Commit Master Roster Update
-                            </button>
-                        </div>
-                    </div>
+        <div class="card-body p-4 bg-light bg-opacity-25">
+            <div class="row g-3">
+                <!-- Field 1: Lesson Topic / Style Type -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted mb-1" asp-for="FormInput.AssignedLesson.Type">
+                        Lesson Topic / Type
+                    </label>
+                    <input asp-for="FormInput.AssignedLesson.Type" 
+                           type="text" 
+                           class="form-control form-control-sm bg-white" 
+                           placeholder="e.g., East Coast Swing (Intro)" />
+                    <span asp-validation-for="FormInput.AssignedLesson.Type" class="text-danger small font-monospace"></span>
                 </div>
+
+                <!-- Field 2: Assigned Instructor -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted mb-1" asp-for="FormInput.AssignedLesson.InstructorId">
+                        Instructor Name
+                    </label>
+                    <select asp-for="FormInput.AssignedLesson.InstructorId" 
+                            class="form-select form-select-sm bg-white">
+                        <option value="">-- Choose Instructor (Optional) --</option>
+                        @foreach (var inst in Model.RegistryInstructors)
+                        {
+                            <option value="@inst.Id">@inst.Name @(!string.IsNullOrEmpty(inst.Email) ? $"({inst.Email})" : "")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="FormInput.AssignedLesson.InstructorId" class="text-danger small font-monospace"></span>
+                </div>
+
+                <!-- Field 3: Start Time -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted mb-1" asp-for="FormInput.AssignedLesson.StartTime">
+                        Lesson Start Time
+                    </label>
+                    <input asp-for="FormInput.AssignedLesson.StartTime" 
+                           type="time" 
+                           class="form-control form-control-sm bg-white" />
+                    <span asp-validation-for="FormInput.AssignedLesson.StartTime" class="text-danger small font-monospace"></span>
+                </div>
+
+                <!-- Field 4: End Time -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-muted mb-1" asp-for="FormInput.AssignedLesson.EndTime">
+                        Lesson End Time
+                    </label>
+                    <input asp-for="FormInput.AssignedLesson.EndTime" 
+                           type="time" 
+                           class="form-control form-control-sm bg-white" />
+                    <span asp-validation-for="FormInput.AssignedLesson.EndTime" class="text-danger small font-monospace"></span>
+                </div>
+            </div>
+            <div class="form-text text-muted mt-2 small">
+                Leave these fields blank if this social dance does not include a pre-dance instructional lesson.
+            </div>
+        </div>
+    </div>
+</div>
+
 
  
 
 
             </div>
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary px-4">Create Master Schedule</button>
+                <button 
+                    type="button" 
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+                <button
+                    type="submit" 
+                    class="btn btn-primary px-4">Create Master Schedule</button>
             </div>
         </form>
     </div>

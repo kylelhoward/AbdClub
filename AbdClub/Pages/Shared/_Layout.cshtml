@@ -6,11 +6,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AbdClub</title>
+
+    
+
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AbdClub.styles.css" asp-append-version="true" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
 
 </head>
 <body>
@@ -93,8 +96,10 @@
                              Admin
                          </a>
                          <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                             <li><a class="dropdown-item" asp-page="/Admin/BatchNotify">Officer Broadcast Center</a></li>
-                              <li><a class="dropdown-item" asp-page="/Admin/ManageHomepage">Manage Home Page</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/Index">Admin Dashboard</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/BatchNotify">Admin Broadcast Center</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/EmailLogs/Index">Email Logs</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/ManageHomepage">Manage Home Page</a></li>
                                  
 @*                              <li><a class="dropdown-item" asp-page="/Admin/Dashboard">Executive Panel</a></li>
                              <li><a class="dropdown-item" asp-page="/Admin/Financials">Club Revenue Matrix</a></li>

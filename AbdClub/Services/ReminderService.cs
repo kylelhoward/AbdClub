@@ -47,33 +47,24 @@ public class ReminderService : BackgroundService
             // Find members expiring on exactly this target date
             // who haven't already received this reminder
             var membersToRemind = await db.Members
-     .Where(m =>
-        // 🌟 THE DATABASE REALIGNMENT FIX: 
-        // Replaces the unmapped property with physical database column flags!
-        !m.IsSuspended &&
-        m.ExpiryDate.HasValue &&
-        m.ExpiryDate.Value.Date >= today && // Ensures they are active today
-        m.ExpiryDate.Value.Date >= start &&
-        m.ExpiryDate.Value.Date < end &&
-         !db.EmailLogs.Any(e =>
-             e.MemberId == m.Id &&
-             e.EmailType == emailType &&
-             e.SentAt >= today.Date &&
-             e.SentAt < today.Date.AddDays(1)))
-     .ToListAsync();
+                 .Where(m =>
+                    // 🌟 THE DATABASE REALIGNMENT FIX: 
+                    // Replaces the unmapped property with physical database column flags!
+                    !m.IsSuspended &&
+                    m.ExpiryDate.HasValue &&
+                    m.ExpiryDate.Value.Date >= today && // Ensures they are active today
+                    m.ExpiryDate.Value.Date >= start &&
+                    m.ExpiryDate.Value.Date < end &&
+                     !db.EmailLogs.Any(e =>
+                         e.MemberId == m.Id &&
+                         e.EmailType == emailType &&
+                         e.SentAt >= today.Date &&
+                         e.SentAt < today.Date.AddDays(1)))
+                 .ToListAsync();
 
             foreach (var member in membersToRemind)
             {
                 await emailService.SendReminderAsync(member, emailType);
-
-                // Log it so we don't send twice
-                db.EmailLogs.Add(new Models.EmailLog
-                {
-                    MemberId = member.Id,
-                    EmailType = emailType,
-                    Subject = $"Membership reminder — {days} days",
-                    SentAt = DateTime.UtcNow
-                });
             }
         }
 
