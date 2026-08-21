@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -15,30 +14,24 @@ namespace AbdClub.Services;
 public class GoogleSheetExportService : IGoogleSheetExportService
 {
     private readonly IConfiguration _config;
-    private readonly IGoogleCredentialPathProvider _credentialPathProvider;
     private readonly string[] _scopes = { SheetsService.Scope.Spreadsheets }; // Requires Read/Write scopes
 
-    public GoogleSheetExportService(IConfiguration config, IGoogleCredentialPathProvider credentialPathProvider)
+    public GoogleSheetExportService(IConfiguration config)
     {
         _config = config;
-        _credentialPathProvider = credentialPathProvider;
     }
 
     public async Task<string> ExportMembersToSheetAsync(string spreadsheetId, string sheetName, List<Member> members)
     {
-        // 1. Authenticate using your existing Service Account cryptographic token
-        // Resolve credential path via provider
-        string credentialPath = _credentialPathProvider.GetCredentialPath();
-        if (!System.IO.File.Exists(credentialPath))
+        // 1. Use Google Application Default Credentials for secure, environment-based authentication
+        GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+
+        if (credential == null)
         {
-            throw new FileNotFoundException($"Google service account key not found: {credentialPath}");
+            throw new InvalidOperationException("Unable to load Google credentials. Ensure GOOGLE_APPLICATION_CREDENTIALS is set or credentials are configured via Workload Identity.");
         }
 
-        GoogleCredential credential;
-        using (var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read))
-        {
-            credential = GoogleCredential.FromStream(stream).CreateScoped(_scopes);
-        }
+        credential = credential.CreateScoped(_scopes);
 
         var service = new SheetsService(new BaseClientService.Initializer()
         {

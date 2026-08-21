@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading.Tasks;
 using System.Linq;
 using AbdClub.Models;
@@ -26,20 +25,17 @@ public class SheetViewerModel : PageModel
     private readonly ILogger<SheetViewerModel> _logger;
     private readonly AbdContext _context;
     private readonly IGoogleSheetExportService _exportService;
-    private readonly IGoogleCredentialPathProvider _credentialPathProvider;
 
     public SheetViewerModel(
         IConfiguration config,
         ILogger<SheetViewerModel> logger,
         AbdContext context,
-        IGoogleSheetExportService exportService,
-        IGoogleCredentialPathProvider credentialPathProvider)
+        IGoogleSheetExportService exportService)
     {
         _config = config;
         _logger = logger;
         _context = context;
         _exportService = exportService;
-        _credentialPathProvider = credentialPathProvider;
     }
 
     public List<SheetMemberRow> Rows { get; set; } = new();
@@ -66,20 +62,16 @@ public class SheetViewerModel : PageModel
     {
         try
         {
-            // 1. Locate the credentials JSON file via the shared provider
-            string credentialPath = _credentialPathProvider.GetCredentialPath();
-            if (!System.IO.File.Exists(credentialPath))
+            // 1. Use Google Application Default Credentials for authentication
+            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+
+            if (credential == null)
             {
-                ErrorMessage = $"Google Service Account key file not found at: {credentialPath}. Please ensure the configured file exists.";
+                ErrorMessage = "Unable to load Google credentials. Ensure GOOGLE_APPLICATION_CREDENTIALS is set or credentials are configured via Workload Identity.";
                 return Page();
             }
 
-            // 2. Authenticate using Service Account key
-            GoogleCredential credential;
-            using (var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read))
-            {
-                credential = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
-            }
+            credential = credential.CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
 
             var service = new SheetsService(new BaseClientService.Initializer
             {
@@ -170,19 +162,16 @@ public class SheetViewerModel : PageModel
     {
         try
         {
-            // Locate service account key via shared provider
-            string credentialPath = _credentialPathProvider.GetCredentialPath();
-            if (!System.IO.File.Exists(credentialPath))
+            // Use Google Application Default Credentials for authentication
+            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+
+            if (credential == null)
             {
-                TempData["ImportResult"] = $"Google Service Account key file not found at: {credentialPath}.";
+                TempData["ImportResult"] = "Unable to load Google credentials. Ensure GOOGLE_APPLICATION_CREDENTIALS is set or credentials are configured via Workload Identity.";
                 return RedirectToPage();
             }
 
-            GoogleCredential credential;
-            using (var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read))
-            {
-                credential = GoogleCredential.FromStream(stream).CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
-            }
+            credential = credential.CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
 
             var service = new SheetsService(new BaseClientService.Initializer
             {

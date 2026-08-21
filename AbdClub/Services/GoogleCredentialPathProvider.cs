@@ -19,6 +19,22 @@ namespace AbdClub.Services
 
         public string GetCredentialPath()
         {
+            // Try environment variable GOOGLE_APPLICATION_CREDENTIALS first (Application Default Credentials)
+            string? envPath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+            if (!string.IsNullOrWhiteSpace(envPath))
+            {
+                if (System.IO.File.Exists(envPath))
+                {
+                    _logger?.LogInformation("Using Google credentials from GOOGLE_APPLICATION_CREDENTIALS environment variable: {Path}", envPath);
+                    return envPath;
+                }
+                else
+                {
+                    _logger?.LogWarning("GOOGLE_APPLICATION_CREDENTIALS points to non-existent file: {Path}", envPath);
+                }
+            }
+
+            // Fallback to configuration-based path
             string credentialPath;
             if (!string.IsNullOrWhiteSpace(_configPath))
             {
@@ -43,7 +59,7 @@ namespace AbdClub.Services
 
             if (!existsAtCredential)
             {
-                _logger?.LogWarning("Google service account key not found. Searched locations: {Primary}, {Fallback}", credentialPath, devPath);
+                _logger?.LogWarning("Google service account key not found. Searched locations: {Primary}, {Fallback}. Ensure GOOGLE_APPLICATION_CREDENTIALS is set for Application Default Credentials.", credentialPath, devPath);
             }
 
             return credentialPath;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -27,16 +26,18 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
     public async Task<List<List<string>>> ReadMembershipSheetAsync(string spreadsheetId, string range)
     {
-        // 1. Point to the local path containing your downloaded Google JSON keys asset file
-        string credentialPath = Path.Combine(AppContext.BaseDirectory, "Data", "Publishing", "abdclub-81c5d585c9db.json");
+        // 1. Use Google Application Default Credentials for secure, environment-based authentication
+        // Credentials are resolved from GOOGLE_APPLICATION_CREDENTIALS env var, Workload Identity, or default locations
+        GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
 
-        GoogleCredential credential;
-        using (var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read))
+        if (credential == null)
         {
-            credential = GoogleCredential.FromStream(stream).CreateScoped(_scopes);
+            throw new InvalidOperationException("Unable to load Google credentials. Ensure GOOGLE_APPLICATION_CREDENTIALS is set or credentials are configured via Workload Identity.");
         }
 
-        // 2. Initialize the automated Google Sheets engine service layer instance
+        credential = credential.CreateScoped(_scopes);
+
+        // 2. Initialize the Google Sheets service with ADC
         var service = new SheetsService(new BaseClientService.Initializer()
         {
             HttpClientInitializer = credential,
