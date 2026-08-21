@@ -1,2 +1,2 @@
-SELECT "Id", "LastName", "Email", "IsOfficer", "ExpiryDate" FROM "Members";
+SELECT "Email", "IsSuspended", "IsAdmin", "IsTechAdmin" FROM "Members";
 

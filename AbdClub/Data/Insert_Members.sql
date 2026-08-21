@@ -1,27 +1,38 @@
-INSERT INTO "Members" (
-    "FirstName",
-    "MiddleName",
-    "LastName",
+INSERT INTO public."Members" (
     "Email",
     "Phone",
+    "GoogleSubId",
     "JoinDate",
     "ExpiryDate",
     "IsOfficer",
+    "OfficerRole",
+    "IsSuspended",
+    "CreatedAt",
+    "SelfRegistered",
+    "DanceId",
     "IsAdmin",
     "IsTechAdmin",
-    "OfficerRole",
-    "CreatedAt"
+    "FirstName",
+    "MiddleName",
+    "LastName"
 ) VALUES (
-    'Test',
-    'Middle',
-    'Last',
-    'testLast@gmail.com',   -- must match your Google account exactly
+    'kyle.lhoward@gmail.com',
     NULL,
-    NOW(),
-    NOW() + INTERVAL '1 year',
+    NULL,
+    TIMESTAMPTZ '2026-08-08 13:39:12.724491-05',
+    TIMESTAMPTZ '2026-08-07 19:00:00-05',
+    FALSE,
+    'Tech Admin',
+    FALSE,
+    TIMESTAMPTZ '2026-08-08 13:39:12.724491-05',
+    FALSE,
+    NULL,
+    FALSE,
     TRUE,
-    False,
-    TRUE,
-    'Admin',             -- or whatever your role is
-    NOW()
+    'Kyle',
+    NULL,
+    'Howard'
 );
+
+
+-- TRUNCATE TABLE public."Members" RESTART IDENTITY CASCADE

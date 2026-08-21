@@ -1,5 +1,9 @@
 using AbdClub.Models;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AbdClub.Data;
 
@@ -83,5 +87,64 @@ public class AbdContext : DbContext
         modelBuilder.Entity<NewsletterSubscriber>()
             .HasIndex(n => n.Email)
             .IsUnique();
+    }
+
+    // Ensure all DateTime properties saved to timestamptz columns are UTC
+    private void EnsureUtcDateTimeKinds()
+    {
+        var entries = ChangeTracker.Entries()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified);
+
+        foreach (var entry in entries)
+        {
+            foreach (var property in entry.Properties)
+            {
+                var propType = property.Metadata.ClrType;
+                if (propType == typeof(DateTime))
+                {
+                    if (property.CurrentValue is DateTime dt)
+                    {
+                        if (dt.Kind == DateTimeKind.Unspecified)
+                            property.CurrentValue = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
+                        else if (dt.Kind == DateTimeKind.Local)
+                            property.CurrentValue = dt.ToUniversalTime();
+                    }
+                }
+                else if (propType == typeof(DateTime?))
+                {
+                    if (property.CurrentValue is DateTime ndt)
+                    {
+                        if (ndt.Kind == DateTimeKind.Unspecified)
+                            property.CurrentValue = DateTime.SpecifyKind(ndt, DateTimeKind.Utc);
+                        else if (ndt.Kind == DateTimeKind.Local)
+                            property.CurrentValue = ndt.ToUniversalTime();
+                    }
+                }
+            }
+        }
+    }
+
+    public override int SaveChanges()
+    {
+        EnsureUtcDateTimeKinds();
+        return base.SaveChanges();
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        EnsureUtcDateTimeKinds();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        EnsureUtcDateTimeKinds();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        EnsureUtcDateTimeKinds();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 }

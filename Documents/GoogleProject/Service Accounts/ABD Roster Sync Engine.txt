@@ -1,0 +1,16 @@
+https://console.cloud.google.com/iam-admin/serviceaccounts/details/100080594690678636992;edit=true/keys?project=abdclub
+
+Email
+
+roster-sync@abdclub.iam.gserviceaccount.com
+
+Unique ID
+
+100080594690678636992
+
+
+
+
+Step-by-Step Creation Guide
+ in Google Cloud ConsoleNavigate to your AbdClub project dashboard inside the Google Cloud Console.Open the navigation menu on the left side and go to IAM & Admin ➔ Service Accounts.Click the + CREATE SERVICE ACCOUNT button at the top toolbar.Fill out the fields exactly like this:Service account name: ABD Roster Sync EngineService account ID: roster-syncService account description: Automated C# portal backend for syncing membership logs and spreadsheet data.Click Create and Continue.Grant this service account access to project (Optional): You can completely skip this section (leave it blank) and click Continue. (The robot doesn't need admin powers over your cloud account; it only needs access to the specific Google Sheets you share with it natively).Click Done.Once the account is created, click on its email address inside your summary table view, jump straight to the Keys tab, click Add Key ➔ Create new key, and select JSON.Save that generated file—that is the cryptographic token asset we will drop straight into your app's publishing directory to wire up your data links!
+

@@ -76,6 +76,9 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizePage("/Officers/Meetings/Delete", "isAdmin");
 });
 
+// Register Google credential path provider for centralized resolution
+builder.Services.AddSingleton<IGoogleCredentialPathProvider, GoogleCredentialPathProvider>();
+
 // --- Google Authentication ---
 builder.Services.AddAuthentication(options =>
 {
@@ -239,7 +242,7 @@ builder.Services.AddSession(options =>
 
 builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
-
+builder.Services.AddScoped<IGoogleSheetExportService, GoogleSheetExportService>();
 #endregion --- App Services ---
 
 
