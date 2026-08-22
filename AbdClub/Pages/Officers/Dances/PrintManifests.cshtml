@@ -51,21 +51,25 @@
         @if (Model.SelectedForms.Contains("active-members"))
         {
             <div class="print-page">
-                <div class="border-bottom pb-2 mb-3">
+                 <div class="border-bottom pb-2 mb-3">
                     <!-- 🌟 UPDATED: Refactored title text parameters -->
-                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - Active Member Sign-In</h4>
-                    <p class="text-muted m-0 small">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 
+                                class="fw-bold m-0">
+                                <i class="bi bi-person-check-fill me-2"></i>ABD - Active Member Sign-In</h4>
+                            <p class="text-muted m-0 small">
                         Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
                         Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
                     </p>
-                    <p class="text-muted m-0 small">
-                        <!-- 🌟 DYNAMIC ADMISSION FEE: Pulls straight out of your local appsettings configurations matrix -->
-                        <strong>Admission Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredAdmissionFee)</strong>
-                    </p>
-
-                </div>
-
-
+                        </div>
+                        <div class="text-end">
+                            <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                            <p class="text-muted m-0 small mb-2">Admission Fee</p>
+                            <p class="m-0 fs-4 fw-bold text-danger">@(Model.IsGeneric ? "$________" : Model.ConfiguredAdmissionFee)</p>
+                        </div>
+                    </div>
+               </div>
                     <table class="table table-bordered table-sm align-middle">
                         <thead>
                             <tr>
@@ -122,19 +126,25 @@
         @if (Model.SelectedForms.Contains("inactive-members"))
         {
             <div class="print-page">
-               <div class="border-bottom pb-2 mb-3">
+                 <div class="border-bottom pb-2 mb-3">
                     <!-- 🌟 UPDATED: Refactored title text parameters -->
-                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - Lapsed Member Renewal Form</h4>
-                    <p class="text-muted m-0 small">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 
+                                class="fw-bold m-0">
+                                <i class="bi bi-person-check-fill me-2"></i>ABD - Lapsed Member Renewal Form</h4>
+                            <p class="text-muted m-0 small">
                         Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
                         Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
                     </p>
-                    <p class="text-muted m-0 small">
-                        <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
-                        <strong>Renewal Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredRenewalFee)</strong>
-                    </p>
+                        </div>
+                        <div class="text-end">
+                            <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                            <p class="text-muted m-0 small mb-2">Renewal Fee</p>
+                            <p class="m-0 fs-4 fw-bold text-danger">@(Model.IsGeneric ? "$________" : Model.ConfiguredRenewalFee)</p>
+                        </div>
+                    </div>
                </div>
-
                 <table class="table table-bordered table-sm align-middle">
                     <thead>
                         <tr>
@@ -353,20 +363,29 @@
            ========================================== *@
         @if (Model.SelectedForms.Contains("new-signup"))
         {
-            <div class="print-page">
-                               <div class="border-bottom pb-2 mb-3">
+                                    <div class="print-page">
+
+ <div class="border-bottom pb-2 mb-3">
                     <!-- 🌟 UPDATED: Refactored title text parameters -->
-                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - New Member Registration & Intake Ledger</h4>
-                    <p class="text-muted m-0 small">
-                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
-                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) |
-                        Welcome to the club!  Please print information clearly.
-                    </p>
-                    <p class="text-muted m-0 small">
-                       <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
-                        <strong>Member Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredRenewalFee)</strong>
-                    </p>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 
+                                class="fw-bold m-0">
+                                <i class="bi bi-person-check-fill me-2"></i>ABD - New Member Registration & Intake Ledger</h4>
+                            <p class="text-muted m-0 small">
+                                Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                                Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
+                                Welcome to the club!  Please print information clearly.
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                            <p class="text-muted m-0 small mb-2">Member Fee</p>
+                            <p class="m-0 fs-4 fw-bold text-danger">@(Model.IsGeneric ? "$________" : Model.ConfiguredRenewalFee)</p>
+                        </div>
+                    </div>
                </div>
+
 
                 <table class="table table-bordered table-sm align-middle">
                     <thead>
@@ -404,20 +423,30 @@
            ========================================== *@
         @if (Model.SelectedForms.Contains("non-member"))
         {
-            <div class="print-page">
-                               <div class="border-bottom pb-2 mb-3">
+                        <div class="print-page">
+
+                <div class="border-bottom pb-2 mb-3">
                     <!-- 🌟 UPDATED: Refactored title text parameters -->
-                    <h4 class="fw-bold m-0"><i class="bi bi-person-check-fill me-2"></i>ABD - Non-Member Guest Sign-In Ledger</h4>
-                    <p class="text-muted m-0 small">
-                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
-                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
-                        Please print your email to receive schedule newsletters.
-                    </p>
-                    <p class="text-muted m-0 small">
-                       <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
-                        <strong>Adminssion Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredNonMemberFee)</strong>
-                        </p>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 
+                                class="fw-bold m-0">
+                                <i class="bi bi-person-check-fill me-2"></i>ABD - Non-Member Guest Sign-In Ledger</h4>
+                            <p class="text-muted m-0 small">
+                                Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                                Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
+                                Please print your email to receive schedule newsletters.
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                            <p class="text-muted m-0 small mb-2">Admission Fee</p>
+                            <p class="m-0 fs-4 fw-bold text-danger">@(Model.IsGeneric ? "$________" : Model.ConfiguredNonMemberFee)</p>
+                        </div>
+                    </div>
                </div>
+
+
                 <table class="table table-bordered table-sm align-middle">
                     <thead>
                         <tr>
@@ -454,18 +483,23 @@
             <div class="print-page">
                <div class="border-bottom pb-2 mb-3">
                     <!-- 🌟 UPDATED: Refactored title text parameters -->
-                    <h4 
-                        class="fw-bold m-0">
-                        <i class="bi bi-person-check-fill me-2"></i>ABD - Student Guest Sign-In Ledger</h4>
-                    <p class="text-muted m-0 small">
-                        Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
-                        Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
-                        Please print your email to receive schedule newsletters.
-                    </p>
-                    <p class="text-muted m-0 small">
-                       <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
-                        <strong>Adminssion Fee: @(Model.IsGeneric ? "$________" : Model.ConfiguredStudentNonMemberFee)</strong>
-                        </p>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 
+                                class="fw-bold m-0">
+                                <i class="bi bi-person-check-fill me-2"></i>ABD - Student Guest Sign-In Ledger</h4>
+                            <p class="text-muted m-0 small">
+                                Event: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Title) | 
+                                Date: @(Model.IsGeneric ? "___________________________" : Model.TargetDance?.Date.ToString("yyyy-MM-dd")) 
+                                Please print your email to receive schedule newsletters.
+                            </p>
+                        </div>
+                        <div class="text-end">
+                            <!-- 🌟 DYNAMIC RENEWAL FEE: Pulls straight out of your local appsettings configurations matrix -->
+                            <p class="text-muted m-0 small mb-2">Admission Fee</p>
+                            <p class="m-0 fs-4 fw-bold text-danger">@(Model.IsGeneric ? "$________" : Model.ConfiguredStudentNonMemberFee)</p>
+                        </div>
+                    </div>
                </div>
                 <table class="table table-bordered table-sm align-middle">
                     <thead>

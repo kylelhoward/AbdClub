@@ -4,11 +4,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using AbdClub.Data;
 using AbdClub.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
 namespace AbdClub.Pages.Officers.Dances;
 
 [Authorize(Policy = "isOfficer")]
@@ -61,11 +56,20 @@ public class PrintManifestsModel : PageModel
         if (TargetDance == null && !IsGeneric) return NotFound();
        
         // 🌟 READ CONFIG VALUES NATIVELY: Pull decimal metrics and format as clean currency tokens
-        var admissionValue = _config.GetValue<decimal>("ClubPricing:AdmissionFee", 10.00m);
-        var renewalValue = _config.GetValue<decimal>("ClubPricing:MembershipRenewalFee", 50.00m);
-
-        ConfiguredAdmissionFee = admissionValue.ToString("C"); // Outputs format: $10.00
-        ConfiguredRenewalFee = renewalValue.ToString("C");     // Outputs format: $50.00
+        ConfiguredAdmissionFee = 
+            _config
+            .GetValue(
+                "ClubPricing:AdmissionFee",
+                10.00m).ToString("C"); // Outputs format: $10.00
+        ConfiguredRenewalFee = _config.GetValue(
+            "ClubPricing:MembershipRenewalFee",
+            50.00m).ToString("C");     // Outputs format: $50.00
+        ConfiguredNonMemberFee = _config.GetValue(
+            "ClubPricing:NonMemberFee",
+            15.00m).ToString("C");     // Outputs format: $15.00
+        ConfiguredStudentNonMemberFee = _config.GetValue(
+            "ClubPricing:StudentNonMemberFee",
+            5.00m).ToString("C");     // Outputs format: $5.00
 
         // 2. Fetch records only if a member check-in layout sheet was checked
         if (!IsGeneric)
