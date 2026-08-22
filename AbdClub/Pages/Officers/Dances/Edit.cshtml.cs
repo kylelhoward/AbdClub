@@ -247,14 +247,3 @@ if (TargetDance.AssignedLesson != null)
             .ToListAsync();
     }
 }
-
-public class LessonInputItem
-{
-    [Required]
-    public int InstructorId { get; set; }
-
-    [Required]
-    public string Type { get; set; } = string.Empty;
-    public TimeOnly StartTime { get; set; } = new TimeOnly(19, 0);
-    public TimeOnly EndTime { get; set; } = new TimeOnly(20, 0);
-}

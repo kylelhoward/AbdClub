@@ -509,7 +509,29 @@
             const submitBtn = document.getElementById('createDanceSubmitBtn');
 
             if (form && submitBtn) {
-                form.addEventListener('submit', function() {
+                form.addEventListener('submit', function(e) {
+                    // Validate lesson fields: all or nothing
+                    const instructorId = document.querySelector('[name="FormInput.AssignedLesson.InstructorId"]');
+                    const lessonType = document.querySelector('[name="FormInput.AssignedLesson.Type"]');
+                    const startTime = document.querySelector('[name="FormInput.AssignedLesson.StartTime"]');
+                    const endTime = document.querySelector('[name="FormInput.AssignedLesson.EndTime"]');
+
+                    if (instructorId && lessonType && startTime && endTime) {
+                        const hasInstructor = instructorId.value && parseInt(instructorId.value) > 0;
+                        const hasType = lessonType.value && lessonType.value.trim() !== '';
+                        const hasStartTime = startTime.value && startTime.value.trim() !== '';
+                        const hasEndTime = endTime.value && endTime.value.trim() !== '';
+
+                        const filledCount = [hasInstructor, hasType, hasStartTime, hasEndTime].filter(Boolean).length;
+
+                        // If some but not all fields are filled, prevent submission
+                        if (filledCount > 0 && filledCount < 4) {
+                            e.preventDefault();
+                            alert('Lesson fields must be completed together. Either fill in all lesson fields (Instructor, Type, Start Time, End Time) or leave them all blank.');
+                            return false;
+                        }
+                    }
+
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Scheduling Event & Emailing Officers...';
                 });
