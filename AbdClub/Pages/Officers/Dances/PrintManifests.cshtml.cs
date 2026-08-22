@@ -35,7 +35,7 @@ public class PrintManifestsModel : PageModel
     public string ConfiguredAdmissionFee { get; set; } = "$10.00";
     public string ConfiguredRenewalFee { get; set; } = "$50.00";
     public string ConfiguredNonMemberFee{ get; set; } = "$15.00";
-    public string ConfiguredStudentNonMemberFee{ get; set; } = "$10.00";
+    public string ConfiguredStudentNonMemberFee{ get; set; } = "$5.00";
     
     public async Task<IActionResult> OnGetAsync(int id, string forms, bool generic)
     {
