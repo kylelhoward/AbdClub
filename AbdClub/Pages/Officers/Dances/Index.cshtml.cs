@@ -134,35 +134,72 @@ public class IndexModel : PageModel
 
         _context.Events.Add(danceToUpdate);
         await _context.SaveChangesAsync();
-        // Water - tight 1:1 lesson hydration logic
-        if (FormInput.AssignedLesson != null)
+        // 🌟 DYNAMIC OPTIONAL UNPACKING GATES:
+        // Only instantiate a database Lesson entry if the user filled out the form fields!
+        if (FormInput.AssignedLesson != null &&
+            !string.IsNullOrWhiteSpace(FormInput.AssignedLesson.Type) &&
+            FormInput.AssignedLesson.InstructorId.HasValue &&
+            FormInput.AssignedLesson.StartTime.HasValue &&
+            FormInput.AssignedLesson.EndTime.HasValue)
         {
-            if (danceToUpdate.AssignedLesson == null)
+            var lesson = new Lesson
             {
-                // The event didn't have a lesson row yet -> Instantiate a clean entity tracker instance
-                danceToUpdate.AssignedLesson = new Lesson();
-            }
+                DanceId = danceToUpdate.Id,
+                InstructorId = FormInput.AssignedLesson.InstructorId.Value, // Access underlying value cleanly
+                Type = FormInput.AssignedLesson.Type.Trim(),
+                StartTime = FormInput.AssignedLesson.StartTime.Value, // Access underlying value cleanly
+                EndTime = FormInput.AssignedLesson.EndTime.Value     // Access underlying value cleanly
+            };
 
-            // 🌟 THE CRITICAL REALIGNMENT FIX: 
-            // Manually push the dance primary key directly onto your lesson's relational properties.
-            // This satisfies the physical database "FK_Lessons_Events_DanceId" constraint instantly!
-            danceToUpdate.AssignedLesson.DanceId = danceToUpdate.Id;
-
-            danceToUpdate.AssignedLesson.InstructorId = FormInput.AssignedLesson.InstructorId;
-            danceToUpdate.AssignedLesson.Type = FormInput.AssignedLesson.Type?.Trim();
-            danceToUpdate.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime;
-            danceToUpdate.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime;
+            _context.Lessons.Add(lesson);
+            await _context.SaveChangesAsync();
         }
-        else
-        {
-            // If the user completely wiped the form input text boxes, clear the record from disk space
-            danceToUpdate.AssignedLesson = null;
-        }
-
-            // Save your changes. Fully safe from constraint drops now!
-            await _context.SaveChangesAsync(); // Line 203 will commit perfectly now!
-
         UpdateFeedback = "Success: Event saved.";
         return RedirectToPage();
     }
+
+
+    public async Task<IActionResult> OnPostDeleteDanceAsync(int id)
+    {
+        if (!User.IsInRole("Admin") && !User.IsInRole("TechAdmin"))
+        {
+            return Forbid();
+        }
+
+        // 1. 🌟 CRITICAL: Eager-load the AttendingOfficers tracking collection graph!
+        var danceToDelete = await _context.Events
+            .OfType<Dance>()
+            .Include(d => d.AttendingOfficers) // 👈 Prevents constraint collisions
+            .FirstOrDefaultAsync(d => d.Id == id);
+
+        if (danceToDelete == null)
+        {
+            TempData["ErrorMessage"] = "The targeted dance record could not be found.";
+            return RedirectToPage("./Index");
+        }
+
+        try
+        {
+            // 2. 🌟 Clear out the junction references from memory
+            // This instantly deletes rows inside 'DanceAttendingOfficers' safely, 
+            // leaving your core permanent member account rows completely untouched!
+            danceToDelete.AttendingOfficers.Clear();
+
+            // 3. Queue the primary entity removal pass
+            _context.Events.Remove(danceToDelete);
+
+            // 4. Commit changes down to PostgreSQL
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Successfully deleted event: '{danceToDelete.Title}'.";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"Database Deletion Error: {ex.Message}";
+        }
+
+        return RedirectToPage("./Index");
+    }
+
+
 }

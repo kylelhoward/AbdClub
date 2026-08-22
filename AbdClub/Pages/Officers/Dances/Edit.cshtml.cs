@@ -146,30 +146,46 @@ if (TargetDance.AssignedLesson != null)
         if (FormInput.SelectedVolunteerIds.Any())
             danceToUpdate.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
 
-       // Water - tight 1:1 lesson hydration logic
-    if (FormInput.AssignedLesson != null)
+        // Water - tight 1:1 lesson hydration logic
+        // Inside your OnPostUpdateRosterAsync() or OnPostEditAsync() handler method:
+
+        // Check if the user filled out the basic required elements of the lesson form
+        bool hasLessonInput = FormInput.AssignedLesson != null &&
+                              !string.IsNullOrWhiteSpace(FormInput.AssignedLesson.Type) &&
+                              FormInput.AssignedLesson.InstructorId.HasValue &&
+                              FormInput.AssignedLesson.StartTime.HasValue &&
+                              FormInput.AssignedLesson.EndTime.HasValue;
+
+        if (hasLessonInput)
         {
             if (danceToUpdate.AssignedLesson == null)
             {
-                // The event didn't have a lesson row yet -> Instantiate a clean entity tracker instance
+                // CASE A: The event didn't have a lesson row yet -> Instantiate a clean entity tracker instance
                 danceToUpdate.AssignedLesson = new Lesson();
             }
 
-            // 🌟 THE CRITICAL REALIGNMENT FIX: 
-            // Manually push the dance primary key directly onto your lesson's relational properties.
-            // This satisfies the physical database "FK_Lessons_Events_DanceId" constraint instantly!
+            // Connect the matching parent relationship ID
             danceToUpdate.AssignedLesson.DanceId = danceToUpdate.Id;
 
-            danceToUpdate.AssignedLesson.InstructorId = FormInput.AssignedLesson.InstructorId;
-            danceToUpdate.AssignedLesson.Type = FormInput.AssignedLesson.Type?.Trim();
-            danceToUpdate.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime;
-            danceToUpdate.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime;
+            // 🌟 THE UNPACKING FIX: Appending '.Value' extracts the inner data cleanly, solving the compilation error!
+            danceToUpdate.AssignedLesson.InstructorId = FormInput.AssignedLesson!.InstructorId!.Value;
+            danceToUpdate.AssignedLesson.Type = FormInput.AssignedLesson.Type!.Trim();
+            danceToUpdate.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime!.Value;
+            danceToUpdate.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime!.Value;
         }
         else
         {
-            // If the user completely wiped the form input text boxes, clear the record from disk space
+            // CASE B: If the form is left blank, check if a lesson row currently exists on disk
+            if (danceToUpdate.AssignedLesson != null)
+            {
+                // 🌟 NATIVE CASCADE CLEANUP: Telling EF Core to remove the tracked lesson row entity completely.
+                // This ensures that clearing out the fields on the Edit page actually drops the record from PostgreSQL!
+                _context.Lessons.Remove(danceToUpdate.AssignedLesson);
+            }
+
             danceToUpdate.AssignedLesson = null;
         }
+
 
         // Handle Officer Assignments and Notifications
         var originalOfficers = danceToUpdate.AttendingOfficers.ToList();

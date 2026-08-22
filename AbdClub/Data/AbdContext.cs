@@ -49,15 +49,6 @@ public class AbdContext : DbContext
             .HasForeignKey(e => e.LocationId)
             .OnDelete(DeleteBehavior.Restrict); // Prevent dropping a venue that has active matches
 
-
-        // One-to-Many: MasterInstructor -> Lessons (An instructor can teach multiple lessons over time)
-        modelBuilder.Entity<Lesson>()
-            .HasOne(l => l.Instructor)
-            .WithMany() // Leave empty if your MasterInstructor class doesn't have an explicit navigation collection list
-            .HasForeignKey(l => l.InstructorId)
-            .OnDelete(DeleteBehavior.Restrict); // Restrict stops accidental deletions of instructors with active classes
-
-
         // 1. One-to-Many: DJ Lookup -> Dances
         modelBuilder.Entity<Dance>()
             .HasOne(d => d.AssignedDj)
@@ -77,6 +68,18 @@ public class AbdContext : DbContext
         modelBuilder.Entity<Dance>().HasMany(d => d.AssignedHosts).WithMany().UsingEntity(j => j.ToTable("DanceAssignedHosts"));
         modelBuilder.Entity<Dance>().HasMany(d => d.AssignedVolunteers).WithMany().UsingEntity(j => j.ToTable("DanceAssignedVolunteers"));
 
+        // 🌟 THE FIX: Decouple AttendingOfficers from the raw columns of your Members table permanently
+        modelBuilder.Entity<Dance>()
+            .HasMany(d => d.AttendingOfficers)
+            .WithMany() // Keeps the relationship cleanly independent
+            .UsingEntity(j => j.ToTable("DanceAttendingOfficers")); // 👈 Pushes the foreign keys into an isolated join table!
+
+        // One-to-Many: MasterInstructor -> Lessons (An instructor can teach multiple lessons over time)
+        modelBuilder.Entity<Lesson>()
+            .HasOne(l => l.Instructor)
+            .WithMany() // Leave empty if your MasterInstructor class doesn't have an explicit navigation collection list
+            .HasForeignKey(l => l.InstructorId)
+            .OnDelete(DeleteBehavior.Restrict); // Restrict stops accidental deletions of instructors with active classes
 
         modelBuilder.Entity<ClubFile>()
             .HasOne(f => f.UploadedBy)
