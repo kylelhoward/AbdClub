@@ -54,6 +54,9 @@
                  <li class="nav-item">
                      <a class="nav-link text-dark" asp-page="/Dances/Index">Dances</a>
                  </li>
+                 <li class="nav-item">
+                     <a class="nav-link text-dark" asp-page="/Announcements">Announcements</a>
+                 </li>
                  
                  @* Public/Member Space — visible to any logged-in registered account *@
                  @if (User.Identity?.IsAuthenticated == true)
@@ -78,6 +81,7 @@
                              @* <li><a class="dropdown-item" asp-page="/Officers/Meetings/Index">Meetings</a></li> *@
                              <li><a class="dropdown-item" asp-page="/Officers/Registry/Index">Registry</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/Dances/Index">Dances</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/Announcements/Edit">Announcement Flyer</a></li>
                              @* <li><a class="dropdown-item" asp-page="/Officers/Dances/PrintManifests">Print Manifests</a></li> *@
                              <li><a class="dropdown-item" asp-page="/Officers/Locations/Index">Locations</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/FileManager">Club Files</a></li>

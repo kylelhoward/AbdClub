@@ -29,6 +29,9 @@ public class AbdContext : DbContext
     public DbSet<MasterHost> MasterHosts { get; set; }
     public DbSet<MasterInstructor> MasterInstructors { get; set; }
     public DbSet<MasterVolunteer> MasterVolunteers { get; set; }
+    public DbSet<AnnouncementFlyerSettings> AnnouncementFlyerSettings { get; set; } = null!;
+    public DbSet<FlyerAnnouncementItem> FlyerAnnouncementItems { get; set; } = null!;
+    public DbSet<HelpWantedItem> HelpWantedItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -90,6 +93,29 @@ public class AbdContext : DbContext
         modelBuilder.Entity<NewsletterSubscriber>()
             .HasIndex(n => n.Email)
             .IsUnique();
+
+        // The application maintains one current flyer, not a history of flyers.
+        modelBuilder.Entity<AnnouncementFlyerSettings>()
+            .HasData(new
+            {
+                Id = AbdClub.Models.AnnouncementFlyerSettings.CurrentSettingsId,
+                Greeting = "Thank you for coming tonight!",
+                MembershipUrl = "https://www.danceatx.org/store/annual-membership-1",
+                WebsiteUrl = "https://www.danceatx.org/",
+                UpdatedAt = new DateTime(2026, 8, 23, 0, 0, 0, DateTimeKind.Utc)
+            });
+
+        modelBuilder.Entity<FlyerAnnouncementItem>()
+            .HasOne(i => i.AnnouncementFlyerSettings)
+            .WithMany(s => s.Announcements)
+            .HasForeignKey(i => i.AnnouncementFlyerSettingsId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<HelpWantedItem>()
+            .HasOne(i => i.AnnouncementFlyerSettings)
+            .WithMany(s => s.HelpWantedItems)
+            .HasForeignKey(i => i.AnnouncementFlyerSettingsId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     // Ensure all DateTime properties saved to timestamptz columns are UTC

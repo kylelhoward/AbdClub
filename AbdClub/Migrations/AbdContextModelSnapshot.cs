@@ -22,6 +22,47 @@ namespace AbdClub.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("AbdClub.Models.AnnouncementFlyerSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Greeting")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("MembershipUrl")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WebsiteUrl")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AnnouncementFlyerSettings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Greeting = "Thank you for coming tonight!",
+                            MembershipUrl = "https://www.danceatx.org/store/annual-membership-1",
+                            UpdatedAt = new DateTime(2026, 8, 23, 0, 0, 0, DateTimeKind.Utc),
+                            WebsiteUrl = "https://www.danceatx.org/"
+                        });
+                });
+
             modelBuilder.Entity("AbdClub.Models.BroadcastAuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -237,6 +278,62 @@ namespace AbdClub.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("HomepageContents");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.FlyerAnnouncementItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AnnouncementFlyerSettingsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnnouncementFlyerSettingsId");
+
+                    b.ToTable("FlyerAnnouncementItems");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.HelpWantedItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AnnouncementFlyerSettingsId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnnouncementFlyerSettingsId");
+
+                    b.ToTable("HelpWantedItems");
                 });
 
             modelBuilder.Entity("AbdClub.Models.Lesson", b =>
@@ -679,6 +776,28 @@ namespace AbdClub.Migrations
                     b.Navigation("SentByOfficer");
                 });
 
+            modelBuilder.Entity("AbdClub.Models.FlyerAnnouncementItem", b =>
+                {
+                    b.HasOne("AbdClub.Models.AnnouncementFlyerSettings", "AnnouncementFlyerSettings")
+                        .WithMany("Announcements")
+                        .HasForeignKey("AnnouncementFlyerSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AnnouncementFlyerSettings");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.HelpWantedItem", b =>
+                {
+                    b.HasOne("AbdClub.Models.AnnouncementFlyerSettings", "AnnouncementFlyerSettings")
+                        .WithMany("HelpWantedItems")
+                        .HasForeignKey("AnnouncementFlyerSettingsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AnnouncementFlyerSettings");
+                });
+
             modelBuilder.Entity("AbdClub.Models.ClubFile", b =>
                 {
                     b.HasOne("AbdClub.Models.Member", "UploadedBy")
@@ -817,6 +936,13 @@ namespace AbdClub.Migrations
             modelBuilder.Entity("AbdClub.Models.Location", b =>
                 {
                     b.Navigation("Events");
+                });
+
+            modelBuilder.Entity("AbdClub.Models.AnnouncementFlyerSettings", b =>
+                {
+                    b.Navigation("Announcements");
+
+                    b.Navigation("HelpWantedItems");
                 });
 
             modelBuilder.Entity("AbdClub.Models.Member", b =>

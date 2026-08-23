@@ -1,0 +1,282 @@
+@page "/Announcements"
+@model AbdClub.Pages.AnnouncementsModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Announcements";
+}
+
+<div class="flyer-actions no-print" aria-label="Flyer actions">
+    <div>
+        <h1>ABD Announcements</h1>
+        <p>View the current announcements or print this page.</p>
+    </div>
+    <div class="flyer-action-buttons">
+        @if (User.IsInRole("Officer") || User.IsInRole("Admin") || User.IsInRole("TechAdmin"))
+        {
+            <a asp-page="/Officers/Announcements/Edit" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit flyer
+            </a>
+        }
+        <button type="button" class="btn btn-danger" onclick="window.print()">
+            <i class="bi bi-printer" aria-hidden="true"></i> Print or save as PDF
+        </button>
+    </div>
+</div>
+
+<article class="announcement-flyer" aria-label="Austin Ballroom Dancers announcements flyer">
+    <header class="flyer-header">
+        <img src="~/images/club-logo.webp" alt="Austin Ballroom Dancers logo" />
+        <div class="flyer-branding">
+            <div class="flyer-name"><span>Austin</span> Ballroom Dancers</div>
+            <div class="flyer-tagline">Dancing <b>★</b> Community <b>★</b> Connection</div>
+        </div>
+        <div class="flyer-greeting">@Model.Flyer.Greeting</div>
+    </header>
+
+    <div class="flyer-grid">
+        <section class="flyer-card upcoming-card">
+            <h2><i class="bi bi-calendar-event" aria-hidden="true"></i> Upcoming Dances</h2>
+            @if (Model.UpcomingDances.Count == 0)
+            {
+                <p class="empty-message">New dance dates will be announced soon.</p>
+            }
+            else
+            {
+                <div class="dance-list">
+                    @foreach (var dance in Model.UpcomingDances)
+                    {
+                        <div class="dance-item">
+                            <span class="item-star" aria-hidden="true">★</span>
+                            <div>
+                                <strong>@dance.Date.ToString("MMMM d, yyyy", CultureInfo.InvariantCulture)</strong>
+                                <span>@dance.Location.VenueName</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="flyer-card announcements-card">
+            <h2><i class="bi bi-megaphone" aria-hidden="true"></i> Announcements</h2>
+            @{ var announcements = Model.Flyer.Announcements.OrderBy(i => i.DisplayOrder).ToList(); }
+            @if (announcements.Count == 0)
+            {
+                <p class="empty-message">There are no additional announcements at this time.</p>
+            }
+            else
+            {
+                <ul class="announcement-list">
+                    @foreach (var item in announcements)
+                    {
+                        <li>@item.Text</li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="flyer-card members-card">
+            <h2><i class="bi bi-person-heart" aria-hidden="true"></i> Welcome New Members</h2>
+            @if (Model.NewMembers.Count == 0)
+            {
+                <p class="empty-message">We look forward to welcoming new members!</p>
+            }
+            else
+            {
+                <ul class="new-member-list">
+                    @foreach (var member in Model.NewMembers)
+                    {
+                        <li>
+                            <strong>@member.FullName</strong>
+                            <span>@member.JoinDate.ToString("MMM d", CultureInfo.InvariantCulture)</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="flyer-card help-card">
+            <h2><i class="bi bi-people" aria-hidden="true"></i> Help Wanted</h2>
+            @{ var helpItems = Model.Flyer.HelpWantedItems.OrderBy(i => i.DisplayOrder).ToList(); }
+            @if (helpItems.Count == 0)
+            {
+                <p class="empty-message">Ask a board member about ways to help ABD.</p>
+            }
+            else
+            {
+                <ul class="help-list">
+                    @foreach (var item in helpItems)
+                    {
+                        <li>
+                            <strong>@item.Title</strong>
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <span>@item.Description</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section class="flyer-card membership-card">
+            <h2><i class="bi bi-stars" aria-hidden="true"></i> Join ABD</h2>
+            <div class="membership-content">
+                <div class="membership-qr" role="img" aria-label="QR code for ABD membership sign-up">
+                    @Html.Raw(Model.MembershipQrSvg)
+                </div>
+                <div>
+                    <strong>Become a member today!</strong>
+                    <span>Scan the code to join.</span>
+                    <a href="@Model.Flyer.MembershipUrl">@Model.Flyer.MembershipUrl</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="flyer-card thank-you-card">
+            <h2><i class="bi bi-heart" aria-hidden="true"></i> Thank You!</h2>
+            <p>Thank you to our dance hosts, board members on duty, volunteers, and our DJ for this evening!</p>
+        </section>
+
+        <section class="flyer-card conduct-card">
+            <h2><i class="bi bi-shield-check" aria-hidden="true"></i> Code of Conduct</h2>
+            <p>ABD has a code of conduct. Please see our website for a copy.</p>
+            <p class="conduct-report">Please report violations to a board member or email us.</p>
+        </section>
+    </div>
+
+    <footer class="flyer-footer">
+        <span aria-hidden="true">★</span>
+        <a href="@Model.Flyer.WebsiteUrl">@Model.Flyer.WebsiteUrl</a>
+        <span aria-hidden="true">★</span>
+    </footer>
+</article>
+
+<style>
+    :root {
+        --abd-red: #b20d16;
+        --abd-black: #151515;
+        --abd-cream: #fffdf9;
+        --abd-soft-red: #fff4f4;
+    }
+
+    .flyer-actions {
+        max-width: 1100px;
+        margin: 1rem auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 1rem;
+    }
+
+    .flyer-actions h1 { margin: 0; font-size: 1.6rem; font-weight: 800; }
+    .flyer-actions p { margin: .25rem 0 0; color: #6c757d; }
+    .flyer-action-buttons { display: flex; gap: .5rem; flex-wrap: wrap; }
+
+    .announcement-flyer {
+        box-sizing: border-box;
+        width: min(100%, 1100px);
+        margin: 0 auto 2rem;
+        padding: 18px;
+        color: var(--abd-black);
+        background: var(--abd-cream);
+        border: 1px solid #ddd5cc;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, .12);
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .flyer-header {
+        display: grid;
+        grid-template-columns: 72px 1fr auto;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid var(--abd-red);
+    }
+
+    .flyer-header img { width: 72px; height: 72px; object-fit: contain; }
+    .flyer-name { color: var(--abd-red); font-family: Georgia, serif; font-size: 1.85rem; font-weight: 800; letter-spacing: .035em; text-transform: uppercase; }
+    .flyer-name span { color: var(--abd-black); font-style: italic; text-transform: none; }
+    .flyer-tagline { margin-top: 2px; font-family: Georgia, serif; font-size: 1rem; }
+    .flyer-tagline b { margin: 0 .35rem; color: var(--abd-red); }
+    .flyer-greeting { max-width: 290px; color: var(--abd-red); font-family: Georgia, serif; font-size: 1.25rem; font-style: italic; font-weight: 700; text-align: right; }
+
+    .flyer-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+    .flyer-card { overflow: hidden; padding: 12px 14px; background: #fff; border: 1.5px solid var(--abd-black); border-radius: 12px; }
+    .flyer-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 9px; padding-bottom: 6px; color: var(--abd-black); border-bottom: 1px solid #e3d9d0; font-size: 1rem; font-weight: 900; letter-spacing: .025em; text-transform: uppercase; }
+    .flyer-card h2 i { color: var(--abd-red); font-size: 1.15rem; }
+    .flyer-card p { margin: 0; font-size: .9rem; line-height: 1.35; }
+    .empty-message { color: #595959; font-style: italic; }
+
+    .upcoming-card { grid-column: span 4; min-height: 155px; }
+    .announcements-card { grid-column: span 8; min-height: 155px; background: var(--abd-soft-red); border-width: 2px; border-color: var(--abd-red); }
+    .members-card, .help-card, .membership-card { grid-column: span 4; min-height: 178px; }
+    .thank-you-card, .conduct-card { grid-column: span 6; min-height: 108px; }
+
+    .dance-list { display: grid; gap: 9px; }
+    .dance-item { display: grid; grid-template-columns: 18px 1fr; gap: 5px; }
+    .dance-item strong, .dance-item span { display: block; }
+    .dance-item strong { font-size: .92rem; }
+    .dance-item div span { margin-top: 1px; font-size: .82rem; font-style: italic; }
+    .item-star { color: var(--abd-red); }
+
+    .announcement-list { margin: 0; padding-left: 1.25rem; columns: 2; column-gap: 2rem; }
+    .announcement-list li { break-inside: avoid; margin: 0 0 7px; padding-left: 3px; font-size: .9rem; line-height: 1.3; }
+    .announcement-list li::marker { color: var(--abd-red); }
+
+    .new-member-list, .help-list { margin: 0; padding: 0; list-style: none; }
+    .new-member-list li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px dotted #d7d0ca; font-size: .82rem; }
+    .new-member-list li:last-child { border-bottom: 0; }
+    .new-member-list span { color: #666; white-space: nowrap; }
+    .help-list li { margin-bottom: 7px; }
+    .help-list strong { display: block; color: var(--abd-red); font-size: .88rem; text-transform: uppercase; }
+    .help-list span { display: block; font-size: .78rem; line-height: 1.25; }
+
+    .membership-content { display: grid; grid-template-columns: 105px 1fr; align-items: center; gap: 10px; }
+    .membership-qr svg { display: block; width: 105px; height: 105px; }
+    .membership-content strong, .membership-content span { display: block; }
+    .membership-content strong { color: var(--abd-red); font-size: .9rem; }
+    .membership-content span { margin-top: 3px; font-size: .78rem; }
+    .membership-content a { display: block; overflow-wrap: anywhere; margin-top: 5px; color: var(--abd-black); font-size: .58rem; }
+
+    .conduct-report { margin-top: 6px !important; padding-top: 6px; border-top: 1px solid var(--abd-red); font-weight: 700; }
+    .flyer-footer { display: flex; justify-content: center; align-items: center; gap: 16px; padding-top: 10px; color: var(--abd-red); font-family: Georgia, serif; font-size: 1rem; font-weight: 800; }
+    .flyer-footer a { color: var(--abd-black); }
+
+    @@media (max-width: 850px) {
+        .flyer-header { grid-template-columns: 58px 1fr; }
+        .flyer-header img { width: 58px; height: 58px; }
+        .flyer-greeting { grid-column: 1 / -1; max-width: none; text-align: center; }
+        .upcoming-card, .announcements-card, .members-card, .help-card, .membership-card, .thank-you-card, .conduct-card { grid-column: 1 / -1; min-height: auto; }
+        .announcement-list { columns: 1; }
+    }
+
+    @@page { size: Letter landscape; margin: .25in; }
+
+    @@media print {
+        html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+        body > header, body > footer, .no-print { display: none !important; }
+        body > .container, body > .container > main { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+        .announcement-flyer { width: 10.5in; height: 8in; margin: 0; padding: .14in; border: 0; box-shadow: none; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        .flyer-header { grid-template-columns: .63in 1fr 2.6in; gap: .1in; margin-bottom: .08in; padding-bottom: .07in; }
+        .flyer-header img { width: .63in; height: .63in; }
+        .flyer-name { font-size: 18pt; }
+        .flyer-tagline { font-size: 9pt; }
+        .flyer-greeting { font-size: 12pt; }
+        .flyer-grid { gap: .07in; }
+        .flyer-card { padding: .075in .095in; border-radius: .08in; break-inside: avoid; }
+        .flyer-card h2 { margin-bottom: .045in; padding-bottom: .035in; font-size: 9pt; }
+        .flyer-card p, .announcement-list li { font-size: 8pt; }
+        .upcoming-card, .announcements-card { min-height: 1.45in; }
+        .members-card, .help-card, .membership-card { min-height: 1.78in; }
+        .thank-you-card, .conduct-card { min-height: .92in; }
+        .dance-list { gap: .04in; }
+        .dance-item strong { font-size: 8pt; }
+        .dance-item div span, .new-member-list li, .help-list strong { font-size: 7.4pt; }
+        .help-list span { font-size: 6.8pt; }
+        .membership-content { grid-template-columns: 1.05in 1fr; gap: .07in; }
+        .membership-qr svg { width: 1.05in; height: 1.05in; }
+        .flyer-footer { padding-top: .05in; font-size: 9pt; }
+    }
+</style>
