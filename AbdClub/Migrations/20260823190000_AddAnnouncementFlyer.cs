@@ -75,6 +75,14 @@ namespace AbdClub.Migrations
             migrationBuilder.InsertData(
                 table: "AnnouncementFlyerSettings",
                 columns: new[] { "Id", "Greeting", "MembershipUrl", "UpdatedAt", "WebsiteUrl" },
+                columnTypes: new[]
+                {
+                    "integer",
+                    "character varying(200)",
+                    "character varying(1024)",
+                    "timestamp with time zone",
+                    "character varying(1024)"
+                },
                 values: new object[]
                 {
                     1,
