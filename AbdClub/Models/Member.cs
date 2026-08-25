@@ -6,6 +6,10 @@ namespace AbdClub.Models;
 public class Member
 {
     public int Id { get; set; }
+    public int MemberNumber { get; set; }
+
+    [NotMapped]
+    public string DisplayMemberNumber => $"ABD-{MemberNumber:D5}";
     // 🌟 THE CLEAN ARCHITECTURE UPGRADE
     [Required, StringLength(50)] public string FirstName { get; set; } = string.Empty;
     [StringLength(50)] public string? MiddleName { get; set; }
@@ -17,6 +21,9 @@ public class Member
         : $"{FirstName} {MiddleName} {LastName}";
     public string Email { get; set; } = string.Empty;
     public string? Phone { get; set; }
+    // Legacy authentication fields are retained temporarily so the migration can
+    // copy existing officer access into OfficerAccounts. Runtime authorization no
+    // longer reads these fields.
     public string? GoogleSubId { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime? ExpiryDate { get; set; }

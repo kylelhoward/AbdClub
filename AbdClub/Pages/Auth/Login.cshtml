@@ -2,14 +2,13 @@
 @model AbdClub.Pages.Auth.LoginModel
 
 <div class="login-wrap" style="max-width:400px; margin:3rem auto;">
-    <h1>Member Login</h1>
-    <p>Sign in to access your Austin Ballroom Dancers membership.</p>
+    <h1>Officer Login</h1>
+    <p>Authorized ABD officers can sign in to manage club operations.</p>
 
     @if (Model.NotAMember)
     {
         <div class="alert alert-warning">
-            Your account is not linked to an active membership.
-            <a href="/Membership">Join here</a> or contact an officer.
+            That email is not linked to an enabled officer account. Contact an administrator if you need access.
         </div>
     }
 
@@ -50,8 +49,7 @@
         <!-- Magic Link Login -->
         <div>
             <p class="text-muted small">
-                Don't have a Google account? Enter your email
-                and we'll send you a login link.
+                Enter your officer account email and we’ll send a one-time login link.
             </p>
             <form method="post">
                 <div class="mb-3">

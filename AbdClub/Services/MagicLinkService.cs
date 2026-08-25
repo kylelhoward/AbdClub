@@ -23,24 +23,16 @@ public class MagicLinkService : IMagicLinkService
 
     public async Task<bool> SendMagicLinkAsync(string email, string baseUrl)
     {
-        // Check if email exists in Members table
-        var member = await _db.Members
-            .FirstOrDefaultAsync(m => m.Email == email);
+        var officer = await _db.OfficerAccounts
+            .Include(a => a.Member)
+            .FirstOrDefaultAsync(a => a.Email == email && a.IsEnabled);
 
-        if (member.IsSuspended)
+        if (officer == null)
         {
             // Don't reveal whether email exists — just return true
             // This prevents email enumeration attacks
             _logger.LogInformation(
-                "Suspended Member:Magic link not sent: {Email}", email);
-            return true;
-        }
-        if (member == null)
-        {
-            // Don't reveal whether email exists — just return true
-            // This prevents email enumeration attacks
-            _logger.LogInformation(
-                "Magic link requested for unknown email: {Email}", email);
+                "Magic link requested for unknown or disabled officer email: {Email}", email);
             return true;
         }
 
@@ -69,7 +61,10 @@ public class MagicLinkService : IMagicLinkService
         var magicUrl = $"{baseUrl}/Auth/MagicLink?token={token}";
 
         // Send the email
-        await _email.SendMagicLinkEmailAsync(member, magicUrl);
+        await _email.SendMagicLinkEmailAsync(
+            officer.Email,
+            officer.Member?.FullName ?? "ABD Officer",
+            magicUrl);
 
         _logger.LogInformation(
             "Magic link sent to {Email}", email);
@@ -77,7 +72,7 @@ public class MagicLinkService : IMagicLinkService
         return true;
     }
 
-    public async Task<Member?> ValidateTokenAsync(string token)
+    public async Task<OfficerAccount?> ValidateTokenAsync(string token)
     {
         var magicLink = await _db.MagicLinks
             .FirstOrDefaultAsync(m =>
@@ -97,10 +92,9 @@ public class MagicLinkService : IMagicLinkService
         await _db.SaveChangesAsync();
 
         // 🌟 FIXED SERVER-SIDE RETRIEVAL: Uses persistent table fields for a safe SQL translation
-        return await _db.Members
-            .FirstOrDefaultAsync(m =>
-                m.Email == magicLink.Email &&
-                !m.IsSuspended); // 2. Membership must be chronologically active
+        return await _db.OfficerAccounts
+            .Include(a => a.Member)
+            .FirstOrDefaultAsync(a => a.Email == magicLink.Email && a.IsEnabled);
 
     }
 }

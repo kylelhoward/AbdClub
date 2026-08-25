@@ -54,8 +54,6 @@ public class MembersListModel(AbdContext db, IAuthorizationService authorization
                 m.ExpiryDate.HasValue &&
                 m.ExpiryDate.Value < DateTime.UtcNow),
 
-            "officers" => query.Where(m => m.IsOfficer),
-            "admins" => query.Where(m => m.IsAdmin || m.IsTechAdmin),
             _ => query
         };
 

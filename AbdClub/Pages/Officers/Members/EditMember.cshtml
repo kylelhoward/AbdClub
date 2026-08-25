@@ -19,6 +19,11 @@
                 <input type="hidden" asp-for="Member.Id" />
 
                 <div class="mb-3">
+                    <label class="form-label">Member Number</label>
+                    <input value="@Model.Member.DisplayMemberNumber" class="form-control" readonly />
+                </div>
+
+                <div class="mb-3">
                     <label asp-for="Member.FirstName" class="form-label">First Name</label>
                     <input asp-for="Member.FirstName" class="form-control" placeholder="Enter first name" />
                     <span asp-validation-for="Member.FirstName" class="text-danger small"></span>
@@ -53,49 +58,11 @@
                 </div>
 
                 <div class="card bg-light p-3 mb-4">
-                    <div class="container">
-                        <div class="row">
-                        <div class="col">
-                            <div class="form-check form-switch mb-2">
-                                <input 
-                                    asp-for="Member.IsSuspended" 
-                                    type="checkbox" 
-                                    class="form-check-input" 
-                                    role="switch" />
-                                <label asp-for="Member.IsSuspended" class="form-check-label fw-bold">Suspend Member</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input 
-                                    asp-for="Member.IsOfficer" 
-                                    type="checkbox" 
-                                    class="form-check-input" 
-                                    role="switch" 
-                                    id="isOfficerToggle" />
-                                <label asp-for="Member.IsOfficer" class="form-check-label fw-bold">Is Officer</label>
-                            </div>
-                    <div id="officerRoleField" style="display:none;">
-                        <label asp-for="Member.OfficerRole" class="form-label mt-2">
-                            Officer Role
-                        </label>
-                        <input asp-for="Member.OfficerRole" class="form-control"
-                               placeholder="e.g. President, Treasurer, Secretary" />
-                    <span asp-validation-for="Member.OfficerRole" class="text-danger small"></span>
+                    <div class="form-check form-switch">
+                        <input asp-for="Member.IsSuspended" type="checkbox" class="form-check-input" role="switch" />
+                        <label asp-for="Member.IsSuspended" class="form-check-label fw-bold">Suspend membership</label>
                     </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-check form-switch mb-2">
-                                <input asp-for="Member.IsAdmin" type="checkbox" class="form-check-input" role="switch" />
-                                <label asp-for="Member.IsAdmin" class="form-check-label fw-bold">Is Admin</label>
-                            </div>
-                                @if (Model.Member.IsTechAdmin)
-                                {
-                                        <div class="form-check form-switch">
-                                            <input asp-for="Member.IsTechAdmin" type="checkbox" class="form-check-input" role="switch" />
-                                            <label asp-for="Member.IsTechAdmin" class="form-check-label fw-bold">Is Tech Admin</label>
-                                        </div>
-                                }
-                       </div>
-                    </div>
+                    <div class="form-text">Officer login permissions are managed under Admin → Officer Accounts.</div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center border-top pt-3">
@@ -152,16 +119,4 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        // Show/hide officer role field based on toggle
-        const toggle = document.getElementById('isOfficerToggle');
-        const roleField = document.getElementById('officerRoleField');
-
-        function updateRoleField() {
-            roleField.style.display = toggle.checked ? 'block' : 'none';
-        }
-
-        toggle.addEventListener('change', updateRoleField);
-        updateRoleField();
-    </script>
 }

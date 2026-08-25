@@ -19,11 +19,6 @@
                 {
                     <span class="badge bg-secondary me-1">Inactive</span>
                 }
-
-                @if (Model.Member.IsOfficer)
-                {
-                    <span class="badge bg-amber text-dark" style="background-color: #ffc107;">Officer</span>
-                }
             </div>
         </div>
 
@@ -34,6 +29,11 @@
                     @Model.ErrorMessage
                 </div>
             }
+
+            <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Member Number</div>
+                <div class="col-sm-8 text-dark fw-semibold">@Model.Member.DisplayMemberNumber</div>
+            </div>
 
             <div class="row mb-3 border-bottom pb-2">
                 <div class="col-sm-4 text-muted fw-bold">Full Name</div>
@@ -70,15 +70,6 @@
                 </div>
             </div>
 
-            @if (Model.Member.IsOfficer)
-            {
-                <div class="row mb-3 border-bottom pb-2">
-                    <div class="col-sm-4 text-muted fw-bold">Officer Role</div>
-                    <div class="col-sm-8 text-dark">
-                        <span class="fst-italic">@Model.Member.OfficerRole</span>
-                    </div>
-                </div>
-            }
             <div class="row mb-3 border-bottom pb-2">
                 <div class="col-sm-4 text-muted fw-bold">Registration</div>
                 <div class="col-sm-8">

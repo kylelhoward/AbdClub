@@ -1,0 +1,23 @@
+@page "{id:int?}"
+@model AbdClub.Pages.Admin.OfficerAccounts.EditModel
+@{
+    ViewData["Title"] = Model.Input.Id.HasValue ? "Edit Officer Account" : "Add Officer Account";
+}
+
+<div class="mx-auto" style="max-width: 38rem;">
+    <h1>@ViewData["Title"]</h1>
+    <p class="text-muted">This controls website access. Linking a member is optional and does not affect membership status.</p>
+    <form method="post">
+        <input type="hidden" asp-for="Input.Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3"><label asp-for="Input.Email" class="form-label"></label><input asp-for="Input.Email" class="form-control" /><span asp-validation-for="Input.Email" class="text-danger"></span></div>
+        <div class="mb-3"><label asp-for="Input.MemberId" class="form-label">Linked member (optional)</label><select asp-for="Input.MemberId" asp-items="Model.Members" class="form-select"><option value="">Not linked</option></select><span asp-validation-for="Input.MemberId" class="text-danger"></span></div>
+        <div class="mb-3"><label asp-for="Input.AccessLevel" class="form-label">Access level</label><select asp-for="Input.AccessLevel" asp-items="Html.GetEnumSelectList<AbdClub.Models.OfficerAccessLevel>()" class="form-select"></select></div>
+        <div class="mb-3"><label asp-for="Input.OfficerTitle" class="form-label">Officer title</label><input asp-for="Input.OfficerTitle" class="form-control" placeholder="e.g. President or Treasurer" /></div>
+        <div class="form-check form-switch mb-4"><input asp-for="Input.IsEnabled" class="form-check-input" /><label asp-for="Input.IsEnabled" class="form-check-label">Login enabled</label></div>
+        <button class="btn btn-primary" type="submit">Save officer account</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

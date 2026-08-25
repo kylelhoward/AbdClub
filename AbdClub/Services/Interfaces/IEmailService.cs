@@ -8,7 +8,8 @@ public interface IEmailService
     Task SendOfficerReminderAsync(Dance dance, Member officer);
     Task SendEventNotificationToAllMembersAsync(Dance dance, string subject, string body);
     Task SendReminderAsync(Member member, string emailType);
-    Task SendMagicLinkEmailAsync(Member member, string magicUrl);  // ← add this
+    Task SendMagicLinkEmailAsync(string recipientEmail, string recipientName, string magicUrl);
+    Task SendMembershipStatusAsync(string recipientEmail, IReadOnlyList<Member> members);
     Task SendNewsletterWelcomeEmailAsync(string email, string firstName);
     // Add the new batch method signature here
     Task SendBroadcastEmailAsync(

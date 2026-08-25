@@ -14,6 +14,7 @@ public class AbdContext : DbContext
     public DbSet<CarouselSlide> CarouselSlides { get; set; } = null!;
     public DbSet<HomepageContent> HomepageContents { get; set; } = null!;
     public DbSet<Member> Members { get; set; } = null!;
+    public DbSet<OfficerAccount> OfficerAccounts { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
     public DbSet<EmailLog> EmailLogs { get; set; } = null!;
     public DbSet<MeetingNote> MeetingNotes { get; set; } = null!;
@@ -36,6 +37,31 @@ public class AbdContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.HasSequence<int>("MemberNumberSequence", schema: null)
+            .StartsAt(10001);
+
+        modelBuilder.Entity<Member>()
+            .Property(m => m.MemberNumber)
+            .HasDefaultValueSql("nextval('\"MemberNumberSequence\"')");
+
+        modelBuilder.Entity<Member>()
+            .HasIndex(m => m.MemberNumber)
+            .IsUnique();
+
+        modelBuilder.Entity<OfficerAccount>()
+            .HasIndex(a => a.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<OfficerAccount>()
+            .HasIndex(a => a.GoogleSubId)
+            .IsUnique();
+
+        modelBuilder.Entity<OfficerAccount>()
+            .HasOne(a => a.Member)
+            .WithOne()
+            .HasForeignKey<OfficerAccount>(a => a.MemberId)
+            .OnDelete(DeleteBehavior.SetNull);
        
       
         // Pre-existing TPH Hierarchical configurations

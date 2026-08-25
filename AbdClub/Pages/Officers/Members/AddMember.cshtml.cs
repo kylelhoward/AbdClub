@@ -40,17 +40,7 @@ public class AddMemberModel(AbdContext db,IAuthorizationService authorizationSer
         if (!ModelState.IsValid)
             return Page();
 
-        // Check for duplicate email
-        var existing = _db.Members
-            .FirstOrDefault(m => m.Email == Member.Email.Trim().ToLower());
-
-        if (existing != null)
-        {
-            ErrorMessage = $"A member with email {Member.Email} already exists.";
-            return Page();
-        }
-
-        // Normalize email
+        // Contact emails may be shared by two household members.
         Member.Email = Member.Email.Trim().ToLower();
         Member.CreatedAt = DateTime.UtcNow;
 
@@ -61,9 +51,12 @@ public class AddMemberModel(AbdContext db,IAuthorizationService authorizationSer
             Member.ExpiryDate = DateTime.SpecifyKind(
                 Member.ExpiryDate.Value, DateTimeKind.Utc);
 
-        // Clear officer role if not an officer
-        if (!Member.IsOfficer)
-            Member.OfficerRole = null;
+        // Login access is managed separately through OfficerAccount.
+        Member.IsOfficer = false;
+        Member.IsAdmin = false;
+        Member.IsTechAdmin = false;
+        Member.OfficerRole = null;
+        Member.GoogleSubId = null;
 
         _db.Members.Add(Member);
         await _db.SaveChangesAsync();

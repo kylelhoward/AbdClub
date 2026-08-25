@@ -1,0 +1,31 @@
+@page "/MembershipStatus"
+@model AbdClub.Pages.MembershipStatusModel
+@{
+    ViewData["Title"] = "Check Membership Status";
+}
+
+<div class="mx-auto" style="max-width: 34rem;">
+    <h1>Check your membership</h1>
+    <p class="text-muted">Enter the email address on your membership. We’ll email the status and member number for every membership associated with it.</p>
+
+    @if (Model.RequestAccepted)
+    {
+        <div class="alert alert-success">
+            If that email is associated with an ABD membership, a status message is on its way.
+        </div>
+    }
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">Email address</label>
+            <input asp-for="Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Email my membership status</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

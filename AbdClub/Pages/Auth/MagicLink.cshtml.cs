@@ -1,4 +1,5 @@
 using AbdClub.Services.Interfaces;
+using AbdClub.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -26,9 +27,9 @@ public class MagicLinkModel : PageModel
         if (string.IsNullOrEmpty(token))
             return RedirectToPage("/Auth/Login", new { expired = true });
 
-        var member = await _magicLink.ValidateTokenAsync(token);
+        var officer = await _magicLink.ValidateTokenAsync(token);
 
-        if (member == null)
+        if (officer == null)
         {
             IsValid = false;
             return Page();
@@ -37,27 +38,7 @@ public class MagicLinkModel : PageModel
         IsValid = true;
 
         // Build the same claims as Google login
-        var claimsToAdd = new List<Claim>
-        {
-            new(ClaimTypes.Name,  member.FirstName + ' ' + member.FullName),
-            new(ClaimTypes.Email, member.Email),
-            new("MemberId",       member.Id.ToString()),
-            new("IsOfficer",      member.IsOfficer.ToString().ToLower()),
-            new("ExpiryDate",     member.ExpiryDate.HasValue
-                                  ? member.ExpiryDate.Value.ToString("O")
-                                  : ""),
-            new(ClaimTypes.Role, "Member")
-        };
-
-        if (member.OfficerRole != null)
-            claimsToAdd.Add(new("OfficerRole", member.OfficerRole));
-
-        if (member.IsOfficer)
-            claimsToAdd.Add(new(ClaimTypes.Role, "Officer"));
-        if (member.IsAdmin)
-            claimsToAdd.Add(new(ClaimTypes.Role, "Admin"));
-        if (member.IsTechAdmin)
-            claimsToAdd.Add(new(ClaimTypes.Role, "TechAdmin"));
+        var claimsToAdd = OfficerClaimsFactory.Create(officer);
         var identity = new ClaimsIdentity(claimsToAdd, "MagicLink");
         var principal = new ClaimsPrincipal(identity);
 
@@ -69,12 +50,8 @@ public class MagicLinkModel : PageModel
             });
 
         _logger.LogInformation(
-            "Magic link login successful for {Email}", member.Email);
+            "Magic link login successful for {Email}", officer.Email);
 
-        // Redirect based on role — same logic as Callback.cshtml.cs
-        if (member.IsOfficer)
-            return RedirectToPage("/Officers/Dashboard");
-
-        return RedirectToPage("/Members/Dashboard");
+        return RedirectToPage("/Officers/Dashboard");
     }
 }

@@ -3,6 +3,7 @@ using AbdClub.Models;
 using AbdClub.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Resend;
+using System.Net;
 
 namespace AbdClub.Services;
 
@@ -25,13 +26,13 @@ public class ResendEmailService : IEmailService
     private string GetFromName() => _config["Email:FromName"]!;
     private string GetFromAddress() => $"{GetFromName()} <{GetFromEmail()}>";
 
-    public async Task SendMagicLinkEmailAsync(Member member, string magicUrl)
+    public async Task SendMagicLinkEmailAsync(string recipientEmail, string recipientName, string magicUrl)
     {
         var subject = "Your Austin Ballroom Dancers login link";
 
         var body = $@"
         <h2>Your Login Link</h2>
-        <p>Hi {member.LastName},</p>
+        <p>Hi {WebUtility.HtmlEncode(recipientName)},</p>
         <p>Click the button below to log in to your Austin Ballroom Dancers account.</p>
         <p>
             <a href=""{magicUrl}""
@@ -52,7 +53,7 @@ public class ResendEmailService : IEmailService
             var email = new EmailMessage
             {
                 From = GetFromAddress(),
-                To = member.Email,
+                To = recipientEmail,
                 Subject = subject,
                 HtmlBody = body
             };
@@ -61,15 +62,29 @@ public class ResendEmailService : IEmailService
 
             if (response?.Exception != null)
                 _logger.LogError("Failed to send magic link to {Email}: {Error}",
-                    member.Email, response.Exception.Message);
+                    recipientEmail, response.Exception.Message);
             else
-                _logger.LogInformation("Magic link email sent to {Email}", member.Email);
+                _logger.LogInformation("Magic link email sent to {Email}", recipientEmail);
         }
         catch (Exception ex)
         {
             _logger.LogError("Failed to send magic link to {Email}: {Exception}",
-                member.Email, ex.Message);
+                recipientEmail, ex.Message);
         }
+    }
+
+    public async Task SendMembershipStatusAsync(string recipientEmail, IReadOnlyList<Member> members)
+    {
+        var rows = string.Join("", members.Select(member => $"""
+            <tr><td>{WebUtility.HtmlEncode(member.DisplayMemberNumber)}</td><td>{WebUtility.HtmlEncode(member.FullName)}</td><td>{(member.IsActive ? "Active" : "Expired or inactive")}</td><td>{member.ExpiryDate?.ToString("MMMM d, yyyy") ?? "Not recorded"}</td></tr>
+            """));
+        var email = new EmailMessage
+        {
+            From = GetFromAddress(), To = recipientEmail,
+            Subject = "Your Austin Ballroom Dancers membership status",
+            HtmlBody = $"<h2>ABD Membership Status</h2><p>Here are the membership records associated with this email address.</p><table><thead><tr><th>Member number</th><th>Member</th><th>Status</th><th>Expires</th></tr></thead><tbody>{rows}</tbody></table><p>If anything is incorrect, please contact an ABD officer.</p>"
+        };
+        await _resendClient.EmailSendAsync(email);
     }
 
     public async Task SendReminderAsync(Member member, string emailType)

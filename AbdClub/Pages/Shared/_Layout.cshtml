@@ -57,14 +57,9 @@
                  <li class="nav-item">
                      <a class="nav-link text-dark" asp-page="/Announcements">Announcements</a>
                  </li>
-                 
-                 @* Public/Member Space — visible to any logged-in registered account *@
-                 @if (User.Identity?.IsAuthenticated == true)
-                 {
-                     <li class="nav-item">
-                         <a class="nav-link text-dark" asp-page="/Members/Dashboard">My Membership</a>
-                     </li>
-                 }
+                 <li class="nav-item">
+                     <a class="nav-link text-dark" asp-page="/MembershipStatus">Membership Status</a>
+                 </li>
 
                  @* 1. REFACTORED TO POLICY: Officers dropdown — visible to anyone matching the "isOfficer" rule *@
                  @if ((await AuthorizationService.AuthorizeAsync(User,null, "isOfficer")).Succeeded)
@@ -104,6 +99,7 @@
                             <li><a class="dropdown-item" asp-page="/Admin/BatchNotify">Admin Broadcast Center</a></li>
                             <li><a class="dropdown-item" asp-page="/Admin/EmailLogs/Index">Email Logs</a></li>
                             <li><a class="dropdown-item" asp-page="/Admin/ManageHomepage">Manage Home Page</a></li>
+                            <li><a class="dropdown-item" asp-page="/Admin/OfficerAccounts/Index">Officer Accounts</a></li>
                                  
 @*                              <li><a class="dropdown-item" asp-page="/Admin/Dashboard">Executive Panel</a></li>
                              <li><a class="dropdown-item" asp-page="/Admin/Financials">Club Revenue Matrix</a></li>
@@ -137,7 +133,7 @@
                  @if (User.Identity?.IsAuthenticated != true)
                  {
                      <li class="nav-item">
-                         <a class="nav-link text-dark" asp-page="/Auth/Login">Login</a>
+                         <a class="nav-link text-dark" asp-page="/Auth/Login">Officer Login</a>
                      </li>
                  }
 
@@ -172,10 +168,6 @@
                      else if (User.IsInRole("Officer"))
                      {
                          <span class="badge bg-primary me-2">Officer</span>
-                     }
-                     else
-                     {
-                         <span class="badge bg-secondary me-2">Member</span>
                      }
                  </div>
 

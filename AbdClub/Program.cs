@@ -1,10 +1,12 @@
 using AbdClub.Data;
 using AbdClub.Services;
 using AbdClub.Services.Interfaces;
+using AbdClub.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics; // 🌟 Add this for warning definitions
+using System.Threading.RateLimiting;
 using Resend;
 using Serilog;
 using Log = Serilog.Log;
@@ -54,8 +56,9 @@ builder.Services.AddAuthorizationBuilder()
 // --- Razor Pages Folder System Conventions ---
 builder.Services.AddRazorPages(options =>
 {
-    // Open to all registered accounts who passed the email whitelist gate
-    options.Conventions.AuthorizeFolder("/Members");
+    // Member self-service login has been retired. Any remaining member pages are
+    // officer-only until they are removed or repurposed.
+    options.Conventions.AuthorizeFolder("/Members", "isOfficer");
 
     // Tier 1: Visible to Officers, Admins, and TechAdmins
     options.Conventions.AuthorizeFolder("/Officers", "isOfficer");
@@ -74,6 +77,20 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizePage("/Officers/Meetings/Create", "isAdmin");
     options.Conventions.AuthorizePage("/Officers/Meetings/Edit", "isAdmin");
     options.Conventions.AuthorizePage("/Officers/Meetings/Delete", "isAdmin");
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("membership-status", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(15),
+                QueueLimit = 0
+            }));
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 // Register Google credential path provider for centralized resolution
@@ -116,26 +133,19 @@ builder.Services.AddAuthentication(options =>
             return;
         }
 
-        var member = await db.Members
-            .FirstOrDefaultAsync(m => m.Email == email);
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var officer = await db.OfficerAccounts
+            .Include(a => a.Member)
+            .FirstOrDefaultAsync(a => a.Email == normalizedEmail);
 
-        if (member == null)
+        if (officer == null || !officer.IsEnabled)
         {
             // 🌟 SECURITY AUDIT LOG: Explicitly flags unauthorized external login attempts
             logger.LogWarning(
-                "Security Gateway Alert: Sign-in handshake aborted. Google account {AttemptedEmail} is not present on the club member whitelist.",
+                "Security Gateway Alert: Google account {AttemptedEmail} is not an enabled officer account.",
                 email);
 
-            context.Fail("Not a registered member");
-            return;
-        }
-        // 🌟 HARD BLOCK FOR SUSPENDED ACCOUNTS
-        if (member.IsSuspended)
-        {
-            logger.LogWarning(
-               "Access Denied This account has been administratively suspended by a club officer.",
-               email);
-            context.Fail("Access Denied: This account has been administratively suspended by a club officer.");
+            context.Fail("Not an authorized officer");
             return;
         }
 
@@ -150,45 +160,24 @@ builder.Services.AddAuthentication(options =>
         //}
 
         // Store GoogleSubId the first time they log in
-        if (member.GoogleSubId == null && googleSub != null)
+        if (officer.GoogleSubId == null && googleSub != null)
         {
-            member.GoogleSubId = googleSub;
+            officer.GoogleSubId = googleSub;
             await db.SaveChangesAsync();
 
             // 🌟 COMPLIANCE AUDIT LOG: Tracks when an identity bridge anchor link is generated
             logger.LogInformation(
-                "Identity Mapping Upgrade: Linked MemberId: {MemberId} ({CustomerEmail}) to Google Subject Identifiers: {GoogleSubId}",
-                member.Id, email, googleSub);
+                "Linked OfficerAccountId {OfficerAccountId} ({Email}) to Google subject {GoogleSubId}",
+                officer.Id, email, googleSub);
         }
 
         logger.LogInformation(
-            "Security Checkpoint Cleared: Active session cookies initialized for MemberId: {MemberId} ({CustomerEmail}).",
-            member.Id, email);
+            "Security Checkpoint Cleared for OfficerAccountId {OfficerAccountId} ({Email}).",
+            officer.Id, email);
 
         // Get the COOKIE identity, not the Google identity
         // This is the key fix — we must add claims to the principal that will be serialized into the cookie
-        var claimsToAdd = new List<System.Security.Claims.Claim>
-        {
-            new("MemberId",    member.Id.ToString()),
-            new("IsOfficer",   member.IsOfficer.ToString().ToLower()),
-            new("IsAdmin",   member.IsAdmin.ToString().ToLower()),
-            new("IsTechAdmin",   member.IsTechAdmin.ToString().ToLower()),
-            new("ExpiryDate",  member.ExpiryDate.HasValue
-                               ? member.ExpiryDate.Value.ToString("O")
-                               : ""),
-             // Standardized Member role token added to every registered login principal
-            new(System.Security.Claims.ClaimTypes.Role, "Member")
-        };
-
-        if (member.OfficerRole != null)
-            claimsToAdd.Add(new("OfficerRole", member.OfficerRole));
-
-        if (member.IsOfficer)
-            claimsToAdd.Add(new(System.Security.Claims.ClaimTypes.Role, "Officer"));
-        if (member.IsAdmin)
-            claimsToAdd.Add(new(System.Security.Claims.ClaimTypes.Role, "Admin"));
-        if (member.IsTechAdmin)
-            claimsToAdd.Add(new(System.Security.Claims.ClaimTypes.Role, "TechAdmin"));
+        var claimsToAdd = OfficerClaimsFactory.Create(officer);
 
         // Add to BOTH identities to be safe
         foreach (var identity in context.Principal!.Identities)
@@ -288,6 +277,7 @@ try
     app.UseHttpsRedirection();
     app.UseStaticFiles();
     app.UseRouting();
+    app.UseRateLimiter();
     app.UseSession();        // ← add this
     app.UseAuthentication();  // who are you?
     app.UseAuthorization();   // what can you do?

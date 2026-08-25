@@ -147,7 +147,7 @@ public class SmtpEmailService : IEmailService
         return message;
     }
 
-    public async Task SendMagicLinkEmailAsync(Member member, string magicUrl)
+    public async Task SendMagicLinkEmailAsync(string recipientEmail, string recipientName, string magicUrl)
     {
         const string emailType = "MagicLink";
         const string sourceTrigger = "System:MagicLinkAuth";
@@ -156,13 +156,13 @@ public class SmtpEmailService : IEmailService
         _logger.LogInformation(
             "{sourceTrigger}. Recipient: {RecipientEmail}"
             ,sourceTrigger
-            ,member.Email);
+            ,recipientEmail);
 
         var subject = "Your Austin Ballroom Dancers login link";
 
         var body = $@"
         <h2>Your Login Link</h2>
-        <p>Hi {member.LastName},</p>
+        <p>Hi {WebUtility.HtmlEncode(recipientName)},</p>
         <p>Click the button below to log in to your Austin Ballroom Dancers account.</p>
         <p>
             <a href=""{magicUrl}""
@@ -181,7 +181,7 @@ public class SmtpEmailService : IEmailService
         try
         {
             using var message = BuildMessage(
-                member.Email, member.LastName, subject, body, isHtml: true);
+                recipientEmail, recipientName, subject, body, isHtml: true);
 
             // 2. Execute the third-party network API transaction call
             // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
@@ -190,16 +190,16 @@ public class SmtpEmailService : IEmailService
             // 3. Log a clear, successful operation footprint
             _logger.LogInformation(
                 "Communication successfully accepted by remote SMTP relay server. Message type: MagicLink, Destination: {RecipientEmail}",
-                member.Email);
-            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
+                recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: true);
         }
         catch (SmtpException ex)
         {
             // 4. CRITICAL LOG: Catches explicit network configuration glitches (Bad credentials, port blocking)
             _logger.LogError(ex,
                 "Relay Handshake Exception: Zoho SMTP gateway rejected outbound authentication headers for recipient {RecipientEmail}.",
-                member.Email);
-            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
+                recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: false, errorMessage: ex.Message);
             throw; // Bubble up to let the controller gracefully alert the user
         }
         catch (Exception ex)
@@ -207,10 +207,27 @@ public class SmtpEmailService : IEmailService
             // 5. Catch any unhandled thread system drops or parsing anomalies
             _logger.LogError(ex,
                 "Mailing Operational Error: An unexpected failure occurred while processing message envelopes targeting {RecipientEmail}.",
-                member.Email);
-            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
+                recipientEmail);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, null, isSuccess: false, errorMessage: ex.Message);
             throw;
         }
+    }
+
+    public async Task SendMembershipStatusAsync(string recipientEmail, IReadOnlyList<Member> members)
+    {
+        const string subject = "Your Austin Ballroom Dancers membership status";
+        var rows = string.Join("", members.Select(member => $"""
+            <tr><td>{WebUtility.HtmlEncode(member.DisplayMemberNumber)}</td><td>{WebUtility.HtmlEncode(member.FullName)}</td><td>{(member.IsActive ? "Active" : "Expired or inactive")}</td><td>{member.ExpiryDate?.ToString("MMMM d, yyyy") ?? "Not recorded"}</td></tr>
+            """));
+        var body = $"""
+            <h2>ABD Membership Status</h2>
+            <p>Here are the membership records associated with this email address.</p>
+            <table style='border-collapse:collapse;width:100%'><thead><tr><th>Member number</th><th>Member</th><th>Status</th><th>Expires</th></tr></thead><tbody>{rows}</tbody></table>
+            <p>If anything is incorrect, please contact an ABD officer.</p>
+            """;
+        using var message = BuildMessage(recipientEmail, "ABD Member", subject, body, true);
+        await _smtpSender.SendMailAsync(message);
+        await WriteAuditLogAsync(recipientEmail, subject, body, "MembershipStatus", "Public:MembershipStatus", null, true);
     }
 
     public async Task SendMembershipReminderAsync(Member member)
