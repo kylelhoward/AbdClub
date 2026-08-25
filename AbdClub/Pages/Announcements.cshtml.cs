@@ -19,6 +19,7 @@ public class AnnouncementsModel : PageModel
     public List<Dance> UpcomingDances { get; private set; } = new();
     public List<Member> NewMembers { get; private set; } = new();
     public string MembershipQrSvg { get; private set; } = string.Empty;
+    public string NewsletterQrSvg { get; private set; } = string.Empty;
 
     public async Task OnGetAsync()
     {
@@ -53,5 +54,11 @@ public class AnnouncementsModel : PageModel
             QRCodeGenerator.ECCLevel.Q);
         var qrCode = new SvgQRCode(qrData);
         MembershipQrSvg = qrCode.GetGraphic(5);
+
+        using var newsletterQrData = QRCodeGenerator.GenerateQrCode(
+            Flyer.NewsletterUrl,
+            QRCodeGenerator.ECCLevel.Q);
+        var newsletterQrCode = new SvgQRCode(newsletterQrData);
+        NewsletterQrSvg = newsletterQrCode.GetGraphic(5);
     }
 }

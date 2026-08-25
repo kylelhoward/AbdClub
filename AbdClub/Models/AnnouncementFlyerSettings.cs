@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AbdClub.Models;
 
@@ -21,6 +22,9 @@ public class AnnouncementFlyerSettings
 
     [Required, Url, StringLength(1024)]
     public string WebsiteUrl { get; set; } = "https://www.danceatx.org/";
+
+    [NotMapped]
+    public string NewsletterUrl => $"{WebsiteUrl.TrimEnd('/')}/#newsletter-signup";
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
