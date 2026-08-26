@@ -23,10 +23,24 @@ public class MembersListModel(AbdContext db, IAuthorizationService authorization
         // Apply search first
         if (!string.IsNullOrWhiteSpace(q))
         {
-            q = q.Trim().ToLower();
+            var searchText = q.Trim();
+            var normalizedText = searchText.ToLower();
+
+            var memberNumberText = searchText.StartsWith(
+                "ABD-",
+                StringComparison.OrdinalIgnoreCase)
+                    ? searchText[3..]
+                    : searchText;
+
+            var isMemberNumber =
+                int.TryParse(memberNumberText, out var memberNumber);
+
             query = query.Where(m =>
-                m.LastName.ToLower().Contains(q) ||
-                m.Email.ToLower().Contains(q));
+              m.LastName.ToLower().Contains(normalizedText) ||
+              m.FirstName.ToLower().Contains(normalizedText) ||
+              (m.Email != null &&
+               m.Email.ToLower().Contains(normalizedText)) ||
+              (isMemberNumber && m.MemberNumber == memberNumber));
         }
 
         // 🌟 SERVER-SIDE REALIGNMENT: Bypasses the unmapped IsActive parameter natively

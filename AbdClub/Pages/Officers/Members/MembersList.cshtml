@@ -56,9 +56,19 @@
             @Model.Members.Count member(s) found.
         </div>
         <div>
-            <form class="d-flex" method="get" role="search" aria-label="Search members">
-                <input name="q" value="@(Request.Query["q"])" class="form-control form-control-sm me-2" placeholder="Search name or email" />
-                <button class="btn btn-outline-secondary btn-sm" type="submit">Search</button>
+            <form 
+                class="d-flex"
+                method="get"
+                role="search"
+                aria-label="Search members">
+                <input 
+                    name="q"
+                    value="@(Request.Query["q"])"
+                    class="form-control form-control-sm me-2" 
+                    placeholder="Search name or email" />
+                <button 
+                    class="btn btn-outline-secondary btn-sm" 
+                    type="submit">Search</button>
             </form>
         </div>
     </div>
