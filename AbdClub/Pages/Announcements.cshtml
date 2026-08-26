@@ -13,7 +13,7 @@
     <div class="flyer-action-buttons">
         @if (User.IsInRole("Officer") || User.IsInRole("Admin") || User.IsInRole("TechAdmin"))
         {
-            <a asp-page="/Officers/Announcements/Edit" class="btn btn-outline-secondary">
+            <a asp-page="/Admin/ManageAnnouncements" class="btn btn-outline-secondary">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> Edit flyer
             </a>
         }
@@ -141,8 +141,8 @@
                 </div>
                 <div>
                     <strong>Join our email list!</strong>
-                    <span>Scan for ABD news and dance announcements.</span>
-                    <a href="@Model.Flyer.NewsletterUrl">danceatx.org/#newsletter-signup</a>
+                    <span>ABD Home page (scroll down for email sign-up).</span>
+                    <a href="@Model.Flyer.NewsletterUrl">danceatx.org/</a>
                 </div>
             </div>
         </section>

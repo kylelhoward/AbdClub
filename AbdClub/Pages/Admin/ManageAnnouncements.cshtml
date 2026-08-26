@@ -1,5 +1,5 @@
 @page
-@model AbdClub.Pages.Admin.EditAnnouncementsModel
+@model AbdClub.Pages.Admin.ManageAnnouncementsModel
 @{
     ViewData["Title"] = "Edit Announcement Flyer";
 }
@@ -49,6 +49,7 @@
                 <div>
                     <label asp-for="Input.WebsiteUrl" class="form-label fw-bold"></label>
                     <input asp-for="Input.WebsiteUrl" class="form-control" type="url" />
+                    <div class="form-text">The newsletter QR code automatically links to this homepage plus <code>#newsletter-signup</code>.</div>
                     <span asp-validation-for="Input.WebsiteUrl" class="text-danger"></span>
                 </div>
             </div>

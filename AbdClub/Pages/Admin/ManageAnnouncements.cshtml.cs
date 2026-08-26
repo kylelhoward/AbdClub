@@ -6,14 +6,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-namespace AbdClub.Pages.Officers.Announcements;
+namespace AbdClub.Pages.Admin;
 
 [Authorize(Policy = "isOfficer")]
-public class EditModel : PageModel
+public class ManageAnnouncementsModel : PageModel
 {
     private readonly AbdContext _context;
 
-    public EditModel(AbdContext context)
+    public ManageAnnouncementsModel(AbdContext context)
     {
         _context = context;
     }
