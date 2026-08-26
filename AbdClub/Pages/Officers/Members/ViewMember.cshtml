@@ -97,3 +97,48 @@
         </div>
     </div>
 </div>
+
+
+<hr class="my-5" />
+
+<div class="card shadow border-0">
+    <div class="card-header bg-secondary text-white p-3">
+        <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Member Payments</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Amount</th>
+                        <th class="ps-3">Payment Date</th>
+                        <th>Transaction ID</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Member.Payments.Any())
+                    {
+                        foreach (var payment in Model.Member.Payments)
+                        {
+                            <tr>
+                                <td class="fw-bold">@payment.Amount.ToString("C")</td>
+                                <td class="ps-3 text-muted small">@payment.PaymentDate.ToLocalTime().ToString("g")</td>
+                                <td class="text-muted small">@payment.TransactionId</td>
+                                <td class="text-center"><span class="badge bg-secondary">@payment.Status</span></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td 
+                                colspan="4" 
+                                class="text-center p-4 text-muted">No historical payments found.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

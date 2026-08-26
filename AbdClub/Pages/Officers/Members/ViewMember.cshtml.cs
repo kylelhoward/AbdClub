@@ -3,6 +3,7 @@ using AbdClub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages.Officers.Members;
 
@@ -17,7 +18,9 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
-        Member = await _db.Members.FindAsync(id);
+        Member = await _db.Members
+            .Include(m => m.Payments)
+            .FirstOrDefaultAsync(m => m.Id == id);
 
         if (Member == null)
         {
