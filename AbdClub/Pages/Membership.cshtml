@@ -1,114 +1,114 @@
 ﻿@page
 @model AbdClub.Pages.MembershipModel
+@using AbdClub.Models
 @{
     ViewData["Title"] = "Join Austin Ballroom Dancers";
 }
 
 <div class="membership-wrap">
-
-    <h1>@(Model.IsRenewal ? "Renew Annual Membership" : "Annual Membership")</h1>
-    <p class="lead">
-        Join Austin Ballroom Dancers for one full year — just $50.
-    </p>
-
-    <ul class="perks">
-        <li>Access to all monthly social dances</li>
-        <li>Discounted workshop tickets</li>
-        <li>Member newsletter and event reminders</li>
-        <li>Voting rights at club meetings</li>
-        <li>Priority event registration</li>
-    </ul>
+    <h1>Annual Membership</h1>
+    <p class="lead">Join individually or purchase two annual memberships together at a discount.</p>
 
     @if (Model.PaymentCancelled)
     {
-        <div class="alert alert-warning">
-            Payment was cancelled — no charge was made.
-            You can try again below.
-        </div>
+        <div class="alert alert-warning">Payment was cancelled—no charge was made.</div>
     }
-
     @if (Model.PaymentSuccess)
     {
         <div class="alert alert-success">
-            <strong>Welcome to Austin Ballroom Dancers!</strong>
-            <p>Your membership is now active. Here's how to log in:</p>
-            <hr />
-
-            <p><strong>Option 1 — Gmail users:</strong></p>
-            <a asp-page="/Auth/Login" class="btn btn-outline-dark btn-sm">
-                Sign in with Google
-            </a>
-
-            <p class="mt-3"><strong>Option 2 — All other email users:</strong></p>
-            <p>
-                Go to the <a asp-page="/Auth/Login">login page</a> and enter
-                the email address you used to sign up. We'll send you a
-                login link.
-            </p>
+            <strong>Thank you!</strong> Stripe accepted your payment. Your membership record will be updated when payment processing completes.
         </div>
+        <p><a asp-page="/MembershipStatus">Email me my membership status and member number</a></p>
     }
-
-    @if (!Model.PaymentSuccess)
+    else
     {
-        <div class="membership-form">
-            <h2>Your details</h2>
-            @if (Model.IsRenewal)
-            {
-                <p>Your member details are prefilled below. Your sign-in email is locked to your account.</p>
-            }
-            else
-            {
-                <p>
-                    Enter your information below. The email address you provide
-                    is what you'll use to log in after joining.
-                </p>
-            }
+        <form method="post" id="membership-form" class="membership-form">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-            <form method="post">
-                <div class="form-group">
-                    <label for="fullName">Full name</label>
-                    <input asp-for="LastName" type="text" id="fullName"
-                           placeholder="Jane Smith" required
-                           class="form-control" />
+            <fieldset class="mb-4">
+                <legend class="h4">Choose a membership</legend>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="plan-option h-100">
+                            <input asp-for="Input.Plan" type="radio" value="@MembershipPlan.Individual" />
+                            <span><strong>Individual</strong><small>One member for one year</small><b>@Model.IndividualPrice.ToString("C")</b></span>
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="plan-option h-100">
+                            <input asp-for="Input.Plan" type="radio" value="@MembershipPlan.Couple" />
+                            <span><strong>Two members</strong><small>Two separate memberships purchased together</small><b>@Model.CouplePrice.ToString("C")</b></span>
+                        </label>
+                    </div>
                 </div>
+            </fieldset>
 
-                <div class="form-group">
-                    <label for="email">
-                        Email address
-                        <small>(used to log in — Gmail or any email)</small>
-                    </label>
-                    <input asp-for="Email" type="email" id="email"
-                           placeholder="jane@example.com" required
-                           readonly="@Model.IsRenewal"
-                           class="form-control" />
+            <section class="member-details mb-4">
+                <h2 class="h4">Member 1</h2>
+                <div class="row g-3">
+                    <div class="col-md-6"><label asp-for="Input.FirstName1" class="form-label"></label><input asp-for="Input.FirstName1" class="form-control" /><span asp-validation-for="Input.FirstName1" class="text-danger"></span></div>
+                    <div class="col-md-6"><label asp-for="Input.LastName1" class="form-label"></label><input asp-for="Input.LastName1" class="form-control" /><span asp-validation-for="Input.LastName1" class="text-danger"></span></div>
+                    <div class="col-md-7"><label asp-for="Input.Email1" class="form-label"></label><input asp-for="Input.Email1" class="form-control" autocomplete="email" /><span asp-validation-for="Input.Email1" class="text-danger"></span></div>
+                    <div class="col-md-5"><label asp-for="Input.Phone1" class="form-label"></label><input asp-for="Input.Phone1" class="form-control" autocomplete="tel" /><span asp-validation-for="Input.Phone1" class="text-danger"></span></div>
                 </div>
+            </section>
 
-                <div class="form-group">
-                    <label for="phone">Phone <small>(optional)</small></label>
-                    <input asp-for="Phone" type="tel" id="phone"
-                           placeholder="512-555-0100"
-                           class="form-control" />
+            <section id="member-two" class="member-details mb-4" hidden>
+                <h2 class="h4">Member 2</h2>
+                <div class="row g-3">
+                    <div class="col-md-6"><label asp-for="Input.FirstName2" class="form-label"></label><input asp-for="Input.FirstName2" class="form-control" /><span asp-validation-for="Input.FirstName2" class="text-danger"></span></div>
+                    <div class="col-md-6"><label asp-for="Input.LastName2" class="form-label"></label><input asp-for="Input.LastName2" class="form-control" /><span asp-validation-for="Input.LastName2" class="text-danger"></span></div>
+                    <div class="col-12">
+                        <div class="form-check"><input asp-for="Input.SharedEmail" class="form-check-input" /><label asp-for="Input.SharedEmail" class="form-check-label">Use Member 1’s email address for both memberships</label></div>
+                        <div class="form-text">Each person still receives a separate member number and membership record.</div>
+                    </div>
+                    <div id="second-email" class="col-md-7"><label asp-for="Input.Email2" class="form-label"></label><input asp-for="Input.Email2" class="form-control" autocomplete="email" /><span asp-validation-for="Input.Email2" class="text-danger"></span></div>
+                    <div class="col-md-5"><label asp-for="Input.Phone2" class="form-label"></label><input asp-for="Input.Phone2" class="form-control" autocomplete="tel" /><span asp-validation-for="Input.Phone2" class="text-danger"></span></div>
                 </div>
+            </section>
 
-                <div class="price-summary">
-                    <span>Annual Membership</span>
-                    <span class="price">$50.00</span>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-lg">
-                    Pay $50 securely with Stripe
-                </button>
-
-                <p class="note">
-                    You'll be taken to a secure Stripe payment page.
-                    We never see your card details.
-                </p>
-                <p class="note">
-                    <strong>Gmail users</strong> — log in with Google after joining.<br />
-                    <strong>All other email users</strong> — use the magic link option on the login page.
-                </p>
-            </form>
-        </div>
+            <div class="price-summary"><span id="summary-label">Individual annual membership</span><span id="summary-price" class="price">@Model.IndividualPrice.ToString("C")</span></div>
+            <button type="submit" id="pay-button" class="btn btn-primary btn-lg">Pay @Model.IndividualPrice.ToString("C") securely with Stripe</button>
+            <p class="note mt-3">You’ll be taken to Stripe’s secure payment page. ABD never sees your card details.</p>
+        </form>
     }
-
 </div>
+
+<style>
+    .plan-option { display:flex; gap:.75rem; padding:1rem; border:2px solid #ddd; border-radius:.75rem; cursor:pointer; }
+    .plan-option:has(input:checked) { border-color:#b20d16; background:#fff7f7; }
+    .plan-option span, .plan-option strong, .plan-option small, .plan-option b { display:block; }
+    .plan-option small { color:#666; margin:.2rem 0 .45rem; }
+    .member-details { padding:1.25rem; border:1px solid #ddd; border-radius:.75rem; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const coupleValue = '@MembershipPlan.Couple';
+            const individualPrice = '@Model.IndividualPrice.ToString("C")';
+            const couplePrice = '@Model.CouplePrice.ToString("C")';
+            const plans = document.querySelectorAll('input[name="Input.Plan"]');
+            const memberTwo = document.getElementById('member-two');
+            const sharedEmail = document.getElementById('Input_SharedEmail');
+            const secondEmail = document.getElementById('second-email');
+            const summaryLabel = document.getElementById('summary-label');
+            const summaryPrice = document.getElementById('summary-price');
+            const payButton = document.getElementById('pay-button');
+
+            function update() {
+                const selected = document.querySelector('input[name="Input.Plan"]:checked');
+                const isCouple = selected?.value === coupleValue;
+                memberTwo.hidden = !isCouple;
+                secondEmail.hidden = !isCouple || sharedEmail.checked;
+                summaryLabel.textContent = isCouple ? 'Two annual memberships' : 'Individual annual membership';
+                summaryPrice.textContent = isCouple ? couplePrice : individualPrice;
+                payButton.textContent = `Pay ${isCouple ? couplePrice : individualPrice} securely with Stripe`;
+            }
+            plans.forEach(plan => plan.addEventListener('change', update));
+            sharedEmail.addEventListener('change', update);
+            update();
+        })();
+    </script>
+}

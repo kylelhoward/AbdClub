@@ -1,9 +1,12 @@
-﻿namespace AbdClub.Services.Interfaces;
+﻿using AbdClub.Models;
+
+namespace AbdClub.Services.Interfaces;
 
 public interface IStripeService
 {
     Task<string> CreateCheckoutSessionAsync(
-        string fullName, string email, string? phone,
-        string successUrl, string cancelUrl);
+        MembershipCheckoutRequest request,
+        string successUrl,
+        string cancelUrl);
     Task<bool> HandleWebhookAsync(string json, string stripeSignature);
 }

@@ -305,8 +305,9 @@ public class ResendEmailService : IEmailService
         {
             "Welcome" => $@"
                 <h2>Welcome to Austin Ballroom Dancers!</h2>
-                <p>Hi {member.LastName},</p>
+                <p>Hi {member.FirstName},</p>
                 <p>We're thrilled to have you. Your membership is active until <strong>{expiry}</strong>.</p>
+                <p>Your ABD member number is <strong>{member.DisplayMemberNumber}</strong>.</p>
                 <p><a href=""https://yourdomain.com/calendar"">Check our calendar for upcoming events</a></p>
                 <p>See you on the dance floor!<br/>— The ABD Team</p>
             ",
