@@ -1,105 +1,155 @@
-﻿@page
+@page
 @model AbdClub.Pages.Officers.Members.AddMemberModel
+@using AbdClub.Models
 @{
-    ViewData["Title"] = "Add Member";
+    ViewData["Title"] = "Add Membership";
 }
 
-<div class="container mt-4" style="max-width: 600px;">
+<div class="container mt-4" style="max-width: 720px;">
     <div class="card shadow-sm">
         <div class="card-header bg-success text-white">
-            <h2 class="card-title h4 mb-0">Add New Member</h2>
+            <h2 class="card-title h4 mb-0">Add Membership</h2>
         </div>
         <div class="card-body">
-
-            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-            {
-                <div class="alert alert-danger">@Model.ErrorMessage</div>
-            }
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <form method="post" novalidate>
+                <fieldset class="mb-4">
+                    <legend class="h5">Membership type</legend>
+                    <div class="form-check border rounded p-3 mb-2 ps-5">
+                        <input asp-for="Plan" class="form-check-input" type="radio"
+                               value="@MembershipPlan.Individual" id="planIndividual" />
+                        <label class="form-check-label w-100" for="planIndividual">
+                            <strong>Individual membership — @Model.IndividualPrice.ToString("C")</strong>
+                            <span class="d-block text-muted small">One annual membership</span>
+                        </label>
+                    </div>
+                    <div class="form-check border rounded p-3 ps-5">
+                        <input asp-for="Plan" class="form-check-input" type="radio"
+                               value="@MembershipPlan.Couple" id="planCouple" />
+                        <label class="form-check-label w-100" for="planCouple">
+                            <strong>Two-person membership — @Model.CouplePrice.ToString("C")</strong>
+                            <span class="d-block text-muted small">Two separate members purchased together</span>
+                        </label>
+                    </div>
+                </fieldset>
 
-                <div class="mb-3">
-                    <label asp-for="Member.FirstName" class="form-label">First Name</label>
-                    <input asp-for="Member.FirstName" class="form-control" />
-                    <span asp-validation-for="Member.FirstName" class="text-danger small"></span>
+                <fieldset class="border rounded p-3 mb-4">
+                    <legend class="float-none w-auto px-2 h5">First member</legend>
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="Member.FirstName" class="form-label">First Name</label>
+                            <input asp-for="Member.FirstName" class="form-control" />
+                            <span asp-validation-for="Member.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="Member.MiddleName" class="form-label">Middle Name</label>
+                            <input asp-for="Member.MiddleName" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Member.LastName" class="form-label">Last Name</label>
+                            <input asp-for="Member.LastName" class="form-control" />
+                            <span asp-validation-for="Member.LastName" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7 mb-3">
+                            <label asp-for="Member.Email" class="form-label">Contact Email</label>
+                            <input asp-for="Member.Email" type="email" class="form-control" placeholder="jane@example.com" />
+                            <span asp-validation-for="Member.Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="Member.Phone" class="form-label">Phone <small class="text-muted">(optional)</small></label>
+                            <input asp-for="Member.Phone" type="tel" class="form-control" placeholder="512-555-0100" />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset id="secondMemberSection" class="border rounded p-3 mb-4">
+                    <legend class="float-none w-auto px-2 h5">Second member</legend>
+                    <div class="row">
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="SecondMember.FirstName" class="form-label">First Name</label>
+                            <input asp-for="SecondMember.FirstName" class="form-control" />
+                            <span asp-validation-for="SecondMember.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label asp-for="SecondMember.MiddleName" class="form-label">Middle Name</label>
+                            <input asp-for="SecondMember.MiddleName" class="form-control" />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="SecondMember.LastName" class="form-label">Last Name</label>
+                            <input asp-for="SecondMember.LastName" class="form-control" />
+                            <span asp-validation-for="SecondMember.LastName" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="SharedEmail" class="form-check-input" role="switch" id="sharedEmail" />
+                        <label class="form-check-label" for="sharedEmail">Use the first member's email for both members</label>
+                    </div>
+                    <div class="row">
+                        <div id="secondEmailGroup" class="col-md-7 mb-3">
+                            <label asp-for="SecondMember.Email" class="form-label">Second Member Email</label>
+                            <input asp-for="SecondMember.Email" type="email" class="form-control" />
+                            <span asp-validation-for="SecondMember.Email" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="SecondMember.Phone" class="form-label">Phone <small class="text-muted">(optional)</small></label>
+                            <input asp-for="SecondMember.Phone" type="tel" class="form-control" />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Member.JoinDate" class="form-label">Join Date</label>
+                        <input asp-for="Member.JoinDate" type="date" class="form-control" />
+                        <span asp-validation-for="Member.JoinDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Member.ExpiryDate" class="form-label">Expiry Date</label>
+                        <input asp-for="Member.ExpiryDate" type="date" class="form-control" />
+                        <span asp-validation-for="Member.ExpiryDate" class="text-danger small"></span>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="Member.MiddleName" class="form-label">Middle Name</label>
-                    <input asp-for="Member.MiddleName" class="form-control" />
-                    <span asp-validation-for="Member.MiddleName" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Member.LastName" class="form-label">Last Name</label>
-                    <input asp-for="Member.LastName" class="form-control" />
-                    <span asp-validation-for="Member.LastName" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Member.Email" class="form-label">
-                        Email Address
-                        <small class="text-muted">(used to log in)</small>
-                    </label>
-                    <input asp-for="Member.Email" type="email" class="form-control"
-                           placeholder="jane@example.com" />
-                    <span asp-validation-for="Member.Email" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Member.Phone" class="form-label">
-                        Phone <small class="text-muted">(optional)</small>
-                    </label>
-                    <input asp-for="Member.Phone" type="tel" class="form-control"
-                           placeholder="512-555-0100" />
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Member.JoinDate" class="form-label">Join Date</label>
-                    <input asp-for="Member.JoinDate" type="date" class="form-control"
-                           value="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
-                    <span asp-validation-for="Member.JoinDate" class="text-danger small"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Member.ExpiryDate" class="form-label">Expiry Date</label>
-                    <input asp-for="Member.ExpiryDate" type="date" class="form-control"
-                           value="@DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd")" />
-                    <span asp-validation-for="Member.ExpiryDate" class="text-danger small"></span>
+                <div class="card bg-light p-3 mb-4">
+                    <div class="form-check form-switch mb-3">
+                        <input asp-for="RecordPayment" class="form-check-input" role="switch" id="recordPayment" />
+                        <label class="form-check-label fw-bold" for="recordPayment">
+                            Record payment received: <span id="paymentTotal"></span>
+                        </label>
+                    </div>
+                    <div id="paymentDetails" class="row">
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="PaymentMethod" class="form-label">Payment Method</label>
+                            <select asp-for="PaymentMethod" class="form-select">
+                                <option>Cash</option>
+                                <option>Check</option>
+                                <option>Square/Card</option>
+                                <option>Other</option>
+                            </select>
+                            <span asp-validation-for="PaymentMethod" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <label asp-for="PaymentNotes" class="form-label">Reference or Notes <small class="text-muted">(optional)</small></label>
+                            <input asp-for="PaymentNotes" class="form-control" placeholder="Check number or other reference" />
+                            <span asp-validation-for="PaymentNotes" class="text-danger small"></span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="card bg-light p-3 mb-4">
                     <div class="form-check form-switch">
-                        <input asp-for="Member.IsSuspended" type="checkbox" class="form-check-input" role="switch" />
+                        <input asp-for="Member.IsSuspended" class="form-check-input" role="switch" />
                         <label asp-for="Member.IsSuspended" class="form-check-label fw-bold">Suspend membership</label>
                     </div>
-                    <div class="form-text">Officer login permissions are managed separately under Admin → Officer Accounts.</div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-bold">
-                        Record a payment?
-                        <small class="text-muted fw-normal">
-                            (for members paying by check or cash)
-                        </small>
-                    </label>
-                    <div class="form-check form-switch">
-                       <!-- 🌟 APPROACH A: Use the formal Tag Helper (Highly Recommended) -->
-<input type="checkbox" class="form-check-input" role="switch" asp-for="RecordPayment" id="recordPayment" />
-
-                        <label class="form-check-label" for="RecordPayment">
-                            Record $50 payment
-                        </label>
-                    </div>
+                    <div class="form-text">For a two-person membership, this setting applies to the first member only.</div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center border-top pt-3">
-                    <a asp-page="./MembersList" class="btn btn-outline-secondary">
-                        Cancel
-                    </a>
-                    <button type="submit" class="btn btn-success px-4">
-                        Add Member
-                    </button>
+                    <a asp-page="./MembersList" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success px-4" id="submitButton">Add Membership</button>
                 </div>
             </form>
         </div>
@@ -108,4 +158,32 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const coupleValue = '@MembershipPlan.Couple';
+            const individualPrice = '@Model.IndividualPrice.ToString("C")';
+            const couplePrice = '@Model.CouplePrice.ToString("C")';
+            const planInputs = document.querySelectorAll('input[name="Plan"]');
+            const secondMember = document.getElementById('secondMemberSection');
+            const sharedEmail = document.getElementById('sharedEmail');
+            const secondEmail = document.getElementById('secondEmailGroup');
+            const recordPayment = document.getElementById('recordPayment');
+            const paymentDetails = document.getElementById('paymentDetails');
+            const paymentTotal = document.getElementById('paymentTotal');
+
+            function updateForm() {
+                const plan = document.querySelector('input[name="Plan"]:checked')?.value;
+                const isCouple = plan === coupleValue;
+                secondMember.hidden = !isCouple;
+                secondEmail.hidden = !isCouple || sharedEmail.checked;
+                paymentDetails.hidden = !recordPayment.checked;
+                paymentTotal.textContent = isCouple ? couplePrice : individualPrice;
+            }
+
+            planInputs.forEach(input => input.addEventListener('change', updateForm));
+            sharedEmail.addEventListener('change', updateForm);
+            recordPayment.addEventListener('change', updateForm);
+            updateForm();
+        })();
+    </script>
 }

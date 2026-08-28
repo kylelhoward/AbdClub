@@ -10,6 +10,8 @@ public class Payment
     public DateTime PeriodEnd { get; set; }
     public string? TransactionId { get; set; }
     public string Status { get; set; } = "Completed";
+    public string? PaymentMethod { get; set; }
+    public string? Notes { get; set; }
 
     public Member Member { get; set; } = null!;
 }

@@ -87,7 +87,9 @@
                                     <th>Date</th>
                                     <th>Amount</th>
                                     <th>Period</th>
+                                    <th>Method</th>
                                     <th>Transaction</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -101,10 +103,18 @@
                                             @p.PeriodEnd.ToString("MMM d, yyyy")
                                         </td>
                                         <td>
+                                            @(p.PaymentMethod ?? "—")
+                                            @if (!string.IsNullOrWhiteSpace(p.Notes))
+                                            {
+                                                <small class="d-block text-muted">@p.Notes</small>
+                                            }
+                                        </td>
+                                        <td>
                                             <small class="text-muted">
                                                 @p.TransactionId?[..12]...
                                             </small>
                                         </td>
+                                        <td>@p.Status</td>
                                     </tr>
                                 }
                             </tbody>

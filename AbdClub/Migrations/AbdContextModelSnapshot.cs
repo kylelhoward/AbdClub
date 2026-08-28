@@ -737,8 +737,14 @@ namespace AbdClub.Migrations
                     b.Property<int>("MemberId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("PeriodEnd")
                         .HasColumnType("timestamp with time zone");

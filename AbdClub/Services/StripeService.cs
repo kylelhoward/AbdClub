@@ -198,7 +198,8 @@ public class StripeService : IStripeService
                 PeriodStart = periodStart,
                 PeriodEnd = member.ExpiryDate!.Value,
                 TransactionId = transactionId,
-                Status = "Completed"
+                Status = "Completed",
+                PaymentMethod = "Stripe"
             });
             fulfilledMembers.Add(member);
         }

@@ -19,6 +19,7 @@ public class Member
     public string FullName => string.IsNullOrWhiteSpace(MiddleName)
         ? $"{FirstName} {LastName}"
         : $"{FirstName} {MiddleName} {LastName}";
+    [EmailAddress]
     public string Email { get; set; } = string.Empty;
     public string? Phone { get; set; }
     // Legacy authentication fields are retained temporarily so the migration can
