@@ -10,8 +10,24 @@
     <form method="post">
         <input type="hidden" asp-for="Input.Id" />
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="mb-3"><label asp-for="Input.Email" class="form-label"></label><input asp-for="Input.Email" class="form-control" /><span asp-validation-for="Input.Email" class="text-danger"></span></div>
-        <div class="mb-3"><label asp-for="Input.MemberId" class="form-label">Linked member (optional)</label><select asp-for="Input.MemberId" asp-items="Model.Members" class="form-select"><option value="">Not linked</option></select><span asp-validation-for="Input.MemberId" class="text-danger"></span></div>
+        <div class="mb-3">
+            <label asp-for="Input.MemberId" class="form-label">Linked member (optional)</label>
+            <select asp-for="Input.MemberId" class="form-select" id="linkedMember">
+                <option value="">Not linked</option>
+                @foreach (var member in Model.Members)
+                {
+                    <option value="@member.Id" data-email="@member.Email">@member.DisplayName</option>
+                }
+            </select>
+            <div class="form-text">Selecting a member will copy that member's email into the login email field.</div>
+            <span asp-validation-for="Input.MemberId" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Input.Email" class="form-label">Login email</label>
+            <input asp-for="Input.Email" class="form-control" id="officerEmail" />
+            <div class="form-text">You may change this if the officer uses a different email for website access.</div>
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
         <div class="mb-3"><label asp-for="Input.AccessLevel" class="form-label">Access level</label><select asp-for="Input.AccessLevel" asp-items="Html.GetEnumSelectList<AbdClub.Models.OfficerAccessLevel>()" class="form-select"></select></div>
         <div class="mb-3"><label asp-for="Input.OfficerTitle" class="form-label">Officer title</label><input asp-for="Input.OfficerTitle" class="form-control" placeholder="e.g. President or Treasurer" /></div>
         <div class="form-check form-switch mb-4"><input asp-for="Input.IsEnabled" class="form-check-input" /><label asp-for="Input.IsEnabled" class="form-check-label">Login enabled</label></div>
@@ -20,4 +36,22 @@
     </form>
 </div>
 
-@section Scripts { <partial name="_ValidationScriptsPartial" /> }
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const memberSelect = document.getElementById('linkedMember');
+            const emailInput = document.getElementById('officerEmail');
+
+            memberSelect.addEventListener('change', () => {
+                const selected = memberSelect.options[memberSelect.selectedIndex];
+                const memberEmail = selected?.dataset.email;
+                if (memberEmail) {
+                    emailInput.value = memberEmail;
+                    emailInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    emailInput.focus();
+                }
+            });
+        })();
+    </script>
+}

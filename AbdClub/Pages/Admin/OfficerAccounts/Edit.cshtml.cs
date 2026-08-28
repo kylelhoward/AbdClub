@@ -3,7 +3,6 @@ using AbdClub.Data;
 using AbdClub.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace AbdClub.Pages.Admin.OfficerAccounts;
@@ -12,7 +11,9 @@ public class EditModel(AbdContext db) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
-    public SelectList Members { get; private set; } = default!;
+    public List<MemberOption> Members { get; private set; } = new();
+
+    public sealed record MemberOption(int Id, string DisplayName, string Email);
 
     public class InputModel
     {
@@ -68,6 +69,11 @@ public class EditModel(AbdContext db) : PageModel
     private async Task LoadMembersAsync()
     {
         var members = await db.Members.AsNoTracking().OrderBy(m => m.LastName).ThenBy(m => m.FirstName).ToListAsync();
-        Members = new SelectList(members.Select(m => new { m.Id, Name = $"{m.DisplayMemberNumber} — {m.FullName}" }), "Id", "Name", Input.MemberId);
+        Members = members
+            .Select(m => new MemberOption(
+                m.Id,
+                $"{m.DisplayMemberNumber} — {m.FullName}",
+                m.Email))
+            .ToList();
     }
 }
