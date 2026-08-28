@@ -42,26 +42,33 @@ public class GoogleSheetExportService : IGoogleSheetExportService
         // 2. Construct the 2D matrix array. Row 1 is your static table headers wrapper.
         var dataMatrix = new List<IList<object>>
         {
-            new List<object> { "Member ID", "First Name", "Last Name", "Full Name", "Email Address", "Join Date", "Expiration Date", "Status" }
+            new List<object>
+            {
+                "Member Number", "Database ID", "First Name", "Middle Name", "Last Name",
+                "Full Name", "Email Address", "Phone", "Join Date", "Expiration Date", "Status"
+            }
         };
 
-        // 3. Loop through active database records and map properties to table grid cells
+        // 3. Map every current database member to the roster grid.
         foreach (var m in members)
         {
             dataMatrix.Add(new List<object>
             {
+                m.DisplayMemberNumber,
                 m.Id.ToString(),
                 m.FirstName,
+                m.MiddleName ?? string.Empty,
                 m.LastName,
                 m.FullName, // Reads your unmapped calculated property natively
                 m.Email,
+                m.Phone ?? string.Empty,
                 m.JoinDate.ToString("yyyy-MM-dd"),
                 m.ExpiryDate?.ToString("yyyy-MM-dd") ?? "N/A",
                 m.IsActive ? "Active" : (m.IsSuspended ? "Suspended" : "Expired")
             });
         }
 
-        // 4. Target the specific sheet range (e.g., "MembersExport!A1:H1000")
+        // 4. Start at A1 and let Google Sheets expand to the current roster width.
         // Enforcing a generic catch range string like 'A1' lets Google dynamically resize row depths
         string targetRange = $"{sheetName}!A1";
 
@@ -82,4 +89,3 @@ public class GoogleSheetExportService : IGoogleSheetExportService
         return $"Successfully updated {result.UpdatedRows} rows inside Google Sheet tab: '{sheetName}'";
     }
 }
-

@@ -19,7 +19,7 @@
                 <i class="bi bi-file-earmark-spreadsheet-fill text-success me-2"></i>Google Sheet Live Inspector
             </h2>
             <p class="text-muted small mb-0">
-                Inspect and import rows from the <strong>Membership_raw</strong> tab or push the current roster to Google Sheets.
+                Inspect and import rows from <strong>Membership_raw</strong>, or push the current roster with ABD member numbers.
             </p>
         </div>
 
@@ -83,41 +83,48 @@
     else
     {
         <!-- Summary Metric Badges -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-5 g-3 mb-4">
+            <div class="col">
                 <div class="card border-0 shadow-sm rounded-3 p-3 bg-light">
                     <span class="text-muted small fw-bold text-uppercase">Total Rows Loaded</span>
                     <span class="fs-4 fw-bold text-dark font-monospace">@Model.TotalRowsCount</span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card border-0 shadow-sm rounded-3 p-3 bg-light">
-                    <span class="text-muted small fw-bold text-uppercase">Active Members</span>
+                    <span class="text-muted small fw-bold text-uppercase">Active in Database</span>
                     <span class="fs-4 fw-bold text-success font-monospace">
-                        @Model.Rows.Count(r => !r.IsExpired)
+                        @Model.Rows.Count(r => r.DatabaseStatus == "Active")
                     </span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card border-0 shadow-sm rounded-3 p-3 bg-light">
                     <span 
-                        class="text-muted small fw-bold text-uppercase">Lapsed / Expired</span>
+                        class="text-muted small fw-bold text-uppercase">Expired / Suspended</span>
                     <span 
                         class="fs-4 fw-bold text-warning font-monospace">
-                        @Model.Rows.Count(r => r.IsExpired)
+                        @Model.Rows.Count(r => r.DatabaseStatus is "Expired" or "Suspended")
                     </span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col">
                 <div class="card border-0 shadow-sm rounded-3 p-3 bg-light">
                     <span
-                        class="text-muted small fw-bold text-uppercase">Email Bounce Warnings</span>
-                    <span 
-                        class="fs-4 fw-bold text-danger font-monospace">
-                        @Model.Rows.Count(r => r.IsEmailBounced)
-                    </span>
+                        class="text-muted small fw-bold text-uppercase">Not Matched</span>
+                    <span class="fs-4 fw-bold text-secondary font-monospace">@Model.Rows.Count(r => !r.IsImported)</span>
                 </div>
             </div>
+            <div class="col">
+                <div class="card border-0 shadow-sm rounded-3 p-3 bg-light">
+                    <span class="text-muted small fw-bold text-uppercase">Email Bounces</span>
+                    <span class="fs-4 fw-bold text-danger font-monospace">@Model.Rows.Count(r => r.IsEmailBounced)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-light border small mb-4">
+            Imports identify a member by email plus first and last name. Two people may therefore share one household email and still receive separate ABD member numbers.
         </div>
 
         <!-- Data Grid -->
@@ -127,6 +134,8 @@
                     <thead class="table-dark font-monospace text-uppercase" style="font-size: 0.75rem;">
                         <tr>
                             <th class="ps-3" style="width: 60px;">Row</th>
+                            <th>ABD Member #</th>
+                            <th>Database Status</th>
                             <th>First Name (B)</th>
                             <th>Last Name (C)</th>
                             <th>Full Name (D)</th>
@@ -139,7 +148,7 @@
                         @if (!Model.Rows.Any())
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-5 text-muted">
+                                <td colspan="9" class="text-center py-5 text-muted">
                                     No records found in the specified range.
                                 </td>
                             </tr>
@@ -150,6 +159,34 @@
                             {
                                 <tr>
                                     <td class="ps-3 font-monospace text-muted">@row.RowIndex</td>
+                                    <td class="font-monospace fw-semibold">
+                                        @if (row.IsImported)
+                                        {
+                                            @row.MemberNumber
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not imported</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (row.DatabaseStatus == "Active")
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else if (row.DatabaseStatus == "Suspended")
+                                        {
+                                            <span class="badge bg-danger">Suspended</span>
+                                        }
+                                        else if (row.DatabaseStatus == "Expired")
+                                        {
+                                            <span class="badge bg-warning text-dark">Expired</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
                                     <td class="fw-semibold">@row.FirstName</td>
                                     <td class="fw-semibold">@row.LastName</td>
                                     <td class="text-secondary font-monospace">@row.FullName</td>
@@ -212,4 +249,3 @@
         </div>
     }
 </div>
-

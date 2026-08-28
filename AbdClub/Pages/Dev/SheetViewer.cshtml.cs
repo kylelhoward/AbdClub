@@ -56,6 +56,9 @@ public class SheetViewerModel : PageModel
         public string Phone { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public bool IsEmailBounced { get; set; }
+        public string? MemberNumber { get; set; }
+        public string? DatabaseStatus { get; set; }
+        public bool IsImported => MemberNumber != null;
     }
 
     public async Task<IActionResult> OnGetAsync()
@@ -90,6 +93,13 @@ public class SheetViewerModel : PageModel
                 ErrorMessage = "Connected to Google Sheet, but no row records were returned in range " + range;
                 return Page();
             }
+
+            // Email is contact information and may be shared. Match a sheet row to
+            // a database member by normalized email plus first and last name.
+            var databaseMembers = await _context.Members.AsNoTracking().ToListAsync();
+            var membersByIdentity = databaseMembers
+                .GroupBy(m => MemberIdentity(m.Email, m.FirstName, m.LastName))
+                .ToDictionary(g => g.Key, g => g.First());
 
             int index = 2; // Tracking row number in sheet
             foreach (var row in values)
@@ -129,6 +139,11 @@ public class SheetViewerModel : PageModel
                 bool isBounced = email.Contains("[BOUNCE]", StringComparison.OrdinalIgnoreCase) ||
                                  email.Contains("(bounced)", StringComparison.OrdinalIgnoreCase);
 
+                var cleanEmail = CleanSheetEmail(email);
+                membersByIdentity.TryGetValue(
+                    MemberIdentity(cleanEmail, firstName, lastName),
+                    out var databaseMember);
+
                 Rows.Add(new SheetMemberRow
                 {
                     RowIndex = index,
@@ -138,8 +153,14 @@ public class SheetViewerModel : PageModel
                     RawExpirationDate = rawExp,
                     ParsedExpirationDate = parsedDate,
                     Phone = phone,
-                    Email = email.Replace("[BOUNCE]", "").Replace("(bounced)", "").Trim(),
-                    IsEmailBounced = isBounced
+                    Email = cleanEmail,
+                    IsEmailBounced = isBounced,
+                    MemberNumber = databaseMember?.DisplayMemberNumber,
+                    DatabaseStatus = databaseMember == null
+                        ? null
+                        : databaseMember.IsActive
+                            ? "Active"
+                            : databaseMember.IsSuspended ? "Suspended" : "Expired"
                 });
 
                 index++;
@@ -191,9 +212,15 @@ public class SheetViewerModel : PageModel
                 return RedirectToPage();
             }
 
-            // Load existing emails to avoid duplicates
-            var existingEmails = await _context.Members.Select(m => m.Email).ToListAsync();
-            var existingSet = new HashSet<string>(existingEmails, StringComparer.OrdinalIgnoreCase);
+            // Shared household emails are valid. A member is considered existing
+            // only when email, first name, and last name all match.
+            var existingMembers = await _context.Members
+                .AsNoTracking()
+                .Select(m => new { m.Email, m.FirstName, m.LastName })
+                .ToListAsync();
+            var existingSet = existingMembers
+                .Select(m => MemberIdentity(m.Email, m.FirstName, m.LastName))
+                .ToHashSet();
 
             var toAdd = new List<Member>();
             int index = 2;
@@ -207,7 +234,7 @@ public class SheetViewerModel : PageModel
                 string fullName = GetCell(3);
                 string rawExp = GetCell(4);
                 string phone = GetCell(5);
-                string email = GetCell(6).Replace("[BOUNCE]", "").Replace("(bounced)", "").Trim();
+                string email = CleanSheetEmail(GetCell(6));
 
                 if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email))
                 {
@@ -215,10 +242,11 @@ public class SheetViewerModel : PageModel
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(email) || existingSet.Contains(email))
+                var memberIdentity = MemberIdentity(email, firstName, lastName);
+                if (string.IsNullOrWhiteSpace(email) || existingSet.Contains(memberIdentity))
                 {
                     index++;
-                    continue; // skip rows with no email or already existing
+                    continue; // skip rows with no email or the same person already existing
                 }
 
                 DateTime? parsedDate = null;
@@ -241,11 +269,15 @@ public class SheetViewerModel : PageModel
                     Phone = string.IsNullOrWhiteSpace(phone) ? null : phone,
                     JoinDate = DateTime.UtcNow,
                     ExpiryDate = parsedDate,
-                    IsOfficer = false
+                    IsOfficer = false,
+                    IsAdmin = false,
+                    IsTechAdmin = false,
+                    SelfRegistered = false,
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 toAdd.Add(member);
-                existingSet.Add(email);
+                existingSet.Add(memberIdentity);
                 index++;
             }
 
@@ -268,6 +300,15 @@ public class SheetViewerModel : PageModel
 
         return RedirectToPage();
     }
+
+    private static string CleanSheetEmail(string email) =>
+        email.Replace("[BOUNCE]", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("(bounced)", "", StringComparison.OrdinalIgnoreCase)
+            .Trim()
+            .ToLowerInvariant();
+
+    private static string MemberIdentity(string? email, string? firstName, string? lastName) =>
+        $"{email?.Trim().ToLowerInvariant()}|{firstName?.Trim().ToLowerInvariant()}|{lastName?.Trim().ToLowerInvariant()}";
 
 
     public async Task<IActionResult> OnPostTriggerExportAsync()
@@ -299,4 +340,3 @@ public class SheetViewerModel : PageModel
 
 
 }
-
