@@ -59,7 +59,7 @@ public class AbdContext : DbContext
 
         modelBuilder.Entity<OfficerAccount>()
             .HasOne(a => a.Member)
-            .WithOne()
+            .WithOne(m => m.OfficerAccount)
             .HasForeignKey<OfficerAccount>(a => a.MemberId)
             .OnDelete(DeleteBehavior.SetNull);
        

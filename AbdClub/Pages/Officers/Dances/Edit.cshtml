@@ -292,7 +292,7 @@
                                                     disabled="@isReadOnly"/>
                                                 <label class="form-check-label small fw-bold text-dark pt-0" for="of_@officer.Id">
                                                     @($"{officer.LastName}")
-                                                    <span class="text-muted font-monospace small">(@(officer.OfficerRole ?? "Staff"))</span>
+                                                    <span class="text-muted font-monospace small">(@(officer.OfficerAccount?.OfficerTitle ?? "Staff"))</span>
                                                 </label>
                                             </div>
                                             @if (!string.IsNullOrEmpty(officer.Email))
@@ -442,5 +442,4 @@
         });
     </script>
 }
-
 

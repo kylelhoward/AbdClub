@@ -236,7 +236,7 @@
             <tr style="height: 35px;">
                 <td class="text-center"><span class="checkbox-square"></span></td>
                 <td class="fw-bold">@officer.LastName, @officer.FirstName</td>
-                <td class="text-secondary font-monospace small">@officer.OfficerRole</td>
+                <td class="text-secondary font-monospace small">@(officer.OfficerAccount?.OfficerTitle ?? "Staff Officer")</td>
             </tr>
         }
     }

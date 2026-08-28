@@ -81,12 +81,14 @@ public class IndexModel : PageModel
         // 🌟 FIXED SERVER-SIDE EVALUATION: Uses persistent table fields for water-tight SQL translation
         AvailableOfficers = await _context.Members
             .Where(m =>
-                m.IsOfficer &&
+                m.OfficerAccount != null &&
+                m.OfficerAccount.IsEnabled &&
                 !m.IsSuspended &&
                 m.ExpiryDate.HasValue &&
                 m.ExpiryDate.Value >= DateTime.UtcNow)
             .OrderBy(m => m.LastName)
             .ThenBy(m => m.FirstName) // Added an extra sort pass to keep matching surnames alphabetized
+            .Include(m => m.OfficerAccount)
             .ToListAsync();
 
         UpcomingDances = await _context.Events
@@ -130,7 +132,10 @@ public class IndexModel : PageModel
             danceToUpdate.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
 
         if (FormInput.SelectedOfficerIds.Any())
-            danceToUpdate.AttendingOfficers = await _context.Members.Where(m => FormInput.SelectedOfficerIds.Contains(m.Id)).ToListAsync();
+            danceToUpdate.AttendingOfficers = await _context.Members
+                .Where(m => FormInput.SelectedOfficerIds.Contains(m.Id) &&
+                    m.OfficerAccount != null && m.OfficerAccount.IsEnabled)
+                .ToListAsync();
 
         _context.Events.Add(danceToUpdate);
         await _context.SaveChangesAsync();

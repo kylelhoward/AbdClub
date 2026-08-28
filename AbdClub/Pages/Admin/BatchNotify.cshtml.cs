@@ -48,9 +48,7 @@ public class BatchNotifyModel(
         MembersCount = await _context.Members.CountAsync(m => !m.IsSuspended &&
                 m.ExpiryDate.HasValue &&
                 m.ExpiryDate.Value >= DateTime.UtcNow );
-        OfficersCount = await _context.Members.CountAsync(m => !m.IsSuspended &&
-                m.ExpiryDate.HasValue &&
-                m.ExpiryDate.Value >= DateTime.UtcNow && m.IsOfficer);
+        OfficersCount = await _context.OfficerAccounts.CountAsync(a => a.IsEnabled);
 
         var uniquelySubscribedEmailsCount = await _context.NewsletterSubscribers
             .Select(s => s.Email.ToLower())
@@ -126,12 +124,13 @@ public class BatchNotifyModel(
                 break;
 
             case "OfficersOnly":
-                targets = await _context.Members
-                    .Where(m => !m.IsSuspended 
-                    && m.ExpiryDate.HasValue 
-                    && m.ExpiryDate.Value >= DateTime.UtcNow 
-                    && m.IsOfficer ) // Filters explicitly for active officer flags
-                    .Select(m => new RecipientDetails { Email = m.Email, LastName = m.LastName })
+                targets = await _context.OfficerAccounts
+                    .Where(a => a.IsEnabled)
+                    .Select(a => new RecipientDetails
+                    {
+                        Email = a.Email,
+                        LastName = a.Member != null ? a.Member.LastName : "Officer"
+                    })
                     .ToListAsync();
                 break;
 

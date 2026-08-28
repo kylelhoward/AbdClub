@@ -269,9 +269,6 @@ public class SheetViewerModel : PageModel
                     Phone = string.IsNullOrWhiteSpace(phone) ? null : phone,
                     JoinDate = DateTime.UtcNow,
                     ExpiryDate = parsedDate,
-                    IsOfficer = false,
-                    IsAdmin = false,
-                    IsTechAdmin = false,
                     SelfRegistered = false,
                     CreatedAt = DateTime.UtcNow
                 };

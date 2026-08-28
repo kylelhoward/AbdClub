@@ -45,7 +45,7 @@ public class AttendingOfficersModel : PageModel
         // Fetch dance with complete related tracking contexts
         var dance = await _context.Events.OfType<Dance>()
          .Include(d => d.Location)
-         .Include(d => d.AttendingOfficers)
+         .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
          .Include(d => d.AssignedDj)
 
             // 🌟 THE FIX: Eager-load your single lesson, then reach inside to extract its instructor profile
@@ -138,7 +138,7 @@ public class AttendingOfficersModel : PageModel
                         foreach (var officer in dance.AttendingOfficers.OrderBy(o => o.LastName))
                         {
                             table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text($"{officer.LastName}");
-                            table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(officer.OfficerRole ?? "Staff Officer");
+                            table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(officer.OfficerAccount?.OfficerTitle ?? "Staff Officer");
                             table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("[   ] Present");
                         }
                     });
@@ -321,7 +321,7 @@ public class AttendingOfficersModel : PageModel
 
         // Fetch the dance event and eagerly load the many-to-many collection
         TargetDance = await _context.Events.OfType<Dance>()
-            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (TargetDance == null) return NotFound();
@@ -333,7 +333,9 @@ public class AttendingOfficersModel : PageModel
         ActiveOfficersList = await _context.Members
             .Where(m => !m.IsSuspended &&
                 m.ExpiryDate.HasValue &&
-                m.ExpiryDate.Value >= DateTime.UtcNow && m.IsOfficer)
+                m.ExpiryDate.Value >= DateTime.UtcNow &&
+                m.OfficerAccount != null && m.OfficerAccount.IsEnabled)
+            .Include(m => m.OfficerAccount)
             .OrderBy(m => m.LastName)
             .ToListAsync();
 
@@ -346,10 +348,15 @@ public class AttendingOfficersModel : PageModel
         var idClaim = User.FindFirst("MemberId")?.Value;
         if (!int.TryParse(idClaim, out int memberId)) return Forbid();
 
-        var dance = await _context.Events.OfType<Dance>().Include(d => d.AttendingOfficers).FirstOrDefaultAsync(d => d.Id == id);
+        var dance = await _context.Events.OfType<Dance>()
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
+            .FirstOrDefaultAsync(d => d.Id == id);
         if (dance == null) return NotFound();
 
-        var currentOfficer = await _context.Members.FindAsync(memberId);
+        var currentOfficer = await _context.Members
+            .Include(m => m.OfficerAccount)
+            .FirstOrDefaultAsync(m => m.Id == memberId &&
+                m.OfficerAccount != null && m.OfficerAccount.IsEnabled);
         if (currentOfficer == null) return Forbid();
 
         string actionText;
@@ -370,7 +377,7 @@ public class AttendingOfficersModel : PageModel
 
         // TRIGGER NOTIFICATION DISPATCH
         await _emailService.SendOfficerDutyNotificationAsync(
-            currentOfficer.Email,
+            currentOfficer.OfficerAccount!.Email,
             $"{currentOfficer.LastName}",
             dance.Title,
             dance.Date.ToString("MMMM dd, yyyy"),
@@ -394,7 +401,10 @@ public class AttendingOfficersModel : PageModel
         var dance = await _context.Events.OfType<Dance>().Include(d => d.AttendingOfficers).FirstOrDefaultAsync(d => d.Id == id);
         if (dance == null) return NotFound();
 
-        var targetOfficer = await _context.Members.FindAsync(selectOfficerId);
+        var targetOfficer = await _context.Members
+            .Include(m => m.OfficerAccount)
+            .FirstOrDefaultAsync(m => m.Id == selectOfficerId &&
+                m.OfficerAccount != null && m.OfficerAccount.IsEnabled);
         if (targetOfficer == null)
         {
             StatusNotice = "Error: Selected officer record missing.";
@@ -415,7 +425,7 @@ public class AttendingOfficersModel : PageModel
         // TRIGGER NOTIFICATION DISPATCH
         string actionText = "<span style='color:#198754; font-weight:bold;'>ASSIGNED TO DUTY</span> via Administrative Override by Admin.";
         await _emailService.SendOfficerDutyNotificationAsync(
-            targetOfficer.Email,
+            targetOfficer.OfficerAccount!.Email,
             $"{targetOfficer.LastName}",
             dance.Title,
             dance.Date.ToString("MMMM dd, yyyy"),
@@ -435,7 +445,9 @@ public class AttendingOfficersModel : PageModel
             return Forbid(); // Blocks lower-level officers automatically
         }
 
-        var dance = await _context.Events.OfType<Dance>().Include(d => d.AttendingOfficers).FirstOrDefaultAsync(d => d.Id == id);
+        var dance = await _context.Events.OfType<Dance>()
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
+            .FirstOrDefaultAsync(d => d.Id == id);
         if (dance == null) return NotFound();
 
         var targetOfficer = dance.AttendingOfficers.FirstOrDefault(o => o.Id == dropOfficerId);
@@ -448,7 +460,7 @@ public class AttendingOfficersModel : PageModel
             // TRIGGER NOTIFICATION DISPATCH
             string actionText = "<span style='color:#dc3545; font-weight:bold;'>REMOVED FROM DUTY</span> via Administrative Override by Admin.";
             await _emailService.SendOfficerDutyNotificationAsync(
-                targetOfficer.Email,
+                targetOfficer.OfficerAccount?.Email ?? targetOfficer.Email,
                 $"{targetOfficer.LastName}",
                 dance.Title,
                 dance.Date.ToString("MMMM dd, yyyy"),
@@ -461,4 +473,3 @@ public class AttendingOfficersModel : PageModel
     }
 
 }
-

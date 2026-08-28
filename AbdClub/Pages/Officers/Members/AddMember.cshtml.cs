@@ -140,11 +140,6 @@ public class AddMemberModel(
         if (member.ExpiryDate.HasValue)
             member.ExpiryDate = DateTime.SpecifyKind(member.ExpiryDate.Value, DateTimeKind.Utc);
 
-        member.IsOfficer = false;
-        member.IsAdmin = false;
-        member.IsTechAdmin = false;
-        member.OfficerRole = null;
-        member.GoogleSubId = null;
     }
 
     private static Member NewMember() => new()

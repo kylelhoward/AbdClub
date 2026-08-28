@@ -86,7 +86,7 @@
                                         </td>
                                         <td>
                                             <!-- Accesses whatever property field handles assignment role values -->
-                                            <span class="badge bg-secondary">@(string.IsNullOrEmpty(officer.OfficerRole) ? "Staff Officer" : officer.OfficerRole)</span>
+                                            <span class="badge bg-secondary">@(officer.OfficerAccount?.OfficerTitle ?? "Staff Officer")</span>
                                         </td>
                                             <td class="pe-3 text-end">
                                                 <form method="post" asp-page-handler="RemoveOfficerOverride"
@@ -131,7 +131,7 @@
                                 <option value="">-- Choose From Active Officers --</option>
                                 @foreach (var available in Model.ActiveOfficersList)
                                 {
-                                    <option value="@available.Id">@($"{available.LastName} ({available.OfficerRole ?? "No Role Specified"})")</option>
+                                    <option value="@available.Id">@($"{available.LastName} ({available.OfficerAccount?.OfficerTitle ?? "No Role Specified"})")</option>
                                 }
                             </select>
                         </div>
@@ -144,4 +144,3 @@
         </div>
     </div>
 </div>
-

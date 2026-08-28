@@ -22,9 +22,8 @@ public class Member
     [EmailAddress]
     public string Email { get; set; } = string.Empty;
     public string? Phone { get; set; }
-    // Legacy authentication fields are retained temporarily so the migration can
-    // copy existing officer access into OfficerAccounts. Runtime authorization no
-    // longer reads these fields.
+    // Legacy columns retained temporarily for migration compatibility only.
+    // Runtime officer access, titles, and authentication use OfficerAccount.
     public string? GoogleSubId { get; set; }
     public DateTime JoinDate { get; set; }
     public DateTime? ExpiryDate { get; set; }
@@ -36,6 +35,7 @@ public class Member
     public bool SelfRegistered { get; set; } = false;
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public ICollection<EmailLog> EmailLogs { get; set; } = new List<EmailLog>();
+    public OfficerAccount? OfficerAccount { get; set; }
 
 // 🌟 THE ADMINISTRATIVE MANUAL OVERRIDE FLAG:
     // Keeps a physical column in the database table. Defaults to false.

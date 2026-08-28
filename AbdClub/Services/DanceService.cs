@@ -33,7 +33,7 @@ public class DanceService
     public async Task SendAttendingOfficerRemindersAsync(int danceId)
     {
         var dance = await _db.Dances
-            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
             .FirstOrDefaultAsync(d => d.Id == danceId);
 
         if (dance == null) return;

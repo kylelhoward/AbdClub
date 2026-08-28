@@ -56,18 +56,28 @@ public class SeedModel : PageModel
             return Page();
         }
 
-        _db.Members.Add(new Member
+        var member = new Member
         {
             LastName = fullName,
             Email = email,
             Phone = phone,
             JoinDate = DateTime.UtcNow,
-            ExpiryDate = expiryDate,
-            IsOfficer = memberType == "officer",
-            OfficerRole = memberType == "officer" ? officerRole : null
-        });
+            ExpiryDate = expiryDate
+        };
+        _db.Members.Add(member);
 
         await _db.SaveChangesAsync();
+        if (memberType == "officer")
+        {
+            _db.OfficerAccounts.Add(new OfficerAccount
+            {
+                Email = email.Trim().ToLowerInvariant(),
+                MemberId = member.Id,
+                OfficerTitle = string.IsNullOrWhiteSpace(officerRole) ? null : officerRole.Trim(),
+                IsEnabled = true
+            });
+            await _db.SaveChangesAsync();
+        }
         Message = $"Added: {fullName} ({email}) — expires {expiryDate:yyyy-MM-dd}";
         await LoadMembersAsync();
         return Page();
@@ -106,9 +116,9 @@ public class SeedModel : PageModel
 
             // Officers
             new() { LastName = "Isabel Cruz",     Email = "isabel.cruz.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddYears(1), IsOfficer = true, OfficerRole = "President" },
+                    JoinDate = today, ExpiryDate = today.AddYears(1) },
             new() { LastName = "James Park",      Email = "james.park.test@gmail.com",
-                    JoinDate = today, ExpiryDate = today.AddYears(1), IsOfficer = true, OfficerRole = "Treasurer" },
+                    JoinDate = today, ExpiryDate = today.AddYears(1) },
         };
 
         // Skip any emails already in the database
@@ -123,6 +133,31 @@ public class SeedModel : PageModel
         _db.Members.AddRange(toAdd);
         await _db.SaveChangesAsync();
 
+        var officerSeeds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["isabel.cruz.test@gmail.com"] = "President",
+            ["james.park.test@gmail.com"] = "Treasurer"
+        };
+        var officerEmails = officerSeeds.Keys.ToList();
+        var seededOfficerMembers = await _db.Members
+            .Where(m => officerEmails.Contains(m.Email))
+            .ToListAsync();
+        var linkedMemberIds = await _db.OfficerAccounts
+            .Where(a => a.MemberId.HasValue)
+            .Select(a => a.MemberId!.Value)
+            .ToListAsync();
+        foreach (var officerMember in seededOfficerMembers.Where(m => !linkedMemberIds.Contains(m.Id)))
+        {
+            _db.OfficerAccounts.Add(new OfficerAccount
+            {
+                Email = officerMember.Email.ToLowerInvariant(),
+                MemberId = officerMember.Id,
+                OfficerTitle = officerSeeds[officerMember.Email],
+                IsEnabled = true
+            });
+        }
+        await _db.SaveChangesAsync();
+
         Message = $"Seeded {toAdd.Count} test members " +
                   $"({testMembers.Count - toAdd.Count} skipped — already exist).";
         await LoadMembersAsync();
@@ -132,6 +167,7 @@ public class SeedModel : PageModel
     private async Task LoadMembersAsync()
     {
         Members = await _db.Members
+            .Include(m => m.OfficerAccount)
             .OrderBy(m => m.ExpiryDate)
             .ToListAsync();
         MemberCount = Members.Count;

@@ -46,7 +46,7 @@ public class PrintManifestsModel : PageModel
             .OfType<Dance>()
             .Include(d => d.Location)
             // 🌟 EAGER-LOAD EVERYTHING FOR MANIFEST 3 DUITY LOGS
-            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
             .Include(d => d.AssignedDj)
             .Include(d => d.AssignedLesson).ThenInclude(l => l.Instructor)
             .Include(d => d.AssignedHosts)
@@ -102,4 +102,3 @@ public class PrintManifestsModel : PageModel
         return Page();
     }
 }
-

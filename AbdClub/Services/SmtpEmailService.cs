@@ -273,7 +273,8 @@ public class SmtpEmailService : IEmailService
         const string emailType = "SendOfficerReminder";
         const string sourceTrigger = "System:SendOfficerReminderAsync";
 
-        if (string.IsNullOrEmpty(member.Email)) return;
+        var recipientEmail = member.OfficerAccount?.Email ?? member.Email;
+        if (string.IsNullOrEmpty(recipientEmail)) return;
 
         var subject = $"Officer Reminder: {dance.Title}";
         var body = $@"
@@ -285,7 +286,7 @@ public class SmtpEmailService : IEmailService
                 <li>Date: {dance.Date:MMMM d, yyyy}</li>
                 <li>Time: {dance.StartTime} - {dance.EndTime}</li>
                 <li>Location: {dance.Location}</li>
-                <li>Role: {member.OfficerRole ?? "Officer"}</li>
+                <li>Role: {member.OfficerAccount?.OfficerTitle ?? "Officer"}</li>
                 <li>Contact: {dance.ContactEmail ?? "Not provided"}</li>
             </ul>
             <p>Thank you for your leadership!<br/>— The ABD Team</p>
@@ -293,20 +294,20 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            using var message = BuildMessage(member.Email, member.LastName, subject, body, isHtml: true);
+            using var message = BuildMessage(recipientEmail, member.LastName, subject, body, isHtml: true);
 
             // 🌟 Dispatches through abstraction (RealSmtpSender or FakeSmtpSender)
             await _smtpSender.SendMailAsync(message);
 
             _logger.LogInformation("Officer reminder sent via SMTP to {Email} for dance {DanceId}",
-                member.Email, dance.Id);
-            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
+                recipientEmail, dance.Id);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, member.Id, isSuccess: true);
         }
         catch (Exception ex)
         {
             _logger.LogError("Failed to send officer reminder to {Email}: {Exception}",
-                member.Email, ex.Message);
-            await WriteAuditLogAsync(member.Email, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
+                recipientEmail, ex.Message);
+            await WriteAuditLogAsync(recipientEmail, subject, body, emailType, sourceTrigger, member.Id, isSuccess: false, errorMessage: ex.Message);
         }
     }
 

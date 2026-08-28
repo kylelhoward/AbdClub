@@ -185,7 +185,8 @@ public class ResendEmailService : IEmailService
 
     public async Task SendOfficerReminderAsync(Dance dance, Member officer)
     {
-        if (string.IsNullOrEmpty(officer.Email)) return;
+        var recipientEmail = officer.OfficerAccount?.Email ?? officer.Email;
+        if (string.IsNullOrEmpty(recipientEmail)) return;
 
         var subject = $"Officer Reminder: {dance.Title}";
         var body = $@"
@@ -197,7 +198,7 @@ public class ResendEmailService : IEmailService
                 <li>Date: {dance.Date:MMMM d, yyyy}</li>
                 <li>Time: {dance.StartTime} - {dance.EndTime}</li>
                 <li>Location: {dance.Location}</li>
-                <li>Role: {officer.OfficerRole ?? "Officer"}</li>
+                <li>Role: {officer.OfficerAccount?.OfficerTitle ?? "Officer"}</li>
                 <li>Contact: {dance.ContactEmail ?? "Not provided"}</li>
             </ul>
             <p>Thank you for your leadership!<br/>— The ABD Team</p>
@@ -208,7 +209,7 @@ public class ResendEmailService : IEmailService
             var email = new EmailMessage
             {
                 From = GetFromAddress(),
-                To = officer.Email,
+                To = recipientEmail,
                 Subject = subject,
                 HtmlBody = body
             };
@@ -218,27 +219,28 @@ public class ResendEmailService : IEmailService
             if (response != null && response.Exception == null)
             {
                 _logger.LogInformation("Officer reminder sent via Resend to {Email} for dance {DanceId}",
-                    officer.Email, dance.Id);
+                    recipientEmail, dance.Id);
             }
             else
             {
                 var errorMsg = response?.Exception?.Message ?? "Unknown error";
                 _logger.LogError("Failed to send officer reminder to {Email}: {Error}",
-                    officer.Email, errorMsg);
+                    recipientEmail, errorMsg);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError("Failed to send officer reminder to {Email}: {Exception}",
-                officer.Email, ex.Message);
+                recipientEmail, ex.Message);
         }
     }
 
     public async Task SendEventNotificationToAllMembersAsync(Dance dance, string subject, string body)
     {
-        var members = await _db.Members.Where(m => !m.IsSuspended &&
-                m.ExpiryDate.HasValue &&
-                m.ExpiryDate.Value >= DateTime.UtcNow && m.IsOfficer).ToListAsync();
+        var members = await _db.OfficerAccounts
+            .Where(a => a.IsEnabled && a.Member != null)
+            .Select(a => a.Member!)
+            .ToListAsync();
 
         if (!members.Any())
         {

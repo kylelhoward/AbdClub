@@ -50,7 +50,7 @@ public class EditModel(
         }
 
         TargetDance = await _context.Events.OfType<Dance>()
-            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
             .Include(d => d.AssignedDj)
             .Include(d => d.AssignedHosts)
             .Include(d => d.AssignedVolunteers)
@@ -111,7 +111,7 @@ if (TargetDance.AssignedLesson != null)
         }
 
         var danceToUpdate = await _context.Events.OfType<Dance>()
-            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
             .Include(d => d.AssignedHosts)
             .Include(d => d.AssignedVolunteers)
             .Include(d => d.AssignedLesson)
@@ -205,7 +205,7 @@ if (TargetDance.AssignedLesson != null)
                 danceToUpdate.AttendingOfficers.Remove(officer);
                 await _emailService
                         .SendOfficerDutyNotificationAsync(
-                            officer.Email, 
+                            officer.OfficerAccount?.Email ?? officer.Email,
                             $"{officer.LastName}", 
                             danceToUpdate.Title, 
                             dateString, 
@@ -216,14 +216,18 @@ if (TargetDance.AssignedLesson != null)
 
         if (idsToAdd.Any())
         {
-            var officersToAdd = await _context.Members.Where(m => idsToAdd.Contains(m.Id)).ToListAsync();
+            var officersToAdd = await _context.Members
+                .Include(m => m.OfficerAccount)
+                .Where(m => idsToAdd.Contains(m.Id) &&
+                    m.OfficerAccount != null && m.OfficerAccount.IsEnabled)
+                .ToListAsync();
             string addText = "<span style='color:#198754; font-weight:bold;'>ASSIGNED TO DUTY</span> via adjustments.";
             foreach (var officer in officersToAdd)
             {
                 danceToUpdate.AttendingOfficers.Add(officer);
                 await _emailService
                         .SendOfficerDutyNotificationAsync(
-                            officer.Email, 
+                            officer.OfficerAccount!.Email,
                             $"{officer.LastName}",
                             danceToUpdate.Title,
                             dateString, 
@@ -258,7 +262,9 @@ if (TargetDance.AssignedLesson != null)
             .Where(m => !m.IsSuspended &&
             m.ExpiryDate.HasValue 
             && m.ExpiryDate.Value >= DateTime.UtcNow
-            && m.IsOfficer)
+            && m.OfficerAccount != null
+            && m.OfficerAccount.IsEnabled)
+            .Include(m => m.OfficerAccount)
             .OrderBy(m => m.LastName)
             .ToListAsync();
     }

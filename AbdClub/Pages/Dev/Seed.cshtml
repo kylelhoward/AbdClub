@@ -150,9 +150,9 @@
                                                 <span class="badge @badgeColor shadow-sm d-inline-block text-center" style="width: 120px;">@status</span>
                                             </td>
                                             <td>
-                                                @if (m.IsOfficer)
+                                                @if (m.OfficerAccount?.IsEnabled == true)
                                                 {
-                                                    <span class="text-primary fw-medium"><i class="bi bi-shield-check me-1"></i>@(m.OfficerRole ?? "Staff Officer")</span>
+                                                    <span class="text-primary fw-medium"><i class="bi bi-shield-check me-1"></i>@(m.OfficerAccount.OfficerTitle ?? "Staff Officer")</span>
                                                 }
                                                 else
                                                 {
