@@ -3,7 +3,7 @@
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 
 @{
-    ViewData["Title"] = "Manage Club Dances";
+    ViewData["Title"] = "Manage Club Events";
 }
 
 <div class="container mt-4">
@@ -12,14 +12,14 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a asp-page="/Officers/Dashboard">Officers Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Dance List</li>
+                <li class="breadcrumb-item active" aria-current="page">Event List</li>
             </ol>
         </nav>
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-        <h2><i class="bi bi-calendar-event me-2"></i>Official Dance Matrix</h2>
-                <p class="text-muted mb-0">Manage club members and their statuses</p>
+        <h2><i class="bi bi-calendar-event me-2"></i>Club Events</h2>
+                <p class="text-muted mb-0">Manage regular dances, special events, and outings.</p>
             </div>
            
         </div>
@@ -27,7 +27,7 @@
         {
             @* CREATION_INPUT_MODAL  *@
             <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#createDanceModal">
-                <i class="bi bi-plus-circle me-2"></i>Create New Dance
+                <i class="bi bi-plus-circle me-2"></i>Create New Event
             </button>
         }
     </div>
@@ -47,24 +47,26 @@
                 <thead class="table-dark">
                     <tr>
                         <th class="ps-3">Scheduled Date</th>
-                        <th>Dance Event Title</th>
+                        <th>Event</th>
+                        <th>Type</th>
                         <th>Location Venue</th>
                         <th>Time Window</th>
-                        <th>Assigned DJ</th>
+                        <th>Entertainment</th>
                         @* ActionControls *@
                         <th class="pe-3 text-end">Action Controls</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model.UpcomingDances.Any())
+                    @if (Model.UpcomingEvents.Any())
                     {
-                        foreach (var dance in Model.UpcomingDances)
+                        foreach (var dance in Model.UpcomingEvents)
                         {
                             <tr>
                                 <td class="ps-3 fw-bold">@dance.Date.ToString("ddd, MMM dd, yyyy")</td>
                                 <td>
                                     <span class="d-block fw-semibold text-primary">@dance.Title</span>
                                 </td>
+                                <td><span class="badge bg-info text-dark">@dance.EventTypeLabel</span></td>
                                <!-- 🌟 THE REUSABLE TRIGGER COMPONENT LAYOUT BLOCK -->
                                 <td>
                                     <button type="button" 
@@ -87,11 +89,16 @@
                                 <td class="pe-3 text-end">
                                     <div class="btn-group gap-1">
                                        @* Navigation trigger jump to attendance panel management layers *@
-                                        <a class="btn btn-sm btn-outline-success" asp-page="./AttendingOfficers" asp-route-id="@dance.Id">
-                                            <i class="bi bi-shield-check"></i> Officer Attendance
-                                        </a>
+                                        @if (dance is AbdClub.Models.Dance)
+                                        {
+                                            <a class="btn btn-sm btn-outline-success" asp-page="./AttendingOfficers" asp-route-id="@dance.Id">
+                                                <i class="bi bi-shield-check"></i> Officer Attendance
+                                            </a>
+                                        }
                                        @* PrintRosters *@
-                                        <button type="button" 
+                                        @if (dance is AbdClub.Models.Dance)
+                                        {
+                                        <button type="button"
                                             class="btn btn-sm btn-outline-dark" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#printManifestModal"
@@ -100,6 +107,7 @@
                                             data-dance-meta="@dance.Date.ToString("ddd, MMM dd, yyyy") at @dance.Location.VenueName">
                                             <i class="bi bi-printer-fill me-1"></i> Print Roster Sheets
                                         </button>
+                                        }
                                        @* Edit/View *@
         @if (User.IsInRole("Admin") || User.IsInRole("TechAdmin"))
         {
@@ -130,7 +138,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="6" class="text-center p-5 text-muted">No scheduled dances exist within your database.</td>
+                            <td colspan="7" class="text-center p-5 text-muted">No scheduled events exist within your database.</td>
                         </tr>
                     }
                 </tbody>
@@ -235,6 +243,7 @@
         -->
         <form method="post" asp-page-handler="CreateDance" class="modal-content shadow-lg border-0"
               x-data='{
+            eventType: "RegularDance",
             lessons: [],
             addLesson() {
             this.lessons.push({ instructorid: 0, type: "", startTime: "19:00:00", endTime: "20:00:00" });
@@ -246,15 +255,25 @@
 
         
             <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Schedule Registry Dance Event</h5>
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Schedule Club Event</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
 
             <!-- Section 1: Core Event Fields -->
             <div class="row g-3 mb-3">
+                <div class="col-12">
+                    <label asp-for="FormInput.EventType" class="form-label fw-bold small text-muted mb-1">Event Type</label>
+                    <select asp-for="FormInput.EventType" class="form-select" x-model="eventType">
+                        <option value="RegularDance">Regular Dance</option>
+                        <option value="SpecialEvent">Special Event</option>
+                        <option value="Outing">Outing</option>
+                    </select>
+                    <div class="form-text" x-show="eventType === 'SpecialEvent'">Special events support entertainment, officers, and volunteers, but not lessons or dance hosts.</div>
+                    <div class="form-text" x-show="eventType === 'Outing'">Outings support officers and volunteers, plus optional external instructions.</div>
+                </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-bold small text-muted mb-1">Dance Title</label>
+                    <label class="form-label fw-bold small text-muted mb-1">Event Title</label>
                     <input asp-for="FormInput.Title" class="form-control" placeholder="e.g., Summer Retro Swing Gala" required />
                     <span asp-validation-for="FormInput.Title" class="text-danger small"></span>
                 </div>
@@ -310,22 +329,35 @@
                 <hr class="my-4 border-light-subtle" />
 
                 <!-- Section 4: Single-Select Master DJ Lookup Directory -->
-                <div class="mb-4">
-                    <label class="form-label fw-bold small text-primary mb-1"><i class="bi bi-disc-fill me-1"></i>Select Event DJ Assignment</label>
+                <div class="mb-4" x-show="eventType !== 'Outing'">
+                    <label class="form-label fw-bold small text-primary mb-1"><i class="bi bi-music-note-beamed me-1"></i>Select DJ or Band</label>
                     <select asp-for="FormInput.SelectedDjId" class="form-select bg-light border-primary-subtle fw-medium">
-                        <option value="">-- No DJ Assigned / Vacant Position --</option>
+                        <option value="">-- No entertainment assigned --</option>
                         @foreach (var dj in Model.RegistryDjs)
                         {
-                            <option value="@dj.Id">@dj.Name @(!string.IsNullOrEmpty(dj.Notes) ? $"— {dj.Notes}" : "")</option>
+                            <option value="@dj.Id">@dj.Name (@dj.EntertainmentType) @(!string.IsNullOrEmpty(dj.Notes) ? $"— {dj.Notes}" : "")</option>
                         }
                     </select>
+                </div>
+
+                <div class="row g-3 mb-4" x-show="eventType === 'Outing'">
+                    <div class="col-12">
+                        <label asp-for="FormInput.ExternalWebsiteUrl" class="form-label fw-bold small text-muted">External Website</label>
+                        <input asp-for="FormInput.ExternalWebsiteUrl" type="url" class="form-control" placeholder="https://venue-or-event.example" />
+                        <span asp-validation-for="FormInput.ExternalWebsiteUrl" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="FormInput.RegistrationInstructions" class="form-label fw-bold small text-muted">Registration or Meetup Instructions</label>
+                        <textarea asp-for="FormInput.RegistrationInstructions" class="form-control" rows="3" placeholder="Where to meet, how to purchase admission, or other instructions"></textarea>
+                        <span asp-validation-for="FormInput.RegistrationInstructions" class="text-danger small"></span>
+                    </div>
                 </div>
 
                 <!-- Section 5: REFACTORED Two-Column Helper Grid System (Removed Static Instructor Box) -->
                 <div class="row g-3 mb-4">
 
                     <!-- Hosts Column -->
-                    <div class="col-md-6">
+                    <div class="col-md-6" x-show="eventType === 'RegularDance'">
                         <div class="p-3 border rounded bg-light h-100 shadow-sm border-light-subtle">
                             <label class="fw-bold small mb-2 text-dark d-block"><i class="bi bi-person-badge-fill text-primary me-1"></i>Dance Hosts</label>
                             <div class="bg-white border rounded p-2" style="max-height: 140px; overflow-y: auto;">
@@ -406,7 +438,7 @@
                 </div>
 
                 <!-- DANCE LESSON CONFIGURATION PANEL (1:1 SINGULAR LESSON) -->
-<div class="mb-4">
+<div class="mb-4" x-show="eventType === 'RegularDance'">
     <div class="card shadow-sm border-0">
         <div class="card-header bg-secondary text-white p-3">
             <h6 class="mb-0 text-uppercase tracking-wider fw-bold small">
@@ -467,7 +499,7 @@
                 </div>
             </div>
             <div class="form-text text-muted mt-2 small">
-                Leave these fields blank if this social dance does not include a pre-dance instructional lesson.
+                Leave these fields blank if this regular dance does not include a pre-dance lesson.
             </div>
         </div>
     </div>
@@ -485,6 +517,7 @@
                     data-bs-dismiss="modal">Cancel</button>
                 <button
                     type="submit" 
+                    id="createDanceSubmitBtn"
                     class="btn btn-primary px-4">Create Master Schedule</button>
             </div>
         </form>
@@ -549,12 +582,13 @@
             if (form && submitBtn) {
                 form.addEventListener('submit', function(e) {
                     // Validate lesson fields: all or nothing
+                    const eventType = document.querySelector('[name="FormInput.EventType"]');
                     const instructorId = document.querySelector('[name="FormInput.AssignedLesson.InstructorId"]');
                     const lessonType = document.querySelector('[name="FormInput.AssignedLesson.Type"]');
                     const startTime = document.querySelector('[name="FormInput.AssignedLesson.StartTime"]');
                     const endTime = document.querySelector('[name="FormInput.AssignedLesson.EndTime"]');
 
-                    if (instructorId && lessonType && startTime && endTime) {
+                    if (eventType && eventType.value === 'RegularDance' && instructorId && lessonType && startTime && endTime) {
                         const hasInstructor = instructorId.value && parseInt(instructorId.value) > 0;
                         const hasType = lessonType.value && lessonType.value.trim() !== '';
                         const hasStartTime = startTime.value && startTime.value.trim() !== '';
@@ -648,5 +682,3 @@ if (deleteModal) {
 
 </script>
 }
-
-

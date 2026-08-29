@@ -21,6 +21,8 @@ public class AbdContext : DbContext
     public DbSet<ClubFile> ClubFiles { get; set; } = null!;
     public DbSet<Event> Events { get; set; } = null!;
     public DbSet<Dance> Dances { get; set; } = null!;
+    public DbSet<SpecialEvent> SpecialEvents { get; set; } = null!;
+    public DbSet<Outing> Outings { get; set; } = null!;
     public DbSet<Lesson> Lessons { get; set; } = null!;
     public DbSet<Location> Locations { get; set; } = null!;
     public DbSet<NewsletterSubscriber> NewsletterSubscribers { get; set; } = null!;
@@ -69,7 +71,9 @@ public class AbdContext : DbContext
         modelBuilder.Entity<Event>()
             .HasDiscriminator<string>("EventType")
             .HasValue<Event>("Event")
-            .HasValue<Dance>("Dance");
+            .HasValue<Dance>("Dance")
+            .HasValue<SpecialEvent>("SpecialEvent")
+            .HasValue<Outing>("Outing");
 
         // 🌟 ATTACH RELATIONAL LOCATION RULE TO THE BASE ENTITY:
         // This tells EF Core that any entry inside the Events table maps to a Location primary key
@@ -80,7 +84,7 @@ public class AbdContext : DbContext
             .OnDelete(DeleteBehavior.Restrict); // Prevent dropping a venue that has active matches
 
         // 1. One-to-Many: DJ Lookup -> Dances
-        modelBuilder.Entity<Dance>()
+        modelBuilder.Entity<Event>()
             .HasOne(d => d.AssignedDj)
             .WithMany()
             .HasForeignKey(d => d.AssignedDjId)
@@ -96,13 +100,13 @@ public class AbdContext : DbContext
 
         // 3. Many-to-Many Junction table maps for reusable assignments
         modelBuilder.Entity<Dance>().HasMany(d => d.AssignedHosts).WithMany().UsingEntity(j => j.ToTable("DanceAssignedHosts"));
-        modelBuilder.Entity<Dance>().HasMany(d => d.AssignedVolunteers).WithMany().UsingEntity(j => j.ToTable("DanceAssignedVolunteers"));
+        modelBuilder.Entity<Event>().HasMany(d => d.AssignedVolunteers).WithMany().UsingEntity(j => j.ToTable("EventAssignedVolunteers"));
 
         // 🌟 THE FIX: Decouple AttendingOfficers from the raw columns of your Members table permanently
-        modelBuilder.Entity<Dance>()
+        modelBuilder.Entity<Event>()
             .HasMany(d => d.AttendingOfficers)
             .WithMany() // Keeps the relationship cleanly independent
-            .UsingEntity(j => j.ToTable("DanceAttendingOfficers")); // 👈 Pushes the foreign keys into an isolated join table!
+            .UsingEntity(j => j.ToTable("EventAttendingOfficers"));
 
         // One-to-Many: MasterInstructor -> Lessons (An instructor can teach multiple lessons over time)
         modelBuilder.Entity<Lesson>()
@@ -120,6 +124,10 @@ public class AbdContext : DbContext
         modelBuilder.Entity<NewsletterSubscriber>()
             .HasIndex(n => n.Email)
             .IsUnique();
+
+        modelBuilder.Entity<MasterDJ>()
+            .Property(e => e.EntertainmentType)
+            .HasDefaultValue(EntertainmentType.DJ);
 
         // The application maintains one current flyer, not a history of flyers.
         modelBuilder.Entity<AnnouncementFlyerSettings>()

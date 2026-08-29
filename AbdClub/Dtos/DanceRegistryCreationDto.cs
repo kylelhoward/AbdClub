@@ -5,6 +5,8 @@ namespace AbdClub.Dtos;
 
 public class DanceRegistryCreationDto
 {
+    [Required, EnumDataType(typeof(EventCreationType))]
+    public EventCreationType EventType { get; set; } = EventCreationType.RegularDance;
     [Required(ErrorMessage = "Please provide a title for this social dance.")]
     public string Title { get; set; } = string.Empty;
 
@@ -26,5 +28,17 @@ public class DanceRegistryCreationDto
     public List<int> SelectedInstructorIds { get; set; } = new();
     public List<int> SelectedVolunteerIds { get; set; } = new();
     public List<int> SelectedOfficerIds { get; set; } = new();
+
+    [Url, StringLength(1024)]
+    public string? ExternalWebsiteUrl { get; set; }
+
+    [StringLength(1000)]
+    public string? RegistrationInstructions { get; set; }
 }
 
+public enum EventCreationType
+{
+    RegularDance = 1,
+    SpecialEvent = 2,
+    Outing = 3
+}

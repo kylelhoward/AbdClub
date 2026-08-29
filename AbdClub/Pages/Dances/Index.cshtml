@@ -1,13 +1,13 @@
 ﻿@page
 @model AbdClub.Pages.Members.Dances.IndexModel
 @{
-    ViewData["Title"] = "Dance Calendars & Opportunities";
+    ViewData["Title"] = "ABD Events";
 }
 
 <div class="container mt-4" style="max-width: 900px;">
     <div class="mb-4">
-        <h2>Upcoming Dance Calendar</h2>
-        <p class="text-muted">Check out scheduled sessions, preview lesson topics, or claim an event helper shift position.</p>
+        <h2>Upcoming ABD Events</h2>
+        <p class="text-muted">Regular dances, special events, and ABD outings.</p>
     </div>
 
     @if (Model.VolunteerNotice != null)
@@ -26,6 +26,7 @@
                 <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-1 text-warning">@dance.Title</h4>
+                        <span class="badge bg-info text-dark mb-1">@dance.EventTypeLabel</span>
                         <div class="small opacity-75">
                              <button type="button" 
                                             class="btn btn-link text-info p-0 fw-semibold text-decoration-none text-start venue-modal-trigger"
@@ -53,18 +54,20 @@
                     <div class="row g-4">
                         <!-- COLUMN A: LESSON SCHEDULE DETAILS & DJ -->
                         <div class="col-md-6">
+                            @if (dance is AbdClub.Models.Dance regularDance)
+                            {
                             <h6 class="fw-bold text-uppercase tracking-wider text-muted mb-3">
                                 <i class="bi bi-book-half me-2"></i>Pre-Dance Lesson Details
                             </h6>
-                            @if (dance.AssignedLesson != null)
+                            @if (regularDance.AssignedLesson != null)
     {
         <div class="list-group shadow-sm mb-3">
             <div class="list-group-item bg-white p-3 border border-light-subtle rounded">
                 <div class="d-flex w-100 justify-content-between align-items-center">
                     <!-- Assuming your Lesson class uses .Type or .Topic for the description name -->
-                    <h5 class="mb-1 text-primary fw-bold">@dance.AssignedLesson.Type</h5>
+                    <h5 class="mb-1 text-primary fw-bold">@regularDance.AssignedLesson.Type</h5>
                     <small class="badge bg-secondary-subtle text-secondary border border-secondary border-opacity-20 px-2.5 py-1">
-                        @dance.AssignedLesson.StartTime.ToString("h:mm tt") - @dance.AssignedLesson.EndTime.ToString("h:mm tt")
+                        @regularDance.AssignedLesson.StartTime.ToString("h:mm tt") - @regularDance.AssignedLesson.EndTime.ToString("h:mm tt")
                     </small>
                 </div>
                 
@@ -73,7 +76,7 @@
                 <!-- Dynamically pulls your master lookup instructor relations metadata info -->
                 <small class="text-secondary d-block">
                     <i class="bi bi-person-fill text-muted me-1"></i><strong>Instructor:</strong> 
-                    @(dance.AssignedLesson.Instructor != null ? dance.AssignedLesson.Instructor.Name : "TBD / Unassigned")
+                    @(regularDance.AssignedLesson.Instructor != null ? regularDance.AssignedLesson.Instructor.Name : "TBD / Unassigned")
                 </small>
             </div>
         </div>
@@ -86,19 +89,35 @@
             <span class="text-muted small fw-medium">No instructional lesson block configured for this date.</span>
         </div>
     }
+                            }
 
                             <!-- EXPOSED MASTER DJ TIER REGISTRY SLOT -->
+                            @if (dance is not AbdClub.Models.Outing)
+                            {
                             <div class="card border-0 shadow-sm bg-white p-3">
                                 <div class="d-flex align-items-center">
                                     <div class="flex-shrink-0 bg-dark text-white rounded p-2 px-3 me-3">
                                         <i class="bi bi-disc-fill fs-5 text-warning"></i>
                                     </div>
                                     <div>
-                                        <small class="text-uppercase tracking-wider text-muted fw-bold d-block" style="font-size: 0.7rem;">Tonight's DJ Assignment</small>
-                                        <span class="fw-bold text-dark">@(dance.AssignedDj != null ? dance.AssignedDj.Name : "No DJ Scheduled / Vacant")</span>
+                                        <small class="text-uppercase tracking-wider text-muted fw-bold d-block" style="font-size: 0.7rem;">Entertainment</small>
+                                        <span class="fw-bold text-dark">@(dance.AssignedDj != null ? $"{dance.AssignedDj.Name} ({dance.AssignedDj.EntertainmentType})" : "To be announced")</span>
                                     </div>
                                 </div>
                             </div>
+                            }
+
+                            @if (dance is AbdClub.Models.Outing outing)
+                            {
+                                @if (!string.IsNullOrWhiteSpace(outing.RegistrationInstructions))
+                                {
+                                    <div class="alert alert-info mt-3 mb-0">@outing.RegistrationInstructions</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(outing.ExternalWebsiteUrl))
+                                {
+                                    <a href="@outing.ExternalWebsiteUrl" target="_blank" rel="noopener" class="btn btn-outline-primary mt-3">Visit event website</a>
+                                }
+                            }
                         </div>
 
                         <!-- COLUMN B: DYNAMIC VOLUNTEER SHIFT INTERFACE (HIDDEN FOR NON-MEMBERS) -->
@@ -185,4 +204,3 @@
       <!-- Render the reusable venue popup partial view shell at the bottom of the root wrapper -->
     <partial name="_VenueDetailModal" />
 </div>
-

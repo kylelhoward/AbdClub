@@ -37,7 +37,7 @@ public class IndexModel : PageModel
     }
     [TempData]
     public string? UpdateFeedback { get; set; }
-    public List<Dance> UpcomingDances { get; set; } = new();
+    public List<Event> UpcomingEvents { get; set; } = new();
     public List<Member> AvailableOfficers { get; set; } = new();
     // Master data selection properties
     public List<MasterDJ> RegistryDjs { get; set; } = new();
@@ -91,10 +91,8 @@ public class IndexModel : PageModel
             .Include(m => m.OfficerAccount)
             .ToListAsync();
 
-        UpcomingDances = await _context.Events
-            .OfType<Dance>()
+        UpcomingEvents = await _context.Events
             .Include(d => d.AssignedDj)
-            .Include(l=>l.AssignedLesson)
             .Include(loc=>loc.Location)
             .OrderBy(d => d.Date)
             .ToListAsync();
@@ -111,37 +109,51 @@ public class IndexModel : PageModel
 
         if (!ModelState.IsValid) return Page();
 
-        var danceToUpdate = new Dance
+        if (!Enum.IsDefined(FormInput.EventType))
+            return BadRequest("Unsupported event type.");
+
+        Event eventToCreate = FormInput.EventType switch
         {
-            Title = FormInput.Title,
-            Description = FormInput.Description,
-            ContactEmail = FormInput.ContactEmail,
-            Date = FormInput.Date,
-            StartTime = FormInput.StartTime,
-            EndTime = FormInput.EndTime,
-             // 🌟 MAP THE STRATEGIC FOREIGN KEY LINK DIRECTLY
-            LocationId = FormInput.SelectedLocationId,
-            AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null
+            EventCreationType.RegularDance => new Dance(),
+            EventCreationType.SpecialEvent => new SpecialEvent(),
+            EventCreationType.Outing => new Outing
+            {
+                ExternalWebsiteUrl = FormInput.ExternalWebsiteUrl?.Trim(),
+                RegistrationInstructions = FormInput.RegistrationInstructions?.Trim()
+            },
+            _ => throw new InvalidOperationException("Unsupported event type.")
         };
 
-        // Attach Many-to-Many entities directly from lookups using ID mappings
-        if (FormInput.SelectedHostIds.Any())
-            danceToUpdate.AssignedHosts = await _context.MasterHosts.Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
+        eventToCreate.Title = FormInput.Title.Trim();
+        eventToCreate.Description = FormInput.Description?.Trim();
+        eventToCreate.ContactEmail = FormInput.ContactEmail?.Trim();
+        eventToCreate.Date = FormInput.Date;
+        eventToCreate.StartTime = FormInput.StartTime;
+        eventToCreate.EndTime = FormInput.EndTime;
+        eventToCreate.LocationId = FormInput.SelectedLocationId;
+        eventToCreate.AssignedDjId = FormInput.EventType == EventCreationType.Outing
+            ? null
+            : FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null;
+
+        if (eventToCreate is Dance regularDance && FormInput.SelectedHostIds.Any())
+            regularDance.AssignedHosts = await _context.MasterHosts
+                .Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
 
         if (FormInput.SelectedVolunteerIds.Any())
-            danceToUpdate.AssignedVolunteers = await _context.MasterVolunteers.Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
+            eventToCreate.AssignedVolunteers = await _context.MasterVolunteers
+                .Where(v => FormInput.SelectedVolunteerIds.Contains(v.Id)).ToListAsync();
 
         if (FormInput.SelectedOfficerIds.Any())
-            danceToUpdate.AttendingOfficers = await _context.Members
+            eventToCreate.AttendingOfficers = await _context.Members
                 .Where(m => FormInput.SelectedOfficerIds.Contains(m.Id) &&
                     m.OfficerAccount != null && m.OfficerAccount.IsEnabled)
                 .ToListAsync();
 
-        _context.Events.Add(danceToUpdate);
+        _context.Events.Add(eventToCreate);
         await _context.SaveChangesAsync();
-        // 🌟 DYNAMIC OPTIONAL UNPACKING GATES:
-        // Only instantiate a database Lesson entry if the user filled out the form fields!
-        if (FormInput.AssignedLesson != null &&
+
+        if (eventToCreate is Dance danceToUpdate &&
+            FormInput.AssignedLesson != null &&
             !string.IsNullOrWhiteSpace(FormInput.AssignedLesson.Type) &&
             FormInput.AssignedLesson.InstructorId.HasValue &&
             FormInput.AssignedLesson.StartTime.HasValue &&
@@ -173,8 +185,8 @@ public class IndexModel : PageModel
 
         // 1. 🌟 CRITICAL: Eager-load the AttendingOfficers tracking collection graph!
         var danceToDelete = await _context.Events
-            .OfType<Dance>()
-            .Include(d => d.AttendingOfficers) // 👈 Prevents constraint collisions
+            .Include(d => d.AttendingOfficers)
+            .Include(d => d.AssignedVolunteers)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (danceToDelete == null)
@@ -189,6 +201,7 @@ public class IndexModel : PageModel
             // This instantly deletes rows inside 'DanceAttendingOfficers' safely, 
             // leaving your core permanent member account rows completely untouched!
             danceToDelete.AttendingOfficers.Clear();
+            danceToDelete.AssignedVolunteers.Clear();
 
             // 3. Queue the primary entity removal pass
             _context.Events.Remove(danceToDelete);

@@ -22,5 +22,21 @@ public abstract class Event
 
     [ForeignKey("LocationId")]
     public Location Location { get; set; } = null!;
-}
 
+    // Staffing shared by regular dances, special events, and outings.
+    public ICollection<Member> AttendingOfficers { get; set; } = new List<Member>();
+    public ICollection<MasterVolunteer> AssignedVolunteers { get; set; } = new List<MasterVolunteer>();
+
+    // Entertainment is optional. The existing MasterDJ table now represents DJs and bands.
+    public int? AssignedDjId { get; set; }
+    public MasterDJ? AssignedDj { get; set; }
+
+    [NotMapped]
+    public string EventTypeLabel => this switch
+    {
+        Dance => "Regular Dance",
+        SpecialEvent => "Special Event",
+        Outing => "Outing",
+        _ => "Event"
+    };
+}

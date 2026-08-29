@@ -22,8 +22,9 @@
     <div class="mb-4">
         <h2><i class="bi bi-gear-wide-connected text-dark me-2"></i>Master Event Configuration</h2>
         <h5 class="text-muted">
-            Dance Id @Model.TargetDance.Id: 
+            Event Id @Model.TargetDance.Id:
             <span class="text-primary fw-bold">@Model.TargetDance.Title</span> (@Model.TargetDance.Date.ToString("yyyy-MM-dd"))
+            <span class="badge bg-info text-dark ms-2">@Model.TargetDance.EventTypeLabel</span>
         </h5>
     </div>
 
@@ -70,7 +71,7 @@
                         <!-- Row 1: Event Title (Left 8 Columns) -->
                         <div class="col-md-8">
                             <label 
-                                class="form-label fw-bol/d small text-muted mb-1">Dance Event Title</label>
+                                class="form-label fw-bold small text-muted mb-1">Event Title</label>
                             <input 
                                 asp-for="FormInput.Title" 
                                 class="form-control form-control-lg fw-semibold" 
@@ -110,6 +111,19 @@
                                 disabled="@isReadOnly"/>
                             <span asp-validation-for="FormInput.ContactEmail" class="text-danger small"></span>
                         </div>
+                        @if (Model.TargetDance is AbdClub.Models.Outing)
+                        {
+                            <div class="col-12">
+                                <label asp-for="FormInput.ExternalWebsiteUrl" class="form-label fw-bold small text-muted mb-1">External Website</label>
+                                <input asp-for="FormInput.ExternalWebsiteUrl" type="url" class="form-control" disabled="@isReadOnly" />
+                                <span asp-validation-for="FormInput.ExternalWebsiteUrl" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="FormInput.RegistrationInstructions" class="form-label fw-bold small text-muted mb-1">Registration or Meetup Instructions</label>
+                                <textarea asp-for="FormInput.RegistrationInstructions" class="form-control" rows="3" disabled="@isReadOnly"></textarea>
+                                <span asp-validation-for="FormInput.RegistrationInstructions" class="text-danger small"></span>
+                            </div>
+                        }
 
                         <!-- Row 3: Date and Operational Window Matrices -->
                         <div class="col-md-4">
@@ -165,23 +179,25 @@
 
 
             <!-- ACCORDION ACCORDION ITEM 1: MASTER DJ CONFIGURATION -->
+            @if (Model.TargetDance is not AbdClub.Models.Outing)
+            {
             <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
                 <h2 class="accordion-header" id="headingDj">
                     <button class="accordion-button bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDj" aria-expanded="true" aria-controls="collapseDj">
-                        <i class="bi bi-disc-fill me-2 text-warning"></i>Assigned Event DJ Lookup
+                        <i class="bi bi-music-note-beamed me-2 text-warning"></i>Assigned DJ or Band
                     </button>
                 </h2>
                 <div id="collapseDj" class="accordion-collapse collapse " aria-labelledby="headingDj" data-bs-parent="#danceMatrixAccordion">
                     <div class="accordion-body bg-white p-4">
-                        <label class="form-label small fw-bold text-muted mb-1">Select Lookup Registry DJ</label>
+                        <label class="form-label small fw-bold text-muted mb-1">Select Entertainment</label>
                         <select
                             asp-for="FormInput.SelectedDjId"
                             class="form-select form-select-lg bg-light border-light-subtle fw-semibold text-dark"
                             disabled="@isReadOnly">
-                            <option value="">-- No DJ Assigned / Vacant Position --</option>
+                            <option value="">-- No entertainment assigned --</option>
                             @foreach (var dj in Model.RegistryDjs)
                             {
-                                <option value="@dj.Id">@dj.Name @(!string.IsNullOrEmpty(dj.Email) ? $"({dj.Email})" : "")</option>
+                                <option value="@dj.Id">@dj.Name (@dj.EntertainmentType) @(!string.IsNullOrEmpty(dj.Email) ? $"({dj.Email})" : "")</option>
                             }
                         </select>
                         @if (Model.TargetDance.AssignedDj != null && !string.IsNullOrEmpty(Model.TargetDance.AssignedDj.Email))
@@ -194,6 +210,7 @@
                     </div>
                 </div>
             </div>
+            }
 
             <!-- ACCORDION ITEM 2: HOSTS AND VOLUNTEERS DIRECTORIES -->
             <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
@@ -206,6 +223,8 @@
                     <div class="accordion-body bg-white p-4">
                         <div class="row g-4">
                             <!-- Dance Hosts Checklist -->
+                            @if (Model.TargetDance is AbdClub.Models.Dance)
+                            {
                             <div class="col-md-6">
                                 <label class="fw-bold small mb-2 text-muted d-block"><i class="bi bi-person-badge-fill me-1 text-primary"></i>Dance Hosts Directory</label>
                                 <div class="border bg-white rounded p-3" style="max-height: 220px; overflow-y: auto;">
@@ -231,6 +250,7 @@
                                     }
                                 </div>
                             </div>
+                            }
 
                             <!-- Volunteers Checklist -->
                             <div class="col-md-6">
@@ -312,6 +332,8 @@
 
         
                     <!-- ACCORDION ITEM 4: EVENT PRE-DANCE LESSONS MATRIX -->
+            @if (Model.TargetDance is AbdClub.Models.Dance)
+            {
             <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
                 <h2 class="accordion-header" id="headingLessons">
                     <button class="accordion-button collapsed bg-secondary text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLessons" aria-expanded="false" aria-controls="collapseLessons">
@@ -341,8 +363,7 @@
                    type="text" 
                    class="form-control"
                    placeholder="e.g., East Coast Swing (Introductory Class)"
-                   disabled="@isReadOnly"
-                   required />
+                   disabled="@isReadOnly" />
             <span asp-validation-for="FormInput.AssignedLesson.Type" class="text-danger small font-monospace"></span>
         </div>
 
@@ -351,8 +372,7 @@
             <label class="form-label small fw-bold text-muted mb-1" asp-for="FormInput.AssignedLesson.InstructorId">Assigned Master Instructor</label>
             <select asp-for="FormInput.AssignedLesson.InstructorId" 
                     class="form-select bg-white" 
-                    disabled="@isReadOnly"
-                    required>
+                    disabled="@isReadOnly">
                 <option value="">-- Select Instructor --</option>
                 @foreach (var inst in Model.RegistryInstructors)
                 {
@@ -369,8 +389,7 @@
             <input asp-for="FormInput.AssignedLesson.StartTime" 
                    type="time" 
                    class="form-control" 
-                   disabled="@isReadOnly"
-                   required />
+                   disabled="@isReadOnly" />
             <span asp-validation-for="FormInput.AssignedLesson.StartTime" class="text-danger small font-monospace"></span>
         </div>
 
@@ -380,8 +399,7 @@
             <input asp-for="FormInput.AssignedLesson.EndTime" 
                    type="time" 
                    class="form-control" 
-                   disabled="@isReadOnly"
-                   required />
+                   disabled="@isReadOnly" />
             <span asp-validation-for="FormInput.AssignedLesson.EndTime" class="text-danger small font-monospace"></span>
         </div>
 
@@ -394,6 +412,7 @@
                 </div>
                 @* EndDiv collapseLessons *@
             </div>
+            }
              <!-- End Div ACCORDION ITEM 4: EVENT PRE-DANCE LESSONS MATRIX -->
 
 
@@ -442,4 +461,3 @@
         });
     </script>
 }
-

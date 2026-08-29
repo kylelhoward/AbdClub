@@ -36,4 +36,10 @@ public class DanceFormUpdateDto
     public List<int> SelectedHostIds { get; set; } = new();
     public List<int> SelectedInstructorIds { get; set; } = new();
     public List<int> SelectedVolunteerIds { get; set; } = new();
+
+    [Url, StringLength(1024)]
+    public string? ExternalWebsiteUrl { get; set; }
+
+    [StringLength(1000)]
+    public string? RegistrationInstructions { get; set; }
 }

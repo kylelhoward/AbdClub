@@ -114,6 +114,8 @@ public class IndexModel(
                 Phone = FormInput.Phone?.Trim(),
                 Notes = FormInput.Notes?.Trim()
             };
+            if (entity is MasterDJ entertainment)
+                entertainment.EntertainmentType = FormInput.EntertainmentType;
             _context.Set<T>().Add(entity);
             StatusNotice = $"Success: Successfully added new {FormInput.TargetType} entry profile.";
         }
@@ -127,6 +129,8 @@ public class IndexModel(
                 existing.Email = FormInput.Email?.Trim().ToLower();
                 existing.Phone = FormInput.Phone?.Trim();
                 existing.Notes = FormInput.Notes?.Trim();
+                if (existing is MasterDJ entertainment)
+                    entertainment.EntertainmentType = FormInput.EntertainmentType;
                 _context.Set<T>().Update(existing);
                 StatusNotice = $"Success: Modified profile record for {FormInput.Name}.";
             }
@@ -160,5 +164,5 @@ public class RegistryFormInput
     [EmailAddress] public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Notes { get; set; }
+    public EntertainmentType EntertainmentType { get; set; } = EntertainmentType.DJ;
 }
-

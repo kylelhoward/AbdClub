@@ -12,7 +12,7 @@ public class IndexModel : PageModel
 
     public IndexModel(AbdContext context) => _context = context;
 
-    public List<Dance> ActiveSchedule { get; set; } = new();
+    public List<Event> ActiveSchedule { get; set; } = new();
     public string CurrentMemberName { get; set; } = string.Empty;
 
     [TempData]
@@ -22,12 +22,11 @@ public class IndexModel : PageModel
     {
         // 🌟 FULLY ALIGNED 1:1 EAGER LOADING QUERY
         ActiveSchedule = await _context.Events
-            .OfType<Dance>()
             .Include(d => d.Location)
             .Include(d => d.AssignedDj)
 
             // 🌟 THE FIX: Eager-load your single lesson, then reach inside to extract its instructor profile
-            .Include(d => d.AssignedLesson)
+            .Include(d => ((Dance)d).AssignedLesson)
                 .ThenInclude(l => l.Instructor)
 
             .Include(d => d.AssignedVolunteers)
@@ -53,7 +52,7 @@ public class IndexModel : PageModel
         if (currentMember == null) return Forbid();
 
         // 2. Fetch the target dance along with its assigned volunteers collection loop
-        var dance = await _context.Events.OfType<Dance>()
+        var dance = await _context.Events
             .Include(d => d.AssignedVolunteers)
             .FirstOrDefaultAsync(d => d.Id == danceId);
 

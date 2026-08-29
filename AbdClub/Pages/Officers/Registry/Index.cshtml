@@ -18,6 +18,7 @@
         mEmail: '',
         mPhone: '',
         mNotes: '',
+        mEntertainmentType: 1,
         isReadOnly: false, // 🌟 NEW STATE: Tracks read-only mode boundaries
 
         openCreateModal(type) {
@@ -28,9 +29,10 @@
             this.mEmail = '';
             this.mPhone = '';
             this.mNotes = '';
+            this.mEntertainmentType = 1;
             new bootstrap.Modal(document.getElementById('masterRegistryModal')).show();
         },
-        openEditModal(id, type, name, email, phone, notes, readOnlyMode = false) {
+        openEditModal(id, type, name, email, phone, notes, readOnlyMode = false, entertainmentType = 1) {
             this.isReadOnly = readOnlyMode; // Dynamic binding based on user assignment policies
             this.mRecordId = id;
             this.mType = type;
@@ -38,6 +40,7 @@
             this.mEmail = email;
             this.mPhone = phone;
             this.mNotes = notes;
+            this.mEntertainmentType = entertainmentType;
             new bootstrap.Modal(document.getElementById('masterRegistryModal')).show();
         }
      }">
@@ -78,7 +81,7 @@
 
     <!-- TAB BED LINK SELECT NAVIGATION SYSTEM -->
     <ul class="nav nav-tabs nav-fill mb-4 border-bottom shadow-sm rounded-top bg-light">
-        <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Djs' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Djs'"><i class="bi bi-disc me-2"></i>Master DJs</button></li>
+        <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Djs' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Djs'"><i class="bi bi-music-note-beamed me-2"></i>DJs & Bands</button></li>
         <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Hosts' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Hosts'"><i class="bi bi-person-badge me-2"></i>Dance Hosts</button></li>
         <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Instructors' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Instructors'"><i class="bi bi-mortarboard me-2"></i>Instructors</button></li>
         <li class="nav-item"><button type="button" class="nav-link fw-bold px-4 py-3" :class="activeTab === 'Volunteers' ? 'active bg-white border-bottom-0' : ''" x-on:click="activeTab = 'Volunteers'"><i class="bi bi-heart me-2"></i>Volunteers</button></li>
@@ -92,6 +95,7 @@
                 <thead class="table-light">
                     <tr>
                         <th class="ps-3">Name</th>
+                        <th>Type</th>
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Internal Notes</th>
@@ -103,6 +107,7 @@
                    {
                        <tr>
                            <td class="ps-3 fw-bold">@item.Name</td>
+                           <td><span class="badge bg-info text-dark">@item.EntertainmentType</span></td>
                            <td>@item.Email</td>
                            <td>@item.Phone</td>
                            <td class="text-muted small">@item.Notes</td>
@@ -113,7 +118,7 @@
                               @if (!(await AuthorizationService.AuthorizeAsync(User, null, "isAdmin")).Succeeded)
                               {
                                  <button type="button" class="btn btn-sm btn-outline-secondary"
-                                     x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', true)">
+                                     x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', true, @((int)item.EntertainmentType))">
                                      <i class="bi bi-eye-fill me-1"></i> View Details
                                 </button>
                               }
@@ -123,7 +128,7 @@
                             {
                             <!-- Standard Edit button sets readOnlyMode parameter default = false -->
                             <button type="button" class="btn btn-sm btn-outline-dark" 
-                                x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', false)">
+                                x-on:click="openEditModal(@item.Id, 'DJ', '@JavaScriptEncoder.Default.Encode(item.Name)', '@JavaScriptEncoder.Default.Encode(item.Email ?? "")', '@JavaScriptEncoder.Default.Encode(item.Phone ?? "")', '@JavaScriptEncoder.Default.Encode(item.Notes ?? "")', false, @((int)item.EntertainmentType))">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <form method="post" asp-page-handler="DeleteProfile" asp-route-id="@item.Id" asp-route-type="DJ" onsubmit="return confirm('Purge record?');">
@@ -333,6 +338,14 @@
                         <label class="form-label fw-bold small text-muted mb-1">Full Display Name</label>
                         <!-- x-bind:readonly maps a programmatic lock whenever isReadOnly evaluates true -->
                         <input asp-for="FormInput.Name" x-model="mName" class="form-control" :readonly="isReadOnly" required />
+                    </div>
+                    <div class="mb-3" x-show="mType === 'DJ'">
+                        <label asp-for="FormInput.EntertainmentType" class="form-label fw-bold small text-muted mb-1">Entertainment Type</label>
+                        <select asp-for="FormInput.EntertainmentType" x-model.number="mEntertainmentType" class="form-select" :disabled="isReadOnly">
+                            <option value="1">DJ</option>
+                            <option value="2">Band</option>
+                            <option value="3">Other</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted mb-1">Email Address</label>

@@ -20,7 +20,7 @@ public class EditModel(
     private readonly ILogger<EditModel> _logger = logger;
     private readonly IAuthorizationService _authorizationService = authorizationService;
 
-    public Dance TargetDance { get; set; } = null!;
+    public Event TargetDance { get; set; } = null!;
     public List<Member> AllActiveOfficers { get; set; } = new();
     public List<MasterDJ> RegistryDjs { get; set; } = new();
     public List<MasterHost> RegistryHosts { get; set; } = new();
@@ -49,22 +49,28 @@ public class EditModel(
             return Forbid(); // Blocks lower-level officers automatically
         }
 
-        TargetDance = await _context.Events.OfType<Dance>()
+        TargetDance = await _context.Events
             .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
             .Include(d => d.AssignedDj)
-            .Include(d => d.AssignedHosts)
             .Include(d => d.AssignedVolunteers)
-            .Include(d => d.AssignedLesson) // Eagerly loads updated Lesson collections
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (TargetDance == null) return NotFound();
+
+        if (TargetDance is Dance regularDance)
+        {
+            await _context.Entry(regularDance).Collection(d => d.AssignedHosts).LoadAsync();
+            await _context.Entry(regularDance).Reference(d => d.AssignedLesson).LoadAsync();
+        }
 
         FormInput.SelectedDjId = TargetDance.AssignedDjId;
 
         CurrentlyAssignedOfficerIds = TargetDance.AttendingOfficers.Select(o => o.Id).ToHashSet();
         FormInput.SelectedOfficerIds = CurrentlyAssignedOfficerIds.ToList();
 
-        CurrentlyAssignedHostIds = TargetDance.AssignedHosts.Select(h => h.Id).ToHashSet();
+        CurrentlyAssignedHostIds = TargetDance is Dance dance
+            ? dance.AssignedHosts.Select(h => h.Id).ToHashSet()
+            : new HashSet<int>();
         FormInput.SelectedHostIds = CurrentlyAssignedHostIds.ToList();
 
         FormInput.SelectedInstructorIds = CurrentlyAssignedInstructorIds.ToList();
@@ -82,20 +88,26 @@ public class EditModel(
         FormInput.ContactEmail = TargetDance.ContactEmail;
         FormInput.SelectedLocationId = TargetDance.LocationId;
         // 🌟 REFACTORED 1:1 INITIALIZATION MAP: Replaces your old multi-row collection list loops
-if (TargetDance.AssignedLesson != null)
+if (TargetDance is Dance danceWithLesson && danceWithLesson.AssignedLesson != null)
         {
             FormInput.AssignedLesson = new LessonInputItem
             {
-                InstructorId = TargetDance.AssignedLesson.InstructorId,
-                Type = TargetDance.AssignedLesson.Type,
-                StartTime = TargetDance.AssignedLesson.StartTime,
-                EndTime = TargetDance.AssignedLesson.EndTime
+                InstructorId = danceWithLesson.AssignedLesson.InstructorId,
+                Type = danceWithLesson.AssignedLesson.Type,
+                StartTime = danceWithLesson.AssignedLesson.StartTime,
+                EndTime = danceWithLesson.AssignedLesson.EndTime
             };
         }
         else
         {
             // Initialize as a blank default template instance so your HTML input elements don't throw null crashes
             FormInput.AssignedLesson = new LessonInputItem();
+        }
+
+        if (TargetDance is Outing outing)
+        {
+            FormInput.ExternalWebsiteUrl = outing.ExternalWebsiteUrl;
+            FormInput.RegistrationInstructions = outing.RegistrationInstructions;
         }
 
         await LoadMasterRegistriesAsync();
@@ -110,14 +122,18 @@ if (TargetDance.AssignedLesson != null)
             return Forbid(); // Blocks lower-level officers automatically
         }
 
-        var danceToUpdate = await _context.Events.OfType<Dance>()
+        var danceToUpdate = await _context.Events
             .Include(d => d.AttendingOfficers).ThenInclude(m => m.OfficerAccount)
-            .Include(d => d.AssignedHosts)
             .Include(d => d.AssignedVolunteers)
-            .Include(d => d.AssignedLesson)
             .FirstOrDefaultAsync(d => d.Id == id);
 
         if (danceToUpdate == null) return NotFound();
+
+        if (danceToUpdate is Dance regularDance)
+        {
+            await _context.Entry(regularDance).Collection(d => d.AssignedHosts).LoadAsync();
+            await _context.Entry(regularDance).Reference(d => d.AssignedLesson).LoadAsync();
+        }
         danceToUpdate.Title = FormInput.Title.Trim();
         danceToUpdate.Description = FormInput.Description?.Trim();
         // 🌟 MAP THE SCHEDULE PARAMETER TRANSFORMS CLEANLY
@@ -135,12 +151,24 @@ if (TargetDance.AssignedLesson != null)
             TargetDance = danceToUpdate;
             return Page();
         }
-        danceToUpdate.AssignedDjId = FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null;
+        danceToUpdate.AssignedDjId = danceToUpdate is Outing
+            ? null
+            : FormInput.SelectedDjId > 0 ? FormInput.SelectedDjId : null;
+
+        if (danceToUpdate is Outing outing)
+        {
+            outing.ExternalWebsiteUrl = FormInput.ExternalWebsiteUrl?.Trim();
+            outing.RegistrationInstructions = FormInput.RegistrationInstructions?.Trim();
+        }
 
         // Many-to-Many updates
-        danceToUpdate.AssignedHosts.Clear();
-        if (FormInput.SelectedHostIds.Any())
-            danceToUpdate.AssignedHosts = await _context.MasterHosts.Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
+        if (danceToUpdate is Dance regularDanceToUpdate)
+        {
+            regularDanceToUpdate.AssignedHosts.Clear();
+            if (FormInput.SelectedHostIds.Any())
+                regularDanceToUpdate.AssignedHosts = await _context.MasterHosts
+                    .Where(h => FormInput.SelectedHostIds.Contains(h.Id)).ToListAsync();
+        }
 
         danceToUpdate.AssignedVolunteers.Clear();
         if (FormInput.SelectedVolunteerIds.Any())
@@ -156,34 +184,34 @@ if (TargetDance.AssignedLesson != null)
                               FormInput.AssignedLesson.StartTime.HasValue &&
                               FormInput.AssignedLesson.EndTime.HasValue;
 
-        if (hasLessonInput)
+        if (danceToUpdate is Dance lessonDance && hasLessonInput)
         {
-            if (danceToUpdate.AssignedLesson == null)
+            if (lessonDance.AssignedLesson == null)
             {
                 // CASE A: The event didn't have a lesson row yet -> Instantiate a clean entity tracker instance
-                danceToUpdate.AssignedLesson = new Lesson();
+                lessonDance.AssignedLesson = new Lesson();
             }
 
             // Connect the matching parent relationship ID
-            danceToUpdate.AssignedLesson.DanceId = danceToUpdate.Id;
+            lessonDance.AssignedLesson.DanceId = lessonDance.Id;
 
             // 🌟 THE UNPACKING FIX: Appending '.Value' extracts the inner data cleanly, solving the compilation error!
-            danceToUpdate.AssignedLesson.InstructorId = FormInput.AssignedLesson!.InstructorId!.Value;
-            danceToUpdate.AssignedLesson.Type = FormInput.AssignedLesson.Type!.Trim();
-            danceToUpdate.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime!.Value;
-            danceToUpdate.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime!.Value;
+            lessonDance.AssignedLesson.InstructorId = FormInput.AssignedLesson!.InstructorId!.Value;
+            lessonDance.AssignedLesson.Type = FormInput.AssignedLesson.Type!.Trim();
+            lessonDance.AssignedLesson.StartTime = FormInput.AssignedLesson.StartTime!.Value;
+            lessonDance.AssignedLesson.EndTime = FormInput.AssignedLesson.EndTime!.Value;
         }
-        else
+        else if (danceToUpdate is Dance danceWithoutLessonInput)
         {
             // CASE B: If the form is left blank, check if a lesson row currently exists on disk
-            if (danceToUpdate.AssignedLesson != null)
+            if (danceWithoutLessonInput.AssignedLesson != null)
             {
                 // 🌟 NATIVE CASCADE CLEANUP: Telling EF Core to remove the tracked lesson row entity completely.
                 // This ensures that clearing out the fields on the Edit page actually drops the record from PostgreSQL!
-                _context.Lessons.Remove(danceToUpdate.AssignedLesson);
+                _context.Lessons.Remove(danceWithoutLessonInput.AssignedLesson);
             }
 
-            danceToUpdate.AssignedLesson = null;
+            danceWithoutLessonInput.AssignedLesson = null;
         }
 
 
@@ -248,7 +276,7 @@ if (TargetDance.AssignedLesson != null)
             throw;
         }
 
-        UpdateFeedback = "Success: Event data rosters, lookups, and relational lesson instructor profiles updated.";
+        UpdateFeedback = "The event details and assignments were updated.";
         return RedirectToPage(new { id });
     }
 

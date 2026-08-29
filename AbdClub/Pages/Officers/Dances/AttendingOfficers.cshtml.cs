@@ -189,9 +189,9 @@ public class AttendingOfficersModel : PageModel
                         }
 
 
-                        // 2. Render DJ Row
+                        // 2. Render entertainment row
                         string djName = dance.AssignedDj != null ? dance.AssignedDj.Name : "VACANT / UNASSIGNED";
-                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("Event Disc Jockey (DJ)").Bold();
+                        table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text("Event DJ / Band").Bold();
                         table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(djName).FontColor(dance.AssignedDj == null ? Colors.Red.Medium : Colors.Black);
                         table.Cell().BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(5).Text(dance.AssignedDj == null ? "[  ] Recruits Needed" : "[  ] Present");
 
