@@ -30,6 +30,7 @@ public class IndexModel : PageModel
                 .ThenInclude(l => l.Instructor)
 
             .Include(d => d.AssignedVolunteers)
+            .Include(d => d.TicketTypes)
             .Where(d => d.Date >= DateOnly.FromDateTime(DateTime.Today))
             .OrderBy(d => d.Date)
             .ToListAsync();

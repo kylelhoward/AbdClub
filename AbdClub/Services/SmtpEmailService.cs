@@ -67,6 +67,16 @@ public class SmtpEmailService : IEmailService
         }
     }
 
+    public async Task SendEventTicketConfirmationAsync(EventTicketOrder order)
+    {
+        var rows = string.Join("", order.Tickets.Select(ticket => $"<tr><td>{WebUtility.HtmlEncode(ticket.HolderName)}</td><td>{WebUtility.HtmlEncode(ticket.TicketTypeName)}</td><td><strong>{WebUtility.HtmlEncode(ticket.TicketCode)}</strong></td></tr>"));
+        var subject = $"Your tickets for {order.Event.Title}";
+        var body = $"<h2>{WebUtility.HtmlEncode(order.Event.Title)}</h2><p>Thank you for your purchase. Present the following ticket codes at check-in.</p><table cellpadding='8' cellspacing='0' border='1'><tr><th>Attendee</th><th>Ticket</th><th>Code</th></tr>{rows}</table><p>Order total: {order.Amount:C}</p>";
+        using var message = BuildMessage(order.PurchaserEmail, order.PurchaserName, subject, body, isHtml: true);
+        await _smtpSender.SendMailAsync(message);
+        await WriteAuditLogAsync(order.PurchaserEmail, subject, body, "EventTickets", "System:StripeWebhook", null, isSuccess: true);
+    }
+
     // 🌟 THE UNIFIED DATABASE LOGGER HOOK: Call this at the end of every email transmission method
     private async Task WriteAuditLogAsync(
         string recipientEmail,
