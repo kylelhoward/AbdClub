@@ -358,9 +358,10 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
 
         var testVenues = new List<Location>
     {
-        new() { VenueName = "Go Dance South", Address = "4477 S Lamar Blvd, Austin, TX 78745", Description = "Main ballroom entrance. Door code: #4242", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/godance.jpg" },
+        new() { VenueName = "Austin Uptown Dance", Address = "8868 Research Blvd #706, Austin, TX 78758", Description = "Customized dance lessons, friendly instructors.", GoogleMapsUrl = "https://maps.app.goo.gl/urZ543LQrrv51HPJA", PhotoUrl = "/images/venues/uptown_dance.jpg" },
         new() { VenueName = "Go Dance North", Address = "2525 W Anderson Ln., Austin, TX 78757", Description = "Studio 2 corridor entry setup.", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/fallback.jpg" },
-        new() { VenueName = "Fedora Club Hall", Address = "1200 San Jacinto Blvd, Austin, TX 78701", Description = "Street parking requires city meters. Back door loading ramp rules active.", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/fallback.jpg" }
+        new() { VenueName = "Fedora Club Hall", Address = "1200 San Jacinto Blvd, Austin, TX 78701", Description = "Street parking requires city meters. Back door loading ramp rules active.", GoogleMapsUrl = "https://google.com", PhotoUrl = "/images/venues/fallback.jpg" },
+        new() { VenueName = "Maverick's North", Address = "1700 Grand Ave Pkwy #240, Pflugerville, TX 78660", Description = "Street parking requires city meters. Back door loading ramp rules active.", GoogleMapsUrl = "https://share.google/AlT918eYdTPi4jqQU", PhotoUrl = "/images/venues/mavericks_north.webp" }
     };
 
         int addedCount = 0;
@@ -393,8 +394,8 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         if (!isAuthorized) return Forbid();
 
         // Fetch an active location from the database to map our foreign key dependencies
-        var primaryVenue = await _db.Locations.FirstOrDefaultAsync(l => l.VenueName == "Go Dance South");
-        var backupVenue = await _db.Locations.FirstOrDefaultAsync(l => l.VenueName == "Go Dance North")
+        var primaryVenue = await _db.Locations.FirstOrDefaultAsync(l => l.VenueName == "Go Dance North");
+        var backupVenue = await _db.Locations.FirstOrDefaultAsync(l => l.VenueName == "Austin Uptown Dance")
                           ?? primaryVenue;
 
         if (primaryVenue == null)
