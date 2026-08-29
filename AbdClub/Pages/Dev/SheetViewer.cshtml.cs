@@ -229,12 +229,12 @@ public class SheetViewerModel : PageModel
             {
                 string GetCell(int colIndex) => row.Count > colIndex ? row[colIndex]?.ToString()?.Trim() ?? string.Empty : string.Empty;
 
-                string firstName = GetCell(1);
-                string lastName = GetCell(2);
-                string fullName = GetCell(3);
-                string rawExp = GetCell(4);
-                string phone = GetCell(5);
-                string email = CleanSheetEmail(GetCell(6));
+                string firstName = GetCell(0);
+                string lastName = GetCell(1);
+                string fullName = GetCell(2);
+                string rawExp = GetCell(3);
+                string phone = GetCell(4);
+                string email = CleanSheetEmail(GetCell(5));
 
                 if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email))
                 {

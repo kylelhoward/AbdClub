@@ -58,10 +58,10 @@ public class MembersListModel(AbdContext db, IAuthorizationService authorization
 
             // Expiring within a 60-day warning horizon window
             "expiring" => query.Where(m =>
-                !m.IsSuspended &&
-                m.ExpiryDate.HasValue &&
-                m.ExpiryDate.Value <= DateTime.UtcNow.AddDays(60) &&
-                m.ExpiryDate.Value >= DateTime.UtcNow),
+     !m.IsSuspended &&
+     m.ExpiryDate.HasValue &&
+     m.ExpiryDate.Value.Date >= DateTime.UtcNow.Date &&
+     m.ExpiryDate.Value.Date <= DateTime.UtcNow.Date.AddDays(60)),
 
             // Lapsed or physically expired chronologically
             "expired" => query.Where(m =>

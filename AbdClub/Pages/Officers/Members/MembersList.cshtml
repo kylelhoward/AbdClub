@@ -103,8 +103,15 @@
                     {
                         var now = DateTime.UtcNow;
                         var expiry = member.ExpiryDate;
+                        var isSuspended = member.IsSuspended;
                         var isExpired = expiry.HasValue && expiry.Value < now;
-                        var isExpiringSoon = expiry.HasValue && !isExpired && expiry.Value < now.AddDays(30);
+                       var today = DateTime.UtcNow.Date;
+
+var isExpiringSoon =
+    !isSuspended &&
+    expiry.HasValue &&
+    expiry.Value.Date >= today &&
+    expiry.Value.Date <= today.AddDays(60);
 
                         <tr class="@(isExpired ? "table-danger" : "")">
                            <td class="fw-semibold text-nowrap">@member.DisplayMemberNumber</td>
@@ -129,7 +136,7 @@
                                 }
                             </td>
                             <td class="text-center">
-                                @if (member.IsSuspended)
+                                @if (isSuspended)
                                 {
                                     <span class="badge bg-secondary">Suspended</span>
                                 }

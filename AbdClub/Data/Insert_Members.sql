@@ -9,14 +9,13 @@ INSERT INTO public."Members" (
     "IsSuspended",
     "CreatedAt",
     "SelfRegistered",
-    "DanceId",
     "IsAdmin",
     "IsTechAdmin",
     "FirstName",
     "MiddleName",
     "LastName"
 ) VALUES (
-    'kyle.lhoward@gmail.com',
+    'kylelhoward@gmail.com',
     NULL,
     NULL,
     TIMESTAMPTZ '2026-08-08 13:39:12.724491-05',
@@ -26,7 +25,6 @@ INSERT INTO public."Members" (
     FALSE,
     TIMESTAMPTZ '2026-08-08 13:39:12.724491-05',
     FALSE,
-    NULL,
     FALSE,
     TRUE,
     'Kyle',
@@ -34,5 +32,3 @@ INSERT INTO public."Members" (
     'Howard'
 );
 
-
--- TRUNCATE TABLE public."Members" RESTART IDENTITY CASCADE
