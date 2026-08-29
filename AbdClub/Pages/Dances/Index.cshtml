@@ -51,6 +51,16 @@
                 <div class="card-body p-4 bg-light bg-opacity-50">
                     <p class="lead fs-6 mb-4">@dance.Description</p>
 
+                    @if (dance is AbdClub.Models.SpecialEvent && dance.TicketTypes.Any(t =>
+                        t.IsActive && !t.IsDoorPrice &&
+                        (!t.SalesStartAt.HasValue || t.SalesStartAt <= DateTime.UtcNow) &&
+                        (!t.SalesEndAt.HasValue || t.SalesEndAt >= DateTime.UtcNow)))
+                    {
+                        <a asp-page="/EventTickets" asp-route-eventId="@dance.Id" class="btn btn-danger mb-4">
+                            <i class="bi bi-ticket-perforated me-1"></i> Buy Tickets
+                        </a>
+                    }
+
                     <div class="row g-4">
                         <!-- COLUMN A: LESSON SCHEDULE DETAILS & DJ -->
                         <div class="col-md-6">

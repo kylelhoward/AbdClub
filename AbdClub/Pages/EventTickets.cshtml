@@ -1,0 +1,129 @@
+@page "/Events/{eventId:int}/Tickets"
+@model AbdClub.Pages.EventTicketsModel
+@{
+    ViewData["Title"] = $"Tickets — {Model.Event.Title}";
+}
+
+<div class="container py-4" style="max-width: 900px;">
+    <div class="mb-4">
+        <a asp-page="/Dances/Index" class="text-decoration-none">&larr; All events</a>
+        <h1 class="h2 mt-2">@Model.Event.Title Tickets</h1>
+        <p class="text-muted mb-0">@Model.Event.Date.ToString("dddd, MMMM d, yyyy") at @Model.Event.Location.VenueName</p>
+    </div>
+
+    @if (Model.PaymentCancelled)
+    {
+        <div class="alert alert-warning">Checkout was cancelled. No payment was completed.</div>
+    }
+    @if (Model.CompletedOrder != null && !Model.PaymentPending)
+    {
+        <div class="alert alert-success">
+            <strong>Payment received.</strong> Keep these ticket codes for check-in.
+            <ul class="mb-0 mt-2">
+                @foreach (var ticket in Model.CompletedOrder.Tickets)
+                {
+                    <li><strong>@ticket.HolderName:</strong> @ticket.TicketCode (@ticket.TicketTypeName)</li>
+                }
+            </ul>
+        </div>
+    }
+    else if (Request.Query.ContainsKey("success"))
+    {
+        <div class="alert alert-info">Stripe accepted the payment. Ticket fulfillment is processing; refresh this page shortly if the ticket codes do not appear yet.</div>
+    }
+
+    @if (!Model.TicketTypes.Any())
+    {
+        <div class="alert alert-secondary">Online tickets are not currently available for this event.</div>
+    }
+    else
+    {
+        <form method="post">
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <section class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-dark text-white fw-bold">Select tickets</div>
+                <div class="card-body p-4">
+                    @for (var i = 0; i < Model.TicketTypes.Count; i++)
+                    {
+                        var type = Model.TicketTypes[i];
+                        <input type="hidden" asp-for="Input.Selections[i].TicketTypeId" value="@type.Id" />
+                        <div class="ticket-selection border rounded p-3 mb-3" data-member-only="@type.IsMemberOnly.ToString().ToLowerInvariant()">
+                            <div class="row align-items-end g-3">
+                                <div class="col-md-7">
+                                    <h2 class="h5 mb-1">@type.Name</h2>
+                                    <span class="fs-5 fw-bold text-danger">@type.Price.ToString("C")</span>
+                                    @if (type.IsMemberOnly)
+                                    {
+                                        <span class="badge bg-primary ms-2">Active members</span>
+                                    }
+                                    @if (type.Remaining.HasValue)
+                                    {
+                                        <span class="text-muted small ms-2">@type.Remaining remaining</span>
+                                    }
+                                </div>
+                                <div class="col-md-5">
+                                    <label asp-for="Input.Selections[i].Quantity" class="form-label">Quantity</label>
+                                    <select asp-for="Input.Selections[i].Quantity" class="form-select ticket-quantity">
+                                        @for (var quantity = 0; quantity <= Math.Min(12, type.Remaining ?? 12); quantity++)
+                                        {
+                                            <option value="@quantity">@quantity</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="ticket-details mt-3" hidden>
+                                <label asp-for="Input.Selections[i].HolderNames" class="form-label fw-bold">Attendee names</label>
+                                <textarea asp-for="Input.Selections[i].HolderNames" class="form-control" rows="3" placeholder="One full name per line"></textarea>
+                                <div class="form-text">Enter one attendee name per ticket.</div>
+                                @if (type.IsMemberOnly)
+                                {
+                                    <label asp-for="Input.Selections[i].MemberNumbers" class="form-label fw-bold mt-3">ABD member numbers</label>
+                                    <textarea asp-for="Input.Selections[i].MemberNumbers" class="form-control" rows="3" placeholder="ABD-10001&#10;ABD-10002"></textarea>
+                                    <div class="form-text">Enter the active member number corresponding to each attendee, one per line.</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-dark text-white fw-bold">Purchaser information</div>
+                <div class="card-body p-4 row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.PurchaserName" class="form-label"></label>
+                        <input asp-for="Input.PurchaserName" class="form-control" />
+                        <span asp-validation-for="Input.PurchaserName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.PurchaserEmail" class="form-label"></label>
+                        <input asp-for="Input.PurchaserEmail" type="email" class="form-control" />
+                        <span asp-validation-for="Input.PurchaserEmail" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.PurchaserPhone" class="form-label"></label>
+                        <input asp-for="Input.PurchaserPhone" class="form-control" />
+                        <span asp-validation-for="Input.PurchaserPhone" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <button type="submit" class="btn btn-danger btn-lg">Continue to secure Stripe checkout</button>
+            <p class="text-muted small mt-2">ABD does not receive or store your card information.</p>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.ticket-selection').forEach(function (selection) {
+            const quantity = selection.querySelector('.ticket-quantity');
+            const details = selection.querySelector('.ticket-details');
+            const update = () => details.hidden = Number(quantity.value) === 0;
+            quantity.addEventListener('change', update);
+            update();
+        });
+    </script>
+}
