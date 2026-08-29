@@ -33,6 +33,7 @@ public class AbdContext : DbContext
     public DbSet<AnnouncementFlyerSettings> AnnouncementFlyerSettings { get; set; } = null!;
     public DbSet<FlyerAnnouncementItem> FlyerAnnouncementItems { get; set; } = null!;
     public DbSet<HelpWantedItem> HelpWantedItems { get; set; } = null!;
+    public DbSet<SpecialAnnouncement> SpecialAnnouncements { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -142,6 +143,12 @@ public class AbdContext : DbContext
             .WithMany(s => s.HelpWantedItems)
             .HasForeignKey(i => i.AnnouncementFlyerSettingsId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SpecialAnnouncement>()
+            .HasOne(a => a.UploadedByOfficerAccount)
+            .WithMany()
+            .HasForeignKey(a => a.UploadedByOfficerAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     // Ensure all DateTime properties saved to timestamptz columns are UTC

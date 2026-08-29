@@ -1,4 +1,6 @@
 ﻿@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+@inject AbdClub.Data.AbdContext LayoutDbContext
+@using Microsoft.EntityFrameworkCore
 
 <!DOCTYPE html>
 <html lang="en">
@@ -57,6 +59,14 @@
                  <li class="nav-item">
                      <a class="nav-link text-dark" asp-page="/Announcements">Announcements</a>
                  </li>
+                 @if (await LayoutDbContext.SpecialAnnouncements
+                     .AsNoTracking()
+                     .AnyAsync(a => a.Id == AbdClub.Models.SpecialAnnouncement.CurrentAnnouncementId && a.IsPublished))
+                 {
+                     <li class="nav-item">
+                         <a class="nav-link text-danger fw-semibold" asp-page="/SpecialAnnouncement">Special Announcement</a>
+                     </li>
+                 }
                  <li class="nav-item">
                      <a class="nav-link text-dark" asp-page="/MembershipStatus">Membership Status</a>
                  </li>
@@ -77,6 +87,7 @@
                              <li><a class="dropdown-item" asp-page="/Officers/Registry/Index">Registry</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/Dances/Index">Dances</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/Announcements/Edit">Announcement Flyer</a></li>
+                             <li><a class="dropdown-item" asp-page="/Officers/SpecialAnnouncement/Edit">Special Announcement</a></li>
                              @* <li><a class="dropdown-item" asp-page="/Officers/Dances/PrintManifests">Print Manifests</a></li> *@
                              <li><a class="dropdown-item" asp-page="/Officers/Locations/Index">Locations</a></li>
                              <li><a class="dropdown-item" asp-page="/Officers/FileManager">Club Files</a></li>
