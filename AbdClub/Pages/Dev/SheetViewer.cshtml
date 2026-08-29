@@ -60,6 +60,18 @@
         </div>
     }
 
+    @if (TempData["ErrorMessage"] is string errorMessage && !string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-info border-0 shadow-sm rounded-3 p-3 mb-4">
+            <div class="d-flex align-items-start">
+                <i class="bi bi-info-circle-fill fs-4 text-danger me-3"></i>
+                <div>
+                    <div class="small">@errorMessage</div>
+                </div>
+            </div>
+        </div>
+    }
+
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
     {
         <div class="alert alert-danger border-0 shadow-sm rounded-3 p-4 mb-4">
@@ -68,7 +80,7 @@
                 <div>
                     <h5 class="fw-bold mb-1">Google Sheets Sync Error</h5>
                     <p class="mb-2 small">@Model.ErrorMessage</p>
-                    <div class="small text-muted">
+                    <div class="small text-muted">FullName
                         <strong>Troubleshooting Checklist:</strong>
                         <ul class="mb-0 mt-1">
                             <li>Confirm that <code>abdclub-81c5d585c9db.json</code> is placed inside <code>Data/Publishing/</code>.</li>
@@ -136,12 +148,13 @@
                             <th class="ps-3" style="width: 60px;">Row</th>
                             <th>ABD Member #</th>
                             <th>Database Status</th>
-                            <th>First Name (B)</th>
-                            <th>Last Name (C)</th>
-                            <th>Full Name (D)</th>
-                            <th>Expiration Date (E)</th>
-                            <th>Phone (F)</th>
-                            <th class="pe-3">Email (G)</th>
+                            <th>First Name (A)</th>
+                            <th>Last Name (B)</th>
+                            <th>Full Name (C)</th>
+                            <th>Expiration Date (D)</th>
+                            <th>Phone (E)</th>
+                            <th class="pe-3">Email (F)</th>
+                            <th>Notes (G)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -240,6 +253,7 @@
                                             <span class="text-muted">—</span>
                                         }
                                     </td>
+                                    <td class="text-secondary font-monospace">@row.Notes</td>
                                 </tr>
                             }
                         }

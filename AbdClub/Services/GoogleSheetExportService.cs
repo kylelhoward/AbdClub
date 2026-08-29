@@ -45,7 +45,7 @@ public class GoogleSheetExportService : IGoogleSheetExportService
             new List<object>
             {
                 "Member Number", "Database ID", "First Name", "Middle Name", "Last Name",
-                "Full Name", "Email Address", "Phone", "Join Date", "Expiration Date", "Status"
+                "Full Name", "Email Address", "Phone", "Notes", "Join Date", "Expiration Date", "Status"
             }
         };
 
@@ -62,6 +62,7 @@ public class GoogleSheetExportService : IGoogleSheetExportService
                 m.FullName, // Reads your unmapped calculated property natively
                 m.Email,
                 m.Phone ?? string.Empty,
+                m.Notes ?? string.Empty,
                 m.JoinDate.ToString("yyyy-MM-dd"),
                 m.ExpiryDate?.ToString("yyyy-MM-dd") ?? "N/A",
                 m.IsActive ? "Active" : (m.IsSuspended ? "Suspended" : "Expired")

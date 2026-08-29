@@ -52,6 +52,14 @@
                            placeholder="512-555-0100" />
                 </div>
                 <div class="mb-3">
+                    <label asp-for="Member.Notes" class="form-label">Notes</label>
+                    <textarea 
+                        asp-for="Member.Notes" 
+                        class="form-control" 
+                        placeholder="Enter notes">
+                    </textarea>
+                </div>
+                <div class="mb-3">
                     <label asp-for="Member.ExpiryDate" class="form-label">Expiry Date</label>
                     <input asp-for="Member.ExpiryDate" type="date" class="form-control" />
                     <span asp-validation-for="Member.ExpiryDate" class="text-danger small"></span>

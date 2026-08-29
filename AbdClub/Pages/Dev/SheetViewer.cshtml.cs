@@ -55,6 +55,7 @@ public class SheetViewerModel : PageModel
         public bool IsExpired => ParsedExpirationDate.HasValue && ParsedExpirationDate.Value.Date < DateTime.UtcNow.Date;
         public string Phone { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string? Notes { get; set; } = string.Empty;
         public bool IsEmailBounced { get; set; }
         public string? MemberNumber { get; set; }
         public string? DatabaseStatus { get; set; }
@@ -108,19 +109,20 @@ public class SheetViewerModel : PageModel
                 string GetCell(int colIndex) => row.Count > colIndex ? row[colIndex]?.ToString()?.Trim() ?? string.Empty : string.Empty;
 
                 // Adjust indices based on sheet columns:
-                // Column A = 0 (if present)
-                // Column B = 1: FirstName
-                // Column C = 2: LastName
-                // Column D = 3: FullName
-                // Column E = 4: Expiration Date
-                // Column F = 5: Phone
-                // Column G = 6: Email
-                string firstName = GetCell(1);
-                string lastName = GetCell(2);
-                string fullName = GetCell(3);
-                string rawExp = GetCell(4);
-                string phone = GetCell(5);
-                string email = GetCell(6);
+                // Column A = 0: FirstName
+                // Column B = 1: LastName
+                // Column C = 2: FullName
+                // Column D = 3: Expiration Date
+                // Column E = 4: Phone
+                // Column F = 5: Email
+                // Column G = 6: Notes
+                string firstName = GetCell(0);
+                string lastName = GetCell(1);
+                string fullName = GetCell(2);
+                string rawExp = GetCell(3);
+                string phone = GetCell(4);
+                string email = GetCell(5);
+                string notes = GetCell(6);
 
                 // If column A was omitted in the range request or offset, verify if name exists:
                 if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email))
@@ -155,6 +157,7 @@ public class SheetViewerModel : PageModel
                     Phone = phone,
                     Email = cleanEmail,
                     IsEmailBounced = isBounced,
+                    Notes = databaseMember?.Notes,
                     MemberNumber = databaseMember?.DisplayMemberNumber,
                     DatabaseStatus = databaseMember == null
                         ? null
@@ -235,7 +238,7 @@ public class SheetViewerModel : PageModel
                 string rawExp = GetCell(3);
                 string phone = GetCell(4);
                 string email = CleanSheetEmail(GetCell(5));
-
+                string notes = GetCell(6);
                 if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email))
                 {
                     index++;
@@ -270,7 +273,8 @@ public class SheetViewerModel : PageModel
                     JoinDate = DateTime.UtcNow,
                     ExpiryDate = parsedDate,
                     SelfRegistered = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    Notes = notes
                 };
 
                 toAdd.Add(member);
@@ -325,7 +329,7 @@ public class SheetViewerModel : PageModel
         {
             // 3. Dispatch data rows to Google Drive cloud arrays
             string completionSummaryMessage = await _exportService.ExportMembersToSheetAsync(targetSheetId, tabTitleName, databaseMembers);
-            TempData["SuccessMessage"] = completionSummaryMessage;
+            TempData["ImportResult"] = completionSummaryMessage;
         }
         catch (Exception ex)
         {

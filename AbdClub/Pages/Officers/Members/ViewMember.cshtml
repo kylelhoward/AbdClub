@@ -48,6 +48,20 @@
             </div>
 
             <div class="row mb-3 border-bottom pb-2">
+                <div class="col-sm-4 text-muted fw-bold">Notes</div>
+                <div class="col-sm-8">
+                    @if (!string.IsNullOrWhiteSpace(Model.Member.Notes))
+                    {
+                        <p class="text-dark">@Model.Member.Notes</p>
+                    }
+                    else
+                    {
+                        <span class="text-muted">—</span>
+                    }
+                </div>
+            </div>
+
+            <div class="row mb-3 border-bottom pb-2">
                 <div class="col-sm-4 text-muted fw-bold">Phone</div>
                 <div class="col-sm-8 text-dark">
                     @if (!string.IsNullOrWhiteSpace(Model.Member.Phone))

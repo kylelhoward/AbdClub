@@ -59,5 +59,6 @@ public class Member
         ExpiryDate.HasValue && 
         ExpiryDate.Value.Date >= DateTime.UtcNow.Date && 
         ExpiryDate.Value.Date <= DateTime.UtcNow.AddDays(30).Date;
+    public string? Notes { get; set; }
 
 }
