@@ -1,35 +1,47 @@
 {
-  "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
     "http": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:5001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5001"
     },
     "https": {
       "commandName": "Project",
-      "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:7001;http://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7001;http://localhost:5001"
+    },
+    "Staging": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Staging"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7001;http://localhost:5001"
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-    },
-
-    // 🌟 THE NEW STAGING CONFIGURATION PROFILE
-    "Staging": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "applicationUrl": "https://localhost:7001;http://localhost:5001",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Staging" // 👈 Forces .NET to load appsettings.Staging.json!
-      }
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:63467/",
+      "sslPort": 44315
     }
   }
 }
-
