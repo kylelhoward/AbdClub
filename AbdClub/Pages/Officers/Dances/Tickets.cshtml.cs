@@ -4,7 +4,6 @@ using AbdClub.Models;
 using AbdClub.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -30,8 +29,8 @@ public class TicketsModel(
     public int ValidTicketCount => Orders.SelectMany(o => o.Tickets).Count(t => t.Status == EventTicketStatus.Valid);
     public int CheckedInCount => Orders.SelectMany(o => o.Tickets).Count(t => t.IsCheckedIn);
 
-    [BindProperty, ValidateNever] public TicketTypeInput TypeInput { get; set; } = new();
-    [BindProperty, ValidateNever] public ManualTicketInput ManualInput { get; set; } = new();
+    public TicketTypeInput TypeInput { get; set; } = new();
+    public ManualTicketInput ManualInput { get; set; } = new();
 
     [TempData] public string? StatusMessage { get; set; }
     [TempData] public string? ErrorMessage { get; set; }
@@ -64,14 +63,13 @@ public class TicketsModel(
         return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"event-{id}-tickets.csv");
     }
 
-    public async Task<IActionResult> OnPostSaveTypeAsync(int id)
+    public async Task<IActionResult> OnPostSaveTypeAsync(
+        int id,
+        [Bind(Prefix = nameof(TypeInput))] TicketTypeInput typeInput)
     {
+        TypeInput = typeInput;
         if (!await IsAdminAsync()) return Forbid();
         if (!await LoadAsync(id)) return NotFound();
-
-        // This page contains two independent forms. Validate only the form
-        // submitted to this handler.
-        TryValidateModel(TypeInput, nameof(TypeInput));
 
         if (TypeInput.Price < 0)
             ModelState.AddModelError("TypeInput.Price", "Price cannot be negative.");
@@ -136,14 +134,13 @@ public class TicketsModel(
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostManualSaleAsync(int id)
+    public async Task<IActionResult> OnPostManualSaleAsync(
+        int id,
+        [Bind(Prefix = nameof(ManualInput))] ManualTicketInput manualInput)
     {
+        ManualInput = manualInput;
         if (!await IsAdminAsync()) return Forbid();
         if (!await LoadAsync(id)) return NotFound();
-
-        // This page contains two independent forms. Validate only the form
-        // submitted to this handler.
-        TryValidateModel(ManualInput, nameof(ManualInput));
 
         var type = TicketTypes.SingleOrDefault(t => t.Id == ManualInput.TicketTypeId && t.IsActive);
         if (type == null)
