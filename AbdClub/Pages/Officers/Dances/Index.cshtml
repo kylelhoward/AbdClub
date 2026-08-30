@@ -88,12 +88,6 @@
                                 @* ActionControls *@
                                 <td class="pe-3 text-end">
                                     <div class="btn-group gap-1">
-                                        @if (dance is AbdClub.Models.SpecialEvent)
-                                        {
-                                            <a class="btn btn-sm btn-outline-danger" asp-page="./Tickets" asp-route-id="@dance.Id">
-                                                <i class="bi bi-ticket-perforated"></i> Tickets
-                                            </a>
-                                        }
                                        @* Navigation trigger jump to attendance panel management layers *@
                                         @if (dance is AbdClub.Models.Dance)
                                         {

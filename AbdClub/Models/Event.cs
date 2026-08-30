@@ -31,9 +31,6 @@ public abstract class Event
     public int? AssignedDjId { get; set; }
     public MasterDJ? AssignedDj { get; set; }
 
-    public ICollection<EventTicketType> TicketTypes { get; set; } = new List<EventTicketType>();
-    public ICollection<EventTicketOrder> TicketOrders { get; set; } = new List<EventTicketOrder>();
-
     [NotMapped]
     public string EventTypeLabel => this switch
     {

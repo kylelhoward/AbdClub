@@ -11,7 +11,6 @@ public interface IEmailService
     Task SendMagicLinkEmailAsync(string recipientEmail, string recipientName, string magicUrl);
     Task SendMembershipStatusAsync(string recipientEmail, IReadOnlyList<Member> members);
     Task SendNewsletterWelcomeEmailAsync(string email, string firstName);
-    Task SendEventTicketConfirmationAsync(EventTicketOrder order);
     // Add the new batch method signature here
     Task SendBroadcastEmailAsync(
         string recipientEmail,

@@ -36,9 +36,6 @@ public class AbdContext : DbContext
     public DbSet<FlyerAnnouncementItem> FlyerAnnouncementItems { get; set; } = null!;
     public DbSet<HelpWantedItem> HelpWantedItems { get; set; } = null!;
     public DbSet<SpecialAnnouncement> SpecialAnnouncements { get; set; } = null!;
-    public DbSet<EventTicketType> EventTicketTypes { get; set; } = null!;
-    public DbSet<EventTicketOrder> EventTicketOrders { get; set; } = null!;
-    public DbSet<EventTicket> EventTickets { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -160,57 +157,6 @@ public class AbdContext : DbContext
             .WithMany()
             .HasForeignKey(a => a.UploadedByOfficerAccountId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<EventTicketType>()
-            .HasOne(t => t.Event)
-            .WithMany(e => e.TicketTypes)
-            .HasForeignKey(t => t.EventId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<EventTicketType>()
-            .HasIndex(t => new { t.EventId, t.Name })
-            .IsUnique();
-
-        modelBuilder.Entity<EventTicketOrder>()
-            .HasOne(o => o.Event)
-            .WithMany(e => e.TicketOrders)
-            .HasForeignKey(o => o.EventId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<EventTicketOrder>()
-            .HasIndex(o => o.StripeCheckoutSessionId)
-            .IsUnique();
-
-        modelBuilder.Entity<EventTicketOrder>()
-            .HasIndex(o => o.StripePaymentIntentId);
-
-        modelBuilder.Entity<EventTicket>()
-            .HasOne(t => t.Order)
-            .WithMany(o => o.Tickets)
-            .HasForeignKey(t => t.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<EventTicket>()
-            .HasOne(t => t.TicketType)
-            .WithMany(tt => tt.Tickets)
-            .HasForeignKey(t => t.TicketTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<EventTicket>()
-            .HasIndex(t => t.TicketCode)
-            .IsUnique();
-
-        modelBuilder.Entity<EventTicket>()
-            .HasOne(t => t.Member)
-            .WithMany()
-            .HasForeignKey(t => t.MemberId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        modelBuilder.Entity<EventTicket>()
-            .HasOne(t => t.CheckedInByOfficerAccount)
-            .WithMany()
-            .HasForeignKey(t => t.CheckedInByOfficerAccountId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 
     // Ensure all DateTime properties saved to timestamptz columns are UTC

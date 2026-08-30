@@ -9,9 +9,4 @@ public interface IStripeService
         string successUrl,
         string cancelUrl);
     Task<bool> HandleWebhookAsync(string json, string stripeSignature);
-    Task<string> CreateEventTicketCheckoutSessionAsync(
-        EventTicketCheckoutRequest request,
-        string successUrl,
-        string cancelUrl);
-    Task RefundEventTicketAsync(int ticketId);
 }

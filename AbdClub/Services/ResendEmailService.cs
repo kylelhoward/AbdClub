@@ -87,21 +87,6 @@ public class ResendEmailService : IEmailService
         await _resendClient.EmailSendAsync(email);
     }
 
-    public async Task SendEventTicketConfirmationAsync(EventTicketOrder order)
-    {
-        var rows = string.Join("", order.Tickets.Select(ticket => $"<tr><td>{WebUtility.HtmlEncode(ticket.HolderName)}</td><td>{WebUtility.HtmlEncode(ticket.TicketTypeName)}</td><td><strong>{WebUtility.HtmlEncode(ticket.TicketCode)}</strong></td></tr>"));
-        var email = new EmailMessage
-        {
-            From = GetFromAddress(),
-            To = order.PurchaserEmail,
-            Subject = $"Your tickets for {order.Event.Title}",
-            HtmlBody = $"<h2>{WebUtility.HtmlEncode(order.Event.Title)}</h2><p>Thank you for your purchase. Present the following ticket codes at check-in.</p><table cellpadding='8' cellspacing='0' border='1'><tr><th>Attendee</th><th>Ticket</th><th>Code</th></tr>{rows}</table><p>Order total: {order.Amount:C}</p>"
-        };
-        var response = await _resendClient.EmailSendAsync(email);
-        if (response?.Exception != null)
-            throw response.Exception;
-    }
-
     public async Task SendReminderAsync(Member member, string emailType)
     {
         if (string.IsNullOrEmpty(member.Email)) return;
