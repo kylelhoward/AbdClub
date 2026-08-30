@@ -68,6 +68,10 @@ public class TicketsModel(
         if (!await IsAdminAsync()) return Forbid();
         if (!await LoadAsync(id)) return NotFound();
 
+        // Both modal forms are bound on this page. Only validate the ticket-type
+        // fields when the ticket-type handler was submitted.
+        RemoveModelStatePrefix(nameof(ManualInput));
+
         if (TypeInput.Price < 0)
             ModelState.AddModelError("TypeInput.Price", "Price cannot be negative.");
         if (TypeInput.IsActive && !TypeInput.IsDoorPrice && TypeInput.Price < 0.50m)
@@ -135,6 +139,9 @@ public class TicketsModel(
     {
         if (!await IsAdminAsync()) return Forbid();
         if (!await LoadAsync(id)) return NotFound();
+
+        // Ignore the empty ticket-type modal while validating a manual sale.
+        RemoveModelStatePrefix(nameof(TypeInput));
 
         var type = TicketTypes.SingleOrDefault(t => t.Id == ManualInput.TicketTypeId && t.IsActive);
         if (type == null)
@@ -335,6 +342,17 @@ public class TicketsModel(
     private static string Csv(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
     private static string NormalizeName(string value) =>
         new(value.Where(char.IsLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
+
+    private void RemoveModelStatePrefix(string prefix)
+    {
+        foreach (var key in ModelState.Keys
+            .Where(key => key.Equals(prefix, StringComparison.Ordinal) ||
+                          key.StartsWith(prefix + ".", StringComparison.Ordinal))
+            .ToList())
+        {
+            ModelState.Remove(key);
+        }
+    }
 
     public class TicketTypeInput
     {
