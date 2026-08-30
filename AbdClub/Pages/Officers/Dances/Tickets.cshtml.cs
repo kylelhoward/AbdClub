@@ -4,6 +4,7 @@ using AbdClub.Models;
 using AbdClub.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -29,8 +30,8 @@ public class TicketsModel(
     public int ValidTicketCount => Orders.SelectMany(o => o.Tickets).Count(t => t.Status == EventTicketStatus.Valid);
     public int CheckedInCount => Orders.SelectMany(o => o.Tickets).Count(t => t.IsCheckedIn);
 
-    [BindProperty] public TicketTypeInput TypeInput { get; set; } = new();
-    [BindProperty] public ManualTicketInput ManualInput { get; set; } = new();
+    [BindProperty, ValidateNever] public TicketTypeInput TypeInput { get; set; } = new();
+    [BindProperty, ValidateNever] public ManualTicketInput ManualInput { get; set; } = new();
 
     [TempData] public string? StatusMessage { get; set; }
     [TempData] public string? ErrorMessage { get; set; }
@@ -68,9 +69,9 @@ public class TicketsModel(
         if (!await IsAdminAsync()) return Forbid();
         if (!await LoadAsync(id)) return NotFound();
 
-        // Both modal forms are bound on this page. Only validate the ticket-type
-        // fields when the ticket-type handler was submitted.
-        RemoveModelStatePrefix(nameof(ManualInput));
+        // This page contains two independent forms. Validate only the form
+        // submitted to this handler.
+        TryValidateModel(TypeInput, nameof(TypeInput));
 
         if (TypeInput.Price < 0)
             ModelState.AddModelError("TypeInput.Price", "Price cannot be negative.");
@@ -140,8 +141,9 @@ public class TicketsModel(
         if (!await IsAdminAsync()) return Forbid();
         if (!await LoadAsync(id)) return NotFound();
 
-        // Ignore the empty ticket-type modal while validating a manual sale.
-        RemoveModelStatePrefix(nameof(TypeInput));
+        // This page contains two independent forms. Validate only the form
+        // submitted to this handler.
+        TryValidateModel(ManualInput, nameof(ManualInput));
 
         var type = TicketTypes.SingleOrDefault(t => t.Id == ManualInput.TicketTypeId && t.IsActive);
         if (type == null)
@@ -342,17 +344,6 @@ public class TicketsModel(
     private static string Csv(string value) => $"\"{value.Replace("\"", "\"\"")}\"";
     private static string NormalizeName(string value) =>
         new(value.Where(char.IsLetterOrDigit).Select(char.ToUpperInvariant).ToArray());
-
-    private void RemoveModelStatePrefix(string prefix)
-    {
-        foreach (var key in ModelState.Keys
-            .Where(key => key.Equals(prefix, StringComparison.Ordinal) ||
-                          key.StartsWith(prefix + ".", StringComparison.Ordinal))
-            .ToList())
-        {
-            ModelState.Remove(key);
-        }
-    }
 
     public class TicketTypeInput
     {
