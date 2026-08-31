@@ -144,15 +144,17 @@ public class EventTicketsModel(
             .AsNoTracking()
             .Include(e => e.Location)
             .SingleOrDefaultAsync(e => e.Id == eventId) ?? null!;
+
         if (Event == null)
             return false;
 
         var now = DateTime.UtcNow;
+
         var types = await context.EventTicketTypes
             .AsNoTracking()
-            .Where(t => t.EventId == eventId && t.IsActive && !t.IsDoorPrice &&
-                (!t.SalesStartAt.HasValue || t.SalesStartAt <= now) &&
-                (!t.SalesEndAt.HasValue || t.SalesEndAt >= now))
+            .Where(t =>
+                t.EventId == eventId &&
+                t.IsActive)
             .OrderBy(t => t.DisplayOrder)
             .ThenBy(t => t.Price)
             .ToListAsync();
@@ -162,17 +164,26 @@ public class EventTicketsModel(
             var reserved = await context.EventTickets.CountAsync(t =>
                 t.TicketTypeId == type.Id &&
                 (t.Status == EventTicketStatus.Valid ||
-                 (t.Status == EventTicketStatus.Pending && t.Order.ExpiresAt > now)));
+                 (t.Status == EventTicketStatus.Pending &&
+                  t.Order.ExpiresAt > now)));
+
             TicketTypes.Add(new TicketTypeView(
                 type.Id,
                 type.Name,
                 type.Price,
                 type.IsMemberOnly,
-                type.QuantityAvailable.HasValue ? Math.Max(0, type.QuantityAvailable.Value - reserved) : null));
+                type.IsDoorPrice,
+                type.QuantityAvailable.HasValue
+                    ? Math.Max(
+                        0,
+                        type.QuantityAvailable.Value - reserved)
+                    : null,
+                type.SalesStartAt,
+                type.SalesEndAt));
         }
+
         return true;
     }
-
     private static List<string> Lines(string? value) =>
         (value ?? string.Empty)
             .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -180,8 +191,26 @@ public class EventTicketsModel(
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    public sealed record TicketTypeView(int Id, string Name, decimal Price, bool IsMemberOnly, int? Remaining);
+    public static DateTime? ToCentral(DateTime? utc)
+{
+    if (!utc.HasValue)
+        return null;
 
+    var timeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Chicago");
+
+    return TimeZoneInfo.ConvertTimeFromUtc(
+        DateTime.SpecifyKind(utc.Value, DateTimeKind.Utc),
+        timeZone);
+}
+    public sealed record TicketTypeView(
+      int Id,
+      string Name,
+      decimal Price,
+      bool IsMemberOnly,
+      bool IsDoorPrice,
+      int? Remaining,
+      DateTime? SalesStartAt,
+      DateTime? SalesEndAt);
     public class PurchaseInput
     {
         [Required, StringLength(150), Display(Name = "Purchaser name")]

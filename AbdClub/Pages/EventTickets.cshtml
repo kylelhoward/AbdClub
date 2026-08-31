@@ -8,7 +8,8 @@
     <div class="mb-4">
         <a asp-page="/Dances/Index" class="text-decoration-none">&larr; All events</a>
         <h1 class="h2 mt-2">@Model.Event.Title Tickets</h1>
-        <p class="text-muted mb-0">@Model.Event.Date.ToString("dddd, MMMM d, yyyy") at @Model.Event.Location.VenueName</p>
+        <p 
+            class="text-muted mb-0">@Model.Event.Date.ToString("dddd, MMMM d, yyyy") at @Model.Event.Location.VenueName</p>
     </div>
 
     @if (Model.PaymentCancelled)
@@ -39,52 +40,168 @@
     else
     {
         <form method="post">
-            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+            <div asp-validation-summary="All" class="text-danger"></div>
 
             <section class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-dark text-white fw-bold">Select tickets</div>
                 <div class="card-body p-4">
-                    @for (var i = 0; i < Model.TicketTypes.Count; i++)
+                  @for (var i = 0; i < Model.TicketTypes.Count; i++)
+{
+    var type = Model.TicketTypes[i];
+    var now = DateTime.UtcNow;
+
+    var salesHaveNotStarted =
+        type.SalesStartAt.HasValue &&
+        type.SalesStartAt.Value > now;
+
+    var salesHaveEnded =
+        type.SalesEndAt.HasValue &&
+        type.SalesEndAt.Value < now;
+
+var isSoldOut = type.Remaining == 0;
+
+var isAvailable =
+    !type.IsDoorPrice &&
+    !salesHaveNotStarted &&
+    !salesHaveEnded &&
+    !isSoldOut;
+    var salesStartLocal = EventTicketsModel.ToCentral(type.SalesStartAt);
+var salesEndLocal = EventTicketsModel.ToCentral(type.SalesEndAt);
+    <input type="hidden"
+           asp-for="Input.Selections[i].TicketTypeId"
+           value="@type.Id" />
+
+    <div class="ticket-selection border rounded p-3 mb-3 @(isAvailable ? "" : "bg-light opacity-75")"
+         data-member-only="@type.IsMemberOnly.ToString().ToLowerInvariant()">
+
+        <div class="row align-items-end g-3">
+            <div class="col-md-7">
+                <h2 class="h5 mb-1">@type.Name</h2>
+
+                <span class="fs-5 fw-bold text-danger">
+                    @type.Price.ToString("C")
+                </span>
+
+                @if (type.IsMemberOnly)
+                {
+                    <span class="badge bg-primary ms-2">Active members</span>
+                }
+
+                @if (type.Remaining.HasValue)
+                {
+                    <span class="text-muted small ms-2">
+                        @type.Remaining remaining
+                    </span>
+                }
+
+                <div class="small text-muted mt-2">
+                    @if (salesStartLocal.HasValue && salesEndLocal.HasValue)
                     {
-                        var type = Model.TicketTypes[i];
-                        <input type="hidden" asp-for="Input.Selections[i].TicketTypeId" value="@type.Id" />
-                        <div class="ticket-selection border rounded p-3 mb-3" data-member-only="@type.IsMemberOnly.ToString().ToLowerInvariant()">
-                            <div class="row align-items-end g-3">
-                                <div class="col-md-7">
-                                    <h2 class="h5 mb-1">@type.Name</h2>
-                                    <span class="fs-5 fw-bold text-danger">@type.Price.ToString("C")</span>
-                                    @if (type.IsMemberOnly)
-                                    {
-                                        <span class="badge bg-primary ms-2">Active members</span>
-                                    }
-                                    @if (type.Remaining.HasValue)
-                                    {
-                                        <span class="text-muted small ms-2">@type.Remaining remaining</span>
-                                    }
-                                </div>
-                                <div class="col-md-5">
-                                    <label asp-for="Input.Selections[i].Quantity" class="form-label">Quantity</label>
-                                    <select asp-for="Input.Selections[i].Quantity" class="form-select ticket-quantity">
-                                        @for (var quantity = 0; quantity <= Math.Min(12, type.Remaining ?? 12); quantity++)
-                                        {
-                                            <option value="@quantity">@quantity</option>
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="ticket-details mt-3" hidden>
-                                <label asp-for="Input.Selections[i].HolderNames" class="form-label fw-bold">Attendee names</label>
-                                <textarea asp-for="Input.Selections[i].HolderNames" class="form-control" rows="3" placeholder="One full name per line"></textarea>
-                                <div class="form-text">Enter one attendee name per ticket.</div>
-                                @if (type.IsMemberOnly)
-                                {
-                                    <label asp-for="Input.Selections[i].MemberNumbers" class="form-label fw-bold mt-3">ABD member numbers</label>
-                                    <textarea asp-for="Input.Selections[i].MemberNumbers" class="form-control" rows="3" placeholder="ABD-10001&#10;ABD-10002"></textarea>
-                                    <div class="form-text">Enter the active member number corresponding to each attendee, one per line.</div>
-                                }
-                            </div>
-                        </div>
+                        <span>
+                            Available
+                            @salesStartLocal.Value.ToString("MMM d, yyyy h:mm tt")
+                            through
+                            @salesEndLocal.Value.ToString("MMM d, yyyy h:mm tt")
+                        </span>
                     }
+                    else if (salesStartLocal.HasValue)
+                    {
+                        <span>
+                            Available beginning
+                            @salesStartLocal.Value.ToString("MMM d, yyyy h:mm tt")
+                        </span>
+                    }
+                    else if (salesEndLocal.HasValue)
+                    {
+                        <span>
+                            Available through
+                            @salesEndLocal.Value.ToString("MMM d, yyyy h:mm tt")
+                        </span>
+                    }
+                    else
+                    {
+                        <span>No purchase deadline</span>
+                    }
+                </div>
+
+               @if (type.IsDoorPrice)
+{
+    <span class="badge bg-secondary ms-2">Available at the door</span>
+}
+else if (salesHaveNotStarted)
+{
+    <div class="text-warning fw-semibold mt-1">
+        Online ticket sales have not started.
+    </div>
+}
+else if (salesHaveEnded)
+{
+    <div class="text-danger fw-semibold mt-1">
+        Online ticket sales have ended.
+    </div>
+}
+else if (isSoldOut)
+{
+    <div class="text-danger fw-semibold mt-1">
+        Sold out
+    </div>
+}
+            </div>
+
+            <div class="col-md-5">
+                <label asp-for="Input.Selections[i].Quantity"
+                       class="form-label">
+                    Quantity
+                </label>
+
+              <select asp-for="Input.Selections[i].Quantity"
+        class="form-select ticket-quantity"
+        disabled="@(!isAvailable)">
+                    @for (var quantity = 0;
+                          quantity <= Math.Min(12, type.Remaining ?? 12);
+                          quantity++)
+                    {
+                        <option value="@quantity">@quantity</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="ticket-details mt-3" hidden>
+            <label asp-for="Input.Selections[i].HolderNames"
+                   class="form-label fw-bold">
+                Attendee names
+            </label>
+
+            <textarea asp-for="Input.Selections[i].HolderNames"
+                      class="form-control"
+                      rows="3"
+                      placeholder="One full name per line"></textarea>
+
+            <div class="form-text">
+                Enter one attendee name per ticket.
+            </div>
+
+            @if (type.IsMemberOnly)
+            {
+                <label asp-for="Input.Selections[i].MemberNumbers"
+                       class="form-label fw-bold mt-3">
+                    ABD member numbers
+                </label>
+
+                <textarea asp-for="Input.Selections[i].MemberNumbers"
+                          class="form-control"
+                          rows="3"
+                          placeholder="ABD-10001&#10;ABD-10002"></textarea>
+
+                <div class="form-text">
+                    Enter the active member number corresponding to each
+                    attendee, one per line.
+                </div>
+            }
+        </div>
+    </div>
+}
                 </div>
             </section>
 
