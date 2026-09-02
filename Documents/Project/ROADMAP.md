@@ -1,17 +1,19 @@
 # AbdClub Development Roadmap
 
 ## Short Term — Finish the App
+
 - [ ] Build remaining pages
   - [x] EditMember
   - [ ] Emails
   - [ ] MeetingNotes
   - [ ] Files
-- [x] Wire up Resend (or SMTP2GO) for real email sending
+- [x] Wire up Resend (or ZOHO) for real email sending
 - [x] Test Stripe payments with sandbox
 - [x] Test expiry reminder emails
 - [x] Sign out flow
 
 ## Medium Term — Portfolio Site and ABD UAT on the VPS
+
 - [ ] Spin up a 2GB DigitalOcean Ubuntu 24.04 droplet
 - [ ] Secure the server: non-root user, SSH keys, automatic updates, and UFW
 - [ ] Install ASP.NET Core Runtime 10, PostgreSQL, and Nginx
@@ -25,6 +27,7 @@
 - [ ] Give the ABD board demo accounts and gather UAT feedback
 
 ## Production Go Live
+
 - [ ] Get Network Solutions access
 - [ ] Consider transferring to Cloudflare
 - [ ] Create separate production database, secrets, Stripe live webhook, and Google OAuth callback URL

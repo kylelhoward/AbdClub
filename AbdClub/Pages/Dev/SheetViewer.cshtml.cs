@@ -1,4 +1,5 @@
 using AbdClub.Data;
+using AbdClub.Models;
 using AbdClub.Services.Interfaces;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
@@ -8,13 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using AbdClub.Models;
 
 namespace AbdClub.Pages.Dev;
 
@@ -38,9 +32,11 @@ public class SheetViewerModel : PageModel
         _exportService = exportService;
     }
 
-    public List<SheetMemberRow> Rows { get; set; } = new();
+    public List<SheetMemberRow> SheetMemberRows { get; set; } = new();
+    public List<SheetSubscriberRow> SheetSubscriberRows { get; set; } = new();
     public string? ErrorMessage { get; set; }
-    public int TotalRowsCount { get; set; }
+    public int TotalMembersRowsCount { get; set; }
+    public int TotalSubscribersRowsCount { get; set; }
     public string TargetSheetId { get; } = "1ZYuy9KhrwBdZoydOMydjsd_h9cQZ2FX2r-2VBI3Ul2E";
     private static readonly DateTime VeryOldExpiryDate = DateTime.SpecifyKind(new DateTime(1900, 1, 1), DateTimeKind.Utc);
 
@@ -61,6 +57,18 @@ public class SheetViewerModel : PageModel
         public string? DatabaseStatus { get; set; }
         public bool IsImported => MemberNumber != null;
     }
+
+    public class SheetSubscriberRow
+    {
+        public int RowIndex { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string RawCreatedDate { get; set; } = string.Empty;
+        public DateTime? ParsedCreatedDate { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public int? SubscriberId { get; set; }
+        public bool IsImported => SubscriberId != 0;
+    }
+
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -83,15 +91,17 @@ public class SheetViewerModel : PageModel
                 ApplicationName = "AbdClub-DevViewer"
             });
 
-            // 3. Request columns B to G (skip header row, starting at row 2)
-            string range = "Membership_raw!A2:G"; // Read from A or B through G
-            var request = service.Spreadsheets.Values.Get(TargetSheetId, range);
-            ValueRange response = await request.ExecuteAsync();
-            var values = response.Values;
+            #region Members
 
-            if (values == null || values.Count == 0)
+            // 3. Request columns B to G (skip header row, starting at row 2)
+            string memberRange = "Membership_raw!A2:G"; // Read from A or B through G
+            var memberRequest = service.Spreadsheets.Values.Get(TargetSheetId, memberRange);
+            ValueRange memberResponse = await memberRequest.ExecuteAsync();
+            var memberValues = memberResponse.Values;
+
+            if (memberValues == null || memberValues.Count == 0)
             {
-                ErrorMessage = "Connected to Google Sheet, but no row records were returned in range " + range;
+                ErrorMessage = "Connected to Google Sheet, but no row records were returned in memberRange " + memberRange;
                 return Page();
             }
 
@@ -102,10 +112,10 @@ public class SheetViewerModel : PageModel
                 .GroupBy(m => MemberIdentity(m.Email, m.FirstName, m.LastName))
                 .ToDictionary(g => g.Key, g => g.First());
 
-            int index = 2; // Tracking row number in sheet
-            foreach (var row in values)
+            int memberIndex = 2; // Tracking row number in sheet
+            foreach (var row in memberValues)
             {
-                // Helper to safely read cell text by index
+                // Helper to safely read cell text by memberIndex
                 string GetCell(int colIndex) => row.Count > colIndex ? row[colIndex]?.ToString()?.Trim() ?? string.Empty : string.Empty;
 
                 // Adjust indices based on sheet columns:
@@ -124,10 +134,10 @@ public class SheetViewerModel : PageModel
                 string email = GetCell(5);
                 string notes = GetCell(6);
 
-                // If column A was omitted in the range request or offset, verify if name exists:
+                // If column A was omitted in the memberRange memberRequest or offset, verify if name exists:
                 if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email))
                 {
-                    index++;
+                    memberIndex++;
                     continue; // Skip empty rows
                 }
 
@@ -146,9 +156,9 @@ public class SheetViewerModel : PageModel
                     MemberIdentity(cleanEmail, firstName, lastName),
                     out var databaseMember);
 
-                Rows.Add(new SheetMemberRow
+                SheetMemberRows.Add(new SheetMemberRow
                 {
-                    RowIndex = index,
+                    RowIndex = memberIndex,
                     FirstName = firstName,
                     LastName = lastName,
                     FullName = string.IsNullOrWhiteSpace(fullName) ? $"{firstName} {lastName}".Trim() : fullName,
@@ -166,10 +176,90 @@ public class SheetViewerModel : PageModel
                             : databaseMember.IsSuspended ? "Suspended" : "Expired"
                 });
 
-                index++;
+                memberIndex++;
             }
 
-            TotalRowsCount = Rows.Count;
+            TotalMembersRowsCount = SheetMemberRows.Count;
+
+            #endregion Members
+
+
+            #region Subscribers
+
+            // 3. Request columns B to G (skip header row, starting at row 2)
+            string subscriberRange = "Subscribers_raw!A2:AC"; // Read from A or B through G
+            var subscriberRequest = service.Spreadsheets.Values.Get(TargetSheetId, subscriberRange);
+            ValueRange subscriberResponse = await subscriberRequest.ExecuteAsync();
+            var subscriberValues = subscriberResponse.Values;
+
+            if (subscriberValues == null || subscriberValues.Count == 0)
+            {
+                ErrorMessage = "Connected to Google Sheet, but no row records were returned in subscriberRange " + subscriberRange;
+                return Page();
+            }
+
+            // Email is contact information and may be shared. Match a sheet row to
+            // a database member by normalized email plus first and last name.
+            var databaseSubscribers = await _context.NewsletterSubscribers.AsNoTracking().ToListAsync();
+            var subscribersByIdentity = databaseSubscribers
+                .GroupBy(m => SubscriberIdentity(m.Email, m.FirstName))
+                .ToDictionary(g => g.Key, g => g.First());
+
+            int subscriberIndex = 2; // Tracking row number in sheet
+            foreach (var row in subscriberValues)
+            {
+                // Helper to safely read cell text by subscriberIndex
+                string GetCell(int colIndex) => row.Count > colIndex ? row[colIndex]?.ToString()?.Trim() ?? string.Empty : string.Empty;
+
+                // Adjust indices based on sheet columns:
+                // Column A = 0: Email
+                // Column B = 1: FirstName
+                // Column C = 2: LastName
+                // Column AC = 3: Created At
+                string email = GetCell(0);
+                string firstName = GetCell(1);
+                string lastName = GetCell(2);
+                string fullName = GetCell(2);
+                string rawCreated= GetCell(28);
+
+                // If column A was omitted in the subscriberRange subscriberRequest or offset, verify if name exists:
+                if (
+                    string.IsNullOrWhiteSpace(email))
+                {
+                    subscriberIndex++;
+                    continue; // Skip empty rows
+                }
+
+                DateTime? parsedDate = null;
+                if (DateTime.TryParse(rawCreated , out var exp))
+                {
+                    parsedDate = exp;
+                }
+
+                var subscriberName = $"{firstName} {lastName}".Trim();
+
+                subscribersByIdentity.TryGetValue(
+                    SubscriberIdentity(email, subscriberName),
+                    out var databaseSubscriber);
+
+                SheetSubscriberRows.Add(new SheetSubscriberRow
+                {
+                    RowIndex = subscriberIndex,
+                    FirstName =  subscriberName,
+                    RawCreatedDate = rawCreated,
+                    ParsedCreatedDate = parsedDate,
+                    SubscriberId = databaseSubscriber?.Id,
+                    Email = email
+                });
+
+                subscriberIndex++;
+            }
+
+          TotalSubscribersRowsCount  = SheetSubscriberRows.Count;
+
+            #endregion Subscribers
+
+
         }
         catch (Exception ex)
         {
@@ -204,12 +294,12 @@ public class SheetViewerModel : PageModel
             });
 
             // Read the Membership_raw tab explicitly
-            string range = "Membership_raw!A2:G";
-            var request = service.Spreadsheets.Values.Get(TargetSheetId, range);
-            ValueRange response = await request.ExecuteAsync();
-            var values = response.Values;
+            string memberRange = "Membership_raw!A2:G";
+            var memberRequest = service.Spreadsheets.Values.Get(TargetSheetId, memberRange);
+            ValueRange memberResponse = await memberRequest.ExecuteAsync();
+            var memberValues = memberResponse.Values;
 
-            if (values == null || values.Count == 0)
+            if (memberValues == null || memberValues.Count == 0)
             {
                 TempData["ImportResult"] = "No rows found in Membership_raw tab.";
                 return RedirectToPage();
@@ -226,9 +316,9 @@ public class SheetViewerModel : PageModel
                 .ToHashSet();
 
             var toAdd = new List<Member>();
-            int index = 2;
+            int memberIndex = 2;
             int missingExpiryCount = 0;
-            foreach (var row in values)
+            foreach (var row in memberValues)
             {
                 string GetCell(int colIndex) => row.Count > colIndex ? row[colIndex]?.ToString()?.Trim() ?? string.Empty : string.Empty;
 
@@ -241,14 +331,14 @@ public class SheetViewerModel : PageModel
                 string notes = GetCell(6);
                 if (string.IsNullOrWhiteSpace(firstName) && string.IsNullOrWhiteSpace(lastName) && string.IsNullOrWhiteSpace(fullName) && string.IsNullOrWhiteSpace(email))
                 {
-                    index++;
+                    memberIndex++;
                     continue;
                 }
 
                 var memberIdentity = MemberIdentity(email, firstName, lastName);
                 if (string.IsNullOrWhiteSpace(email) || existingSet.Contains(memberIdentity))
                 {
-                    index++;
+                    memberIndex++;
                     continue; // skip rows with no email or the same person already existing
                 }
 
@@ -279,14 +369,14 @@ public class SheetViewerModel : PageModel
 
                 toAdd.Add(member);
                 existingSet.Add(memberIdentity);
-                index++;
+                memberIndex++;
             }
 
-            if (toAdd.Any())
+            if (toAdd.Count > 0)
             {
                 _context.Members.AddRange(toAdd);
                 await _context.SaveChangesAsync();
-                TempData["ImportResult"] = $"Imported {toAdd.Count} members from Membership_raw (skipped {values.Count - toAdd.Count}). Missing expiry for {missingExpiryCount} imported rows.";
+                TempData["ImportResult"] = $"Imported {toAdd.Count} members from Membership_raw (skipped {memberValues.Count - toAdd.Count}). Missing expiry for {missingExpiryCount} imported rows.";
             }
             else
             {
@@ -302,6 +392,126 @@ public class SheetViewerModel : PageModel
         return RedirectToPage();
     }
 
+    // Import subscribers from the 'Subscribers_raw' tab of the target spreadsheet
+    public async Task<IActionResult> OnPostImportSubscribersAsync()
+    {
+        try
+        {
+            // Use Google Application Default Credentials for authentication
+            GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+
+            if (credential == null)
+            {
+                TempData["ImportResult"] = "Unable to load Google credentials. Ensure GOOGLE_APPLICATION_CREDENTIALS is set or credentials are configured via Workload Identity.";
+                return RedirectToPage();
+            }
+
+            credential = credential.CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
+
+            var service = new SheetsService(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "AbdClub-DevViewer-Import"
+            });
+
+            // Read the Subscribers_raw tab explicitly
+            string subscriberRange = "Subscribers_raw!A2:AC";
+            var subscriberRequest = service.Spreadsheets.Values.Get(TargetSheetId, subscriberRange);
+            ValueRange subscriberResponse = await subscriberRequest.ExecuteAsync();
+            var subscriberValues = subscriberResponse.Values;
+
+            if (subscriberValues == null || subscriberValues.Count == 0)
+            {
+                TempData["ImportResult"] = "No rows found in Subscribers_raw tab.";
+                return RedirectToPage();
+            }
+
+            // Shared household emails are valid. A member is considered existing
+            // only when email, first name, and last name all match.
+            var existingSubscribers = await _context.NewsletterSubscribers
+                .AsNoTracking()
+                .Select(m => new { m.Email, m.FirstName})
+                .ToListAsync();
+            var existingSet = existingSubscribers
+                .Select(m => SubscriberIdentity(m.Email, m.FirstName))
+                .ToHashSet();
+
+            var toAdd = new List<NewsletterSubscriber>();
+            int subscriberIndex = 2;
+            int missingSubscribedAtCount = 0;
+            foreach (var row in subscriberValues)
+            {
+                string GetCell(int colIndex) => row.Count > colIndex ? row[colIndex]?.ToString()?.Trim() ?? string.Empty : string.Empty;
+
+                string email = GetCell(0);
+                string firstName = GetCell(1);
+                string lastName = GetCell(2);
+                string rawCreated  = GetCell(28);
+                var fName = firstName.Trim().ToLower();
+                var lName = lastName.Trim().ToLower();
+                var subscriberName = $"{fName} {lName}";
+
+                if (
+                    string.IsNullOrWhiteSpace(email))
+                {
+                    subscriberIndex++;
+                    continue;
+                }
+
+
+                var subscribersByIdentity = SubscriberIdentity(email, subscriberName);
+
+                if (string.IsNullOrWhiteSpace(email) || existingSet.Contains(subscribersByIdentity))
+                {
+                    subscriberIndex++;
+                    continue; // skip rows with no email or the same person already existing
+                }
+
+                DateTime parsedDate;
+                if (DateTime.TryParse(rawCreated, out var exp))
+                {
+                    parsedDate = DateTime.SpecifyKind(exp, DateTimeKind.Utc);
+                }
+                else
+                {
+                    // Assign a very old expiration date when missing or malformed
+                    parsedDate = VeryOldExpiryDate;
+                    missingSubscribedAtCount++;
+                }
+
+                var subscriber = new NewsletterSubscriber
+                {
+                    FirstName = subscriberName,
+                    Email = email,
+                    SubscribedAt = parsedDate
+                };
+
+                toAdd.Add(subscriber);
+                existingSet.Add(subscribersByIdentity);
+                subscriberIndex++;
+            }
+
+            if (toAdd.Count > 0)
+            {
+                _context.NewsletterSubscribers.AddRange(toAdd);
+                await _context.SaveChangesAsync();
+                TempData["ImportResult"] = $"Imported {toAdd.Count} members from Subscribers_raw (skipped {subscriberValues.Count - toAdd.Count}). Missing subscribed at for {missingSubscribedAtCount} imported rows.";
+            }
+            else
+            {
+                TempData["ImportResult"] = $"No new subscribers to import from Subscribers_raw. Missing subscribed at for {missingSubscribedAtCount} rows.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to import Subscribers_raw from sheet {SheetId}", TargetSheetId);
+            TempData["ImportResult"] = "Import failed: " + ex.Message;
+        }
+
+        return RedirectToPage();
+    }
+
+
     private static string CleanSheetEmail(string email) =>
         email.Replace("[BOUNCE]", "", StringComparison.OrdinalIgnoreCase)
             .Replace("(bounced)", "", StringComparison.OrdinalIgnoreCase)
@@ -310,6 +520,9 @@ public class SheetViewerModel : PageModel
 
     private static string MemberIdentity(string? email, string? firstName, string? lastName) =>
         $"{email?.Trim().ToLowerInvariant()}|{firstName?.Trim().ToLowerInvariant()}|{lastName?.Trim().ToLowerInvariant()}";
+
+    private static string SubscriberIdentity(string? email, string? firstName ) =>
+        $"{email?.Trim().ToLowerInvariant()}|{firstName?.Trim().ToLowerInvariant()}";
 
 
     public async Task<IActionResult> OnPostTriggerExportAsync()

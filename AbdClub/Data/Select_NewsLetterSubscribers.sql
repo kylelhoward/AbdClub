@@ -4,4 +4,6 @@ SELECT "Id",
        "SubscribedAt",
        "UnsubscribeToken"
 FROM public."NewsletterSubscribers"
-LIMIT 1000;
+where "FirstName" = 'Kyle';
+
+-- TRUNCATE TABLE public."NewsletterSubscribers" RESTART IDENTITY CASCADE;

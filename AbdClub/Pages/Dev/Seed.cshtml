@@ -395,7 +395,7 @@
         <div class="accordion-item border-0 mb-2 overflow-hidden rounded shadow-sm">
             <h2 class="accordion-header" id="headingSeedDances">
                 <button class="accordion-button collapsed bg-dark text-white fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeedDances" aria-expanded="false" aria-controls="collapseSeedDances">
-                    <i class="bi bi-calendar-event-fill me-2 text-warning"></i>Dance Calendar Schedules Seeder
+                    <i class="bi bi-calendar-event-fill me-2 text-warning"></i>Event Calendar Schedules Seeder
                 </button>
             </h2>
             <div id="collapseSeedDances" class="accordion-collapse collapse" aria-labelledby="headingSeedDances" data-bs-parent="#devCentralAccordion">
@@ -421,6 +421,7 @@
                             <thead class="table-light small text-uppercase">
                                 <tr>
                                     <th class="ps-3" style="width: 60px;">Id</th>
+                                    <th>Event Type</th>
                                     <th>Event Title</th>
                                     <th>Assigned Venue</th>
                                     <th>Target Date</th>
@@ -428,16 +429,25 @@
                                 </tr>
                             </thead>
                             <tbody class="small">
-                                @if (Model.DancesList != null && Model.DancesList.Any())
+                                @if (Model.EventList!= null && Model.EventList.Any())
                                 {
-                                    foreach (var d in Model.DancesList)
+                                    foreach (var d in Model.EventList)
                                     {
                                         <tr>
                                             <td class="ps-3 text-muted font-monospace fw-bold">@d.Id</td>
+                                            <td class="fw-bold text-dark">@d.EventTypeLabel</td>
                                             <td class="fw-bold text-dark">@d.Title</td>
-                                            <td class="text-primary fw-medium"><i class="bi bi-geo-alt-fill me-1"></i>@(d.Location != null ? d.Location.VenueName : "Unmapped / Broken Link")</td>
+                                            <td 
+                                                class="text-primary fw-medium">
+                                                <i class="bi bi-geo-alt-fill me-1">
+                                                </i>@(d.Location != null ? d.Location.VenueName : "Unmapped / Broken Link")</td>
                                             <td>@d.Date.ToString("yyyy-MM-dd")</td>
-                                            <td><span class="badge bg-light text-secondary border">@d.StartTime.ToString("h:mm tt") - @d.EndTime.ToString("h:mm tt")</span></td>
+                                            <td>
+                                                <span 
+                                                    class="badge bg-light text-secondary border">
+                                                    @d.StartTime.ToString("h:mm tt") - @d.EndTime.ToString("h:mm tt")
+                                                </span>
+                                            </td>
                                         </tr>
                                     }
                                 }

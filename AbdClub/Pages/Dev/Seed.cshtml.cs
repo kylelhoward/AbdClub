@@ -17,7 +17,7 @@ public class SeedModel : PageModel
     public List<NewsletterSubscriber> Subs { get; set; } = new();
     public int SubCount { get; set; }
     public List<Location> LocationsList { get; set; } = new();
-    public List<Dance> DancesList { get; set; } = new();
+    public List<Event> EventList { get; set; } = new();
 
     public List<MasterDJ> Djs { get; set; } = new();
     public List<MasterHost> Hosts { get; set; } = new();
@@ -39,7 +39,7 @@ public class SeedModel : PageModel
         await LoadNewsLetterSubscribersAsync();
         await LoadRegistryPersonsAsync();
         await LoadLocationListAsync();
-        await LoadLocationListAsync();
+        await LoadEventListAsync();
     }
 
     public async Task<IActionResult> OnPostAsync(
@@ -225,10 +225,12 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         // Hydrate Locations for the new Sandbox accordion panes
         LocationsList = await _db.Locations.OrderBy(l => l.VenueName).ToListAsync();
     }
-    private async Task LoadDanceListAsync()
+    private async Task LoadEventListAsync()
     {
         // Hydrate Dances for the new Sandbox accordion panes
-        DancesList = await _db.Events.OfType<Dance>().Include(d => d.Location).OrderBy(d => d.Date).ToListAsync();
+        EventList = await _db.Events
+            .Include(d => d.Location)
+            .OrderBy(d => d.Date).ToListAsync();
     }
     // In SeedModel — simulate a Stripe payment for testing
     public async Task<IActionResult> OnPostSimulatePaymentAsync(
@@ -401,7 +403,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         if (primaryVenue == null)
         {
             Message = "Error: Cannot seed dances. No location profiles exist inside database registries. Run Locations seeder first.";
-            await LoadDanceListAsync();
+            await LoadEventListAsync();
             return Page();
         }
 
@@ -432,7 +434,7 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
         await _db.SaveChangesAsync();
         Message = $"Seeded {addedCount} upcoming relational dance entries ({skippedCount} skipped — already exist).";
 
-        await LoadDanceListAsync();
+        await LoadEventListAsync();
         return Page();
     }
 
