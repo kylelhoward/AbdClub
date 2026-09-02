@@ -1,5 +1,5 @@
 # Set PostgreSQL environment variables to prevent interactive password prompts
-$env:PGPASSWORD = "sub3630!"
+$env:PGPASSWORD = "you_are_a_superuser_password"
 $pgHost = "localhost"
 $pgPort = "5432"
 $pgUser = "postgres"
@@ -18,12 +18,7 @@ psql -h $pgHost -p $pgPort -U $pgUser -d abdclub_dev -f $backupFile
 Write-Host "3.1. Restoring into production (abdclub_production)..." -ForegroundColor Cyan
 psql -h $pgHost -p $pgPort -U $pgUser -d abdclub_production -f $backupFile
 
-# Write-Host "4. Running sanitization on Staging..." -ForegroundColor Cyan
-# psql -h $pgHost -p $pgPort -U $pgUser -d abdclub_staging -c "
-#     UPDATE ""Members"" SET ""Email"" = CONCAT('test_member_', ""Id"", '@abdclub.org') WHERE ""Email"" NOT LIKE '%@yourtestingdomain.com';
-#     UPDATE ""Subscribers"" SET ""Email"" = CONCAT('sub_', ""Id"", '@abdclub.org');
-#     TRUNCATE TABLE ""EmailLogs"";
-# "
+
 
 # Clean up temporary dump file
 Remove-Item $backupFile

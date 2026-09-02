@@ -1,5 +1,6 @@
 # Set PostgreSQL environment variables to prevent interactive password prompts
-$env:PGPASSWORD = "YourPostgresSuperuserPassword"
+# $env:PGPASSWORD = "YourPostgresSuperuserPassword"
+$env:PGPASSWORD = "sub3630!"
 $pgHost = "localhost"
 $pgPort = "5432"
 $pgUser = "postgres"
@@ -15,12 +16,42 @@ psql -h $pgHost -p $pgPort -U $pgUser -d abdclub_staging -f $backupFile
 Write-Host "3. Restoring into dev (abdclub_dev)..." -ForegroundColor Cyan
 psql -h $pgHost -p $pgPort -U $pgUser -d abdclub_dev -f $backupFile
 
-Write-Host "4. Running sanitization on Staging..." -ForegroundColor Cyan
-psql -h $pgHost -p $pgPort -U $pgUser -d abdclub_staging -c "
-    UPDATE ""Members"" SET ""Email"" = CONCAT('test_member_', ""Id"", '@abdclub.org') WHERE ""Email"" NOT LIKE '%@yourtestingdomain.com';
-    UPDATE ""Subscribers"" SET ""Email"" = CONCAT('sub_', ""Id"", '@abdclub.org');
-    TRUNCATE TABLE ""EmailLogs"";
-"
+Write-Host "4. Running sanitization on Dev..." -ForegroundColor Cyan
+
+$sanitizeSql = @'
+UPDATE public."Members"
+SET "Email" =
+    'test_' ||
+    SPLIT_PART("Email", '@', 1) ||
+    '@' ||
+    SPLIT_PART("Email", '@', 2) ||
+    '.invalid'
+WHERE "Email" IS NOT NULL
+  AND "Email" LIKE '%@%'
+  AND "Email" NOT LIKE 'test_%@%.invalid';
+
+UPDATE public."NewsletterSubscribers"
+SET "Email" =
+    'test_' ||
+    SPLIT_PART("Email", '@', 1) ||
+    '@' ||
+    SPLIT_PART("Email", '@', 2) ||
+    '.invalid'
+WHERE "Email" IS NOT NULL
+  AND "Email" LIKE '%@%'
+  AND "Email" NOT LIKE 'test_%@%.invalid';
+
+TRUNCATE TABLE public."EmailLogs";
+'@
+
+$sanitizeSql | psql `
+    -h $pgHost `
+    -p $pgPort `
+    -U $pgUser `
+    -d abdclub_dev `
+    -v ON_ERROR_STOP=1
+
+
 
 # Clean up temporary dump file
 Remove-Item $backupFile

@@ -4,6 +4,6 @@ SELECT "Id",
        "SubscribedAt",
        "UnsubscribeToken"
 FROM public."NewsletterSubscribers"
-where "FirstName" = 'Kyle';
+-- where "FirstName" = 'kyle howard';
 
 -- TRUNCATE TABLE public."NewsletterSubscribers" RESTART IDENTITY CASCADE;
