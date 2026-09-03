@@ -336,7 +336,7 @@ try
             .Select(c => new { c.Type, c.Value })
             .ToList();
         return Results.Json(claims);
-    }).RequireAuthorization();
+    }).RequireAuthorization("isTechAdmin");
     app.Run();
 }
 catch (Exception ex)
