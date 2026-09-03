@@ -1,5 +1,6 @@
 ﻿@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 @inject AbdClub.Data.AbdContext LayoutDbContext
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @using Microsoft.EntityFrameworkCore
 
 <!DOCTYPE html>
@@ -19,6 +20,14 @@
 
 </head>
 <body>
+    @if (string.Equals(Configuration["Uat:ShowBanner"], "true", StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="bg-danger text-white text-center fw-bold py-2 px-3 d-print-none"
+             role="status"
+             aria-label="UAT environment warning">
+            UAT / DEMO &mdash; TEST DATA ONLY &mdash; NOT THE LIVE ABD WEBSITE
+        </div>
+    }
     <header>
        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
      <div class="container">
