@@ -4,7 +4,7 @@
     ViewData["Title"] = "Dev Seed";
 }
 
-<h2>Add Test Members (Dev Only)</h2>
+<h2>Add Test Members (Development / Staging Only)</h2>
 
 @if (!string.IsNullOrEmpty(Model.Message))
 {
@@ -16,6 +16,30 @@
     <div class="mb-4">
         <h2><i class="bi bi-terminal-matrix text-dark me-2"></i>Developer Sandbox Central Control</h2>
         <p class="text-muted">Simulate administrative overrides, execute rapid mock database queries, and seed data loops without requiring continuous external endpoint handshakes.</p>
+    </div>
+
+    <div class="alert alert-warning border-warning shadow-sm mb-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div>
+                <h2 class="h5 mb-1">Generate UAT Dataset</h2>
+                <p class="mb-1">
+                    Adds 122 synthetic members, sample membership payments, and 720 synthetic newsletter subscribers.
+                </p>
+                <p class="small mb-0">
+                    Includes shared-email couples and active, expiring, expired, suspended, and no-expiration memberships.
+                    Existing generated rows and officer accounts are preserved, so this action is safe to run again.
+                </p>
+                <p class="small fw-bold text-danger mb-0 mt-2">
+                    Do not run a bulk email test against all generated recipients while real SMTP is enabled.
+                </p>
+            </div>
+            <form method="post" asp-page-handler="GenerateUatDataset">
+                <button type="submit" class="btn btn-warning fw-bold text-nowrap"
+                        onclick="return confirm('Generate the synthetic UAT dataset? Existing records will be preserved.');">
+                    <i class="bi bi-database-fill-add me-1"></i>Generate UAT Dataset
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- MASTER SANDBOX ACCORDION MATRIX -->

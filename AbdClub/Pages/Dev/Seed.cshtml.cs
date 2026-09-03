@@ -33,6 +33,161 @@ public class SeedModel : PageModel
         await LoadDashboardMetricsAsync();
     }
 
+    public async Task<IActionResult> OnPostGenerateUatDatasetAsync()
+    {
+        if (!User.IsInRole("TechAdmin")) return Forbid();
+        if (!IsDevelopmentOrStaging()) return NotFound();
+
+        const int requestedMemberCount = 122;
+        const int requestedSubscriberCount = 720;
+        var now = DateTime.UtcNow;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
+        var existingMemberKeys = (await _db.Members
+            .Where(m => m.Email.EndsWith("@members.example.invalid"))
+            .Select(m => m.LastName)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var firstNames = new[]
+        {
+            "Avery", "Blake", "Cameron", "Dana", "Emery", "Finley",
+            "Gray", "Harper", "Jordan", "Kai", "Logan", "Morgan"
+        };
+
+        var membersToAdd = new List<Member>();
+        for (var sequence = 1; sequence <= requestedMemberCount; sequence++)
+        {
+            var lastName = $"Sample {sequence:D3}";
+            if (existingMemberKeys.Contains(lastName))
+                continue;
+
+            var statusBucket = (sequence - 1) % 20;
+            DateTime? expiryDate;
+            var isSuspended = false;
+
+            if (statusBucket < 10)
+                expiryDate = now.AddDays(90 + sequence % 275);       // Active: 50%
+            else if (statusBucket < 13)
+                expiryDate = now.AddDays(5 + sequence % 50);        // Expiring within 60 days: 15%
+            else if (statusBucket < 17)
+                expiryDate = now.AddDays(-(10 + sequence % 300));   // Expired: 20%
+            else if (statusBucket < 19)
+            {
+                expiryDate = now.AddDays(180);
+                isSuspended = true;                                  // Suspended: 10%
+            }
+            else
+                expiryDate = null;                                   // No expiration: 5%
+
+            // The first 24 records form 12 shared-email household pairs.
+            var email = sequence <= 24
+                ? $"uat_household_{((sequence - 1) / 2) + 1:D3}@members.example.invalid"
+                : $"uat_member_{sequence:D3}@members.example.invalid";
+
+            membersToAdd.Add(new Member
+            {
+                FirstName = firstNames[(sequence - 1) % firstNames.Length],
+                LastName = lastName,
+                Email = email,
+                Phone = null,
+                GoogleSubId = null,
+                JoinDate = now.AddDays(-(30 + sequence * 3)),
+                ExpiryDate = expiryDate,
+                CreatedAt = now,
+                SelfRegistered = sequence % 3 == 0,
+                IsSuspended = isSuspended,
+                IsOfficer = false,
+                IsAdmin = false,
+                IsTechAdmin = false,
+                OfficerRole = null
+            });
+        }
+
+        _db.Members.AddRange(membersToAdd);
+        await _db.SaveChangesAsync();
+
+        var syntheticMembers = await _db.Members
+            .Where(m => m.Email.EndsWith("@members.example.invalid"))
+            .OrderBy(m => m.LastName)
+            .ToListAsync();
+
+        var existingPaymentKeys = await _db.Payments
+            .Where(p => p.TransactionId != null && p.TransactionId.StartsWith("uat_seed_"))
+            .Select(p => new { p.MemberId, p.TransactionId })
+            .ToListAsync();
+        var existingPayments = existingPaymentKeys
+            .Select(p => $"{p.MemberId}:{p.TransactionId}")
+            .ToHashSet(StringComparer.Ordinal);
+
+        var paymentsToAdd = new List<Payment>();
+        foreach (var member in syntheticMembers.Where(m => m.ExpiryDate.HasValue))
+        {
+            var sequenceText = member.LastName.Split(' ').LastOrDefault();
+            if (!int.TryParse(sequenceText, out var sequence))
+                continue;
+
+            var isCouple = sequence <= 24;
+            var transactionId = isCouple
+                ? $"uat_seed_couple_{((sequence - 1) / 2) + 1:D3}"
+                : $"uat_seed_member_{sequence:D3}";
+
+            if (existingPayments.Contains($"{member.Id}:{transactionId}"))
+                continue;
+
+            var periodEnd = member.ExpiryDate!.Value;
+            paymentsToAdd.Add(new Payment
+            {
+                MemberId = member.Id,
+                Amount = isCouple ? 45m : 50m,
+                PaymentDate = member.JoinDate,
+                PeriodStart = member.JoinDate,
+                PeriodEnd = periodEnd,
+                TransactionId = transactionId,
+                Status = "Completed",
+                PaymentMethod = "UAT Seed",
+                Notes = isCouple
+                    ? "Synthetic two-person membership allocation"
+                    : "Synthetic individual membership payment"
+            });
+        }
+
+        _db.Payments.AddRange(paymentsToAdd);
+
+        var existingSubscriberEmails = (await _db.NewsletterSubscribers
+            .Where(s => s.Email.EndsWith("@newsletter.example.invalid"))
+            .Select(s => s.Email)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var subscribersToAdd = new List<NewsletterSubscriber>();
+        for (var sequence = 1; sequence <= requestedSubscriberCount; sequence++)
+        {
+            var email = $"uat_subscriber_{sequence:D3}@newsletter.example.invalid";
+            if (existingSubscriberEmails.Contains(email))
+                continue;
+
+            subscribersToAdd.Add(new NewsletterSubscriber
+            {
+                FirstName = $"Subscriber {sequence:D3}",
+                Email = email,
+                SubscribedAt = now.AddDays(-(sequence % 365)),
+                UnsubscribeToken = Guid.NewGuid()
+            });
+        }
+
+        _db.NewsletterSubscribers.AddRange(subscribersToAdd);
+        await _db.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        Message = $"UAT dataset ready: added {membersToAdd.Count} members, " +
+                  $"{paymentsToAdd.Count} payments, and {subscribersToAdd.Count} subscribers. " +
+                  "Existing generated records and officer accounts were preserved.";
+        await LoadDashboardMetricsAsync();
+        return Page();
+    }
+
     private async Task LoadDashboardMetricsAsync()
     {
         await LoadMembersAsync();
@@ -280,6 +435,13 @@ new() { FirstName = "Pippin", Email = "pippin.sub.test@gmail.com", SubscribedAt 
     private bool IsDev() => HttpContext.RequestServices
         .GetRequiredService<IWebHostEnvironment>()
         .IsDevelopment();
+
+    private bool IsDevelopmentOrStaging()
+    {
+        var environment = HttpContext.RequestServices
+            .GetRequiredService<IWebHostEnvironment>();
+        return environment.IsDevelopment() || environment.IsStaging();
+    }
 
 
 
