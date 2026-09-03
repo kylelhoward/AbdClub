@@ -290,56 +290,45 @@ try
     //    db.Database.Migrate();
     //}
 
-    // 🌟 REFACTORED DEV TESTING API ROUTE: Fully configured for dynamic configs and structured logs
     app.MapGet("/Dev/test-email", async (
         IEmailService emailService,
-        AbdContext db,
-        IConfiguration config, // Injected configuration manager
-        ILogger<Program> logger) => // Injected Serilog provider engine
+        IConfiguration config,
+        ILogger<Program> logger) =>
     {
-        // 1. Fetch the targeted testing recipient email directly out of configurations
-        var testTargetEmail = config["Email:AdminEmail"] ?? "kylelhoward@gmail.com"; // Clear fallback backup
+        var testTargetEmail = config["Email:AdminEmail"];
+
+        if (string.IsNullOrWhiteSpace(testTargetEmail))
+            return Results.Problem("Email:AdminEmail is not configured.");
 
         logger.LogInformation(
-            "Sandbox Diagnostics: Initiating administrative mock email execution test. TargetRecipient: {TestEmail}",
+            "UAT email diagnostic started for {TestEmail}.",
             testTargetEmail);
 
         try
         {
-            // 2. Query your whitelist table context safely using lowercase normalization rules
-            var cleanEmail = testTargetEmail.Trim().ToLower();
-            var member = await db.Members
-                .FirstOrDefaultAsync(m => m.Email != null && m.Email.ToLower() == cleanEmail);
+            await emailService.SendMembershipStatusAsync(
+                testTargetEmail,
+                Array.Empty<Member>());
 
-            if (member == null)
-            {
-                logger.LogWarning(
-                    "Sandbox Diagnostics Failure: Email test aborted. The target configuration address '{TestEmail}' does not exist on your club database roster.",
-                    testTargetEmail);
-                return $"Error: No member found in database table spaces matching configuration key string: '{testTargetEmail}'";
-            }
-
-            // 3. Dispatch the message template envelope pipeline
-            await emailService.SendMembershipReminderAsync(member);
-
-            // 4. Log a clean, successful transaction footprint using structured JSON brackets
             logger.LogInformation(
-                "Sandbox Diagnostics Success: Automated test notification successfully transferred to outbound SMTP relay thread queues for MemberId: {MemberId} ({TestEmail})",
-                member.Id, testTargetEmail);
+                "UAT email diagnostic completed for {TestEmail}.",
+                testTargetEmail);
 
-            return $"Test email successfully dispatched to active roster member account: {member.Email} via configuration mapping keys.";
+            return Results.Ok(
+                $"Test email dispatched to the configured UAT address: {testTargetEmail}");
         }
         catch (Exception ex)
         {
-            // 5. CRITICAL TRACE: Catches and logs raw Zoho authentication, connection, or port 587 timeouts
-            logger.LogError(ex,
-                "Sandbox Diagnostics Exception: A critical network failure occurred while attempting an outbound email test to {TestEmail}.",
+            logger.LogError(
+                ex,
+                "UAT email diagnostic failed for {TestEmail}.",
                 testTargetEmail);
 
-            return $"System Exception Intercepted: {ex.Message}. Check your System Operational Ledger (/Admin/AuditLogs) for the complete stack trace error block.";
+            return Results.Problem(
+                "The UAT email test failed. Check the server log for details.");
         }
-    });
-
+    })
+    .RequireAuthorization("isTechAdmin");
 
     app.MapGet("/Dev/debug-claims", (HttpContext ctx) =>
     {
