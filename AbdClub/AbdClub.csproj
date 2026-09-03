@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>22f63952-df4a-48f5-97a2-aeeba90fc823</UserSecretsId>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,5 +40,44 @@
     <Folder Include="Pages\Officers\Announcements\" />
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
+
+  <Target Name="GenerateBuildInfo" AfterTargets="Publish">
+    <PropertyGroup>
+      <BuildCommitId>$(SourceRevisionId)</BuildCommitId>
+      <BuildTimestampUtc>$([System.DateTime]::UtcNow.ToString("O"))</BuildTimestampUtc>
+      <BuildMachineName Condition="'$(COMPUTERNAME)' != ''">$(COMPUTERNAME)</BuildMachineName>
+      <BuildMachineName Condition="'$(BuildMachineName)' == '' and '$(HOSTNAME)' != ''">$(HOSTNAME)</BuildMachineName>
+      <BuildMachineName Condition="'$(BuildMachineName)' == ''">unknown</BuildMachineName>
+    </PropertyGroup>
+
+    <Exec Command="git rev-parse HEAD"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="Low"
+          IgnoreExitCode="true"
+          Condition="'$(BuildCommitId)' == ''">
+      <Output TaskParameter="ConsoleOutput" PropertyName="BuildCommitId" />
+    </Exec>
+
+    <PropertyGroup>
+      <BuildCommitId Condition="'$(BuildCommitId)' == ''">unknown</BuildCommitId>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_BuildInfoLine Include="{" />
+      <_BuildInfoLine Include="  &quot;version&quot;: &quot;$(VersionPrefix)&quot;," />
+      <_BuildInfoLine Include="  &quot;commitId&quot;: &quot;$(BuildCommitId)&quot;," />
+      <_BuildInfoLine Include="  &quot;builtAtUtc&quot;: &quot;$(BuildTimestampUtc)&quot;," />
+      <_BuildInfoLine Include="  &quot;configuration&quot;: &quot;$(Configuration)&quot;," />
+      <_BuildInfoLine Include="  &quot;targetFramework&quot;: &quot;$(TargetFramework)&quot;," />
+      <_BuildInfoLine Include="  &quot;buildMachine&quot;: &quot;$(BuildMachineName)&quot;" />
+      <_BuildInfoLine Include="}" />
+    </ItemGroup>
+
+    <WriteLinesToFile File="$(PublishDir)build-info.json"
+                      Lines="@(_BuildInfoLine)"
+                      Overwrite="true"
+                      Encoding="UTF-8" />
+  </Target>
 
 </Project>

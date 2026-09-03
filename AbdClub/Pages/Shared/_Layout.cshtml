@@ -1,6 +1,7 @@
 ﻿@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
 @inject AbdClub.Data.AbdContext LayoutDbContext
 @inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+@inject AbdClub.Services.BuildInfoService BuildInfo
 @using Microsoft.EntityFrameworkCore
 
 <!DOCTYPE html>
@@ -223,8 +224,11 @@
     </div>
 
     <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - Austin Ballroom Dancers - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        <div class="container d-flex flex-column flex-md-row justify-content-between">
+            <span>&copy; 2026 - Austin Ballroom Dancers - <a asp-area="" asp-page="/Privacy">Privacy</a></span>
+            <span>
+                Version @BuildInfo.Version &middot; @BuildInfo.EnvironmentName &middot; @BuildInfo.ShortCommitId
+            </span>
         </div>
     </footer>
 

@@ -232,6 +232,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<DanceService>();
 builder.Services.AddHostedService<ReminderService>();
 builder.Services.AddScoped<IGoogleSheetExportService, GoogleSheetExportService>();
+builder.Services.AddSingleton<BuildInfoService>();
 #endregion --- App Services ---
 
 

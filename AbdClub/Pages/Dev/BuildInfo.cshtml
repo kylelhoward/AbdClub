@@ -1,0 +1,54 @@
+@page
+@model AbdClub.Pages.Dev.BuildInfoModel
+@{
+    ViewData["Title"] = "Build Information";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Build Information</h1>
+        <p class="text-muted mb-0">Deployment and runtime details for troubleshooting.</p>
+    </div>
+    <a asp-page="/Dev/Index" class="btn btn-outline-secondary">Back to Dev Zone</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-4">Application version</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.Version</code></dd>
+
+            <dt class="col-sm-4">Environment</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.EnvironmentName</code></dd>
+
+            <dt class="col-sm-4">Git commit</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.CommitId</code></dd>
+
+            <dt class="col-sm-4">Built at</dt>
+            <dd class="col-sm-8">
+                <code>@(Model.BuildInfo.BuiltAtUtc?.ToString("u") ?? "unknown")</code>
+            </dd>
+
+            <dt class="col-sm-4">Build configuration</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.Configuration</code></dd>
+
+            <dt class="col-sm-4">Target framework</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.TargetFramework</code></dd>
+
+            <dt class="col-sm-4">Build machine</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.BuildMachine</code></dd>
+
+            <dt class="col-sm-4">Runtime</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.RuntimeVersion</code></dd>
+
+            <dt class="col-sm-4">Operating system</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.OperatingSystem</code></dd>
+
+            <dt class="col-sm-4">Server</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.MachineName</code></dd>
+
+            <dt class="col-sm-4">Process architecture</dt>
+            <dd class="col-sm-8"><code>@Model.BuildInfo.ProcessArchitecture</code></dd>
+        </dl>
+    </div>
+</div>
