@@ -26,8 +26,13 @@ public class RealSmtpSender : ISmtpSender
         bool isRerouteActive = _config.GetValue<bool>("EmailTesting:EnforceSandboxReroute", false);
         string safeTargetAddress = _config["EmailTesting:RedirectTargetAddress"] ?? "dev-sandbox@abdclub.org";
 
-        // Safely extract whitelisted testing domains from appsettings array blocks
-        var allowedDomains = _config.GetSection("EmailTesting:AllowedRecipientDomains").Get<string[]>() ?? Array.Empty<string>();
+        // Allow controlled UAT domains as well as individual external testers.
+        // Exact addresses are useful for Gmail/Yahoo/etc. because allowing an entire
+        // public email domain would defeat the staging safety guard.
+        var allowedDomains = _config.GetSection("EmailTesting:AllowedRecipientDomains")
+            .Get<string[]>() ?? Array.Empty<string>();
+        var allowedAddresses = _config.GetSection("EmailTesting:AllowedRecipientAddresses")
+            .Get<string[]>() ?? Array.Empty<string>();
 
         // 2. 🌟 THE CENTRAL SAFETY INTERCEPTOR GATEWAY
         if (isRerouteActive)
@@ -37,11 +42,21 @@ public class RealSmtpSender : ISmtpSender
 
             foreach (var recipient in allRecipients)
             {
-                // Verify if the recipient belongs to an explicitly whitelisted test domain (e.g., @abdclub.org)
+                var recipientAddress = recipient.Address.Trim();
+                bool isAddressWhitelisted = allowedAddresses.Any(address =>
+                    string.Equals(
+                        recipientAddress,
+                        address.Trim(),
+                        StringComparison.OrdinalIgnoreCase));
                 bool isDomainWhitelisted = allowedDomains.Any(domain =>
-                    recipient.Address.EndsWith($"@{domain}", StringComparison.OrdinalIgnoreCase));
+                {
+                    var normalizedDomain = domain.Trim().TrimStart('@');
+                    return normalizedDomain.Length > 0 && recipientAddress.EndsWith(
+                        $"@{normalizedDomain}",
+                        StringComparison.OrdinalIgnoreCase);
+                });
 
-                if (!isDomainWhitelisted)
+                if (!isAddressWhitelisted && !isDomainWhitelisted)
                 {
                     _logger.LogWarning("🛡️ SECURITY NETWORK SAFETY INTERCEPT: Suppressed live email distribution to outside member account '{RealEmail}'. Hard routing payload to sandbox target destination: '{SandboxInbox}'",
                         recipient.Address, safeTargetAddress);
@@ -78,4 +93,3 @@ public class RealSmtpSender : ISmtpSender
         await client.SendMailAsync(message);
     }
 }
-
